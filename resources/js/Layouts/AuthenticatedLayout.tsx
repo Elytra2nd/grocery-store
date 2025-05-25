@@ -1,4 +1,3 @@
-// resources/js/Layouts/AuthenticatedLayout.tsx
 import React, { useState, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
