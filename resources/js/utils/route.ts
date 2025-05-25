@@ -1,45 +1,60 @@
-// resources/js/utils/route.ts
-import { usePage } from '@inertiajs/react';
+// resources/js/utils/routes.ts
+export const routes = {
+    // User routes
+    'dashboard': '/dashboard',
+    'profile.edit': '/profile',
+    'logout': '/logout',
 
-export function route(name: string, params?: Record<string, any>): string {
-    try {
-        const { ziggy } = usePage().props as any;
+    // Admin routes
+    'admin.dashboard': '/admin/dashboard',
+    'admin.products.index': '/admin/products',
+    'admin.products.create': '/admin/products/create',
+    'admin.products.show': (id: number) => `/admin/products/${id}`,
+    'admin.products.edit': (id: number) => `/admin/products/${id}/edit`,
+    'admin.orders.index': '/admin/orders',
+    'admin.orders.pending': '/admin/orders/pending',
+    'admin.orders.processing': '/admin/orders/processing',
+    'admin.orders.shipped': '/admin/orders/shipped',
+    'admin.orders.completed': '/admin/orders/completed',
+    'admin.users.index': '/admin/users',
+    'admin.users.active': '/admin/users/active',
+    'admin.users.new': '/admin/users/new',
+    'admin.reports.index': '/admin/reports',
+    'admin.reports.sales': '/admin/reports/sales',
+    'admin.reports.products': '/admin/reports/products',
+    'admin.reports.customers': '/admin/reports/customers',
+    'admin.reports.financial': '/admin/reports/financial',
+    'admin.settings.index': '/admin/settings',
+    'admin.settings.general': '/admin/settings/general',
+    'admin.settings.store': '/admin/settings/store',
+    'admin.settings.payment': '/admin/settings/payment',
+    'admin.settings.shipping': '/admin/settings/shipping',
+    'admin.categories.index': '/admin/categories',
+    'admin.products.low-stock': '/admin/products/low-stock',
+};
 
-        if (ziggy && ziggy.routes && ziggy.routes[name]) {
-            const routeData = ziggy.routes[name];
-            let url = routeData.uri;
+export function route(name: string, params?: any): string {
+    const routeTemplate = routes[name as keyof typeof routes];
 
-            // Add base URL
-            if (ziggy.url) {
-                url = ziggy.url + '/' + url;
-            }
-
-            // Replace parameters
-            if (params && routeData.parameters) {
-                routeData.parameters.forEach((param: string) => {
-                    if (params[param]) {
-                        url = url.replace(`{${param}}`, params[param]);
-                    }
-                });
-            }
-
-            return url;
-        }
-
-        console.warn(`Route ${name} not found in Ziggy`);
-        return '/';
-
-    } catch (error) {
-        console.error('Error in route helper:', error);
-        return '/';
+    if (typeof routeTemplate === 'function') {
+        return routeTemplate(params);
     }
+
+    if (typeof routeTemplate === 'string') {
+        // Return relative URL to avoid CORS issues
+        return routeTemplate;
+    }
+
+    console.warn(`Route ${name} not found`);
+    return '/';
 }
 
 // Make route function globally available
-// @ts-ignore
-if (typeof window !== 'undefined') {
-    // @ts-ignore
-    window.route = route;
+declare global {
+    var route: typeof route;
 }
 
-export default route;
+if (typeof window !== 'undefined') {
+    // Avoid conflict with existing global 'route' (e.g., from Ziggy)
+    (window as any).customRoute = route;
+}
