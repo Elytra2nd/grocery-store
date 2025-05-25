@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/AdminProductController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -215,7 +214,6 @@ class AdminProductController extends Controller
 
             // Calculate statistics for this product dengan null safety
             $orderItems = $product->orderItems ?? collect([]);
-
             $statistics = [
                 'total_sold' => $orderItems->sum('quantity') ?? 0,
                 'total_revenue' => $orderItems->sum(function($item) {
@@ -332,7 +330,6 @@ class AdminProductController extends Controller
             if ($product->orderItems()->exists()) {
                 return back()->withErrors(['delete' => 'Produk tidak dapat dihapus karena sudah ada dalam pesanan']);
             }
-
             $productName = $product->name;
 
             // Delete image using service

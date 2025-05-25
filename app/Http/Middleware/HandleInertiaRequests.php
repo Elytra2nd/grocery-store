@@ -1,78 +1,44 @@
 <?php
-// app/Http/Middleware/HandleInertiaRequests.php
 
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Tightenco\Ziggy\Ziggy;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'app';
 
-    public function version(Request $request): string|null
+    public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
+        return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user() ? [
-                    'id' => $request->user()->id ?? null,
-                    'name' => $request->user()->name ?? '',
-                    'email' => $request->user()->email ?? '',
-                    'email_verified_at' => $request->user()->email_verified_at ?? null,
-                    'roles' => $request->user()->roles()->get(['id', 'name']) ?? [],
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'email_verified_at' => $request->user()->email_verified_at,
+                    'roles' => $request->user()->roles()->get(['id', 'name']),
+                    'permissions' => $request->user()->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-            ],
+
             'ziggy' => function () use ($request) {
-                // Try to use Ziggy class if available
-                // Ziggy is not installed, so always use manual ziggy data
-
-                // Manual ziggy data dengan null safety
-                return [
-                    'url' => config('app.url') ?? 'http://localhost',
-                    'port' => null,
-                    'defaults' => [],
-                    'routes' => $this->getManualRoutes(),
-                    'location' => $request->url() ?? '',
-                ];
+                return array_merge((new Ziggy)->toArray(), [
+                    'location' => $request->url(),
+                ]);
             },
-        ];
-    }
 
-    private function getManualRoutes(): array
-    {
-        $routes = [];
-
-        try {
-            foreach (\Illuminate\Support\Facades\Route::getRoutes() as $route) {
-                $name = $route->getName();
-                if ($name) {
-                    $routes[$name] = [
-                        'uri' => $route->uri() ?? '',
-                        'methods' => $route->methods() ?? [],
-                        'parameters' => $route->parameterNames() ?? [],
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            // Fallback routes jika ada error
-            $routes = [
-                'dashboard' => ['uri' => 'dashboard', 'methods' => ['GET', 'HEAD']],
-                'admin.dashboard' => ['uri' => 'admin/dashboard', 'methods' => ['GET', 'HEAD']],
-                'admin.products.index' => ['uri' => 'admin/products', 'methods' => ['GET', 'HEAD']],
-            ];
-        }
-
-        return $routes;
+            'flash' => [
+                'success' => fn() => $request->session()->get('success'),
+                'error' => fn() => $request->session()->get('error'),
+            ],
+        ]);
     }
 }
