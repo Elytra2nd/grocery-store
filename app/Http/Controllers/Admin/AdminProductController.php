@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/AdminProductController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -12,9 +11,6 @@ use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
-/**
- * @method void middleware(array|string $middleware, array $options = [])
- */
 class AdminProductController extends Controller
 {
     protected $imageUploadService;
@@ -30,69 +26,89 @@ class AdminProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::query();
+        try {
+            $query = Product::query();
 
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
-        }
-
-        // Category filter
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        // Status filter
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
-
-        // Stock filter
-        if ($request->filled('stock_status')) {
-            switch ($request->stock_status) {
-                case 'low':
-                    $query->where('stock', '<=', 10);
-                    break;
-                case 'out':
-                    $query->where('stock', 0);
-                    break;
-                case 'available':
-                    $query->where('stock', '>', 0);
-                    break;
+            // Search functionality
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
             }
+
+            // Category filter
+            if ($request->filled('category')) {
+                $query->where('category', $request->category);
+            }
+
+            // Status filter
+            if ($request->filled('status')) {
+                $query->where('is_active', $request->status === 'active');
+            }
+
+            // Stock filter
+            if ($request->filled('stock_status')) {
+                switch ($request->stock_status) {
+                    case 'low':
+                        $query->where('stock', '<=', 10);
+                        break;
+                    case 'out':
+                        $query->where('stock', 0);
+                        break;
+                    case 'available':
+                        $query->where('stock', '>', 0);
+                        break;
+                }
+            }
+
+            $products = $query->orderBy('created_at', 'desc')
+                ->paginate(15)
+                ->withQueryString();
+
+            // Get categories for filter
+            $categories = Product::select('category')
+                ->distinct()
+                ->whereNotNull('category')
+                ->where('category', '!=', '')
+                ->orderBy('category')
+                ->pluck('category');
+
+            // Get statistics
+            $statistics = [
+                'total_products' => Product::count(),
+                'active_products' => Product::where('is_active', true)->count(),
+                'low_stock_products' => Product::where('stock', '<=', 10)->count(),
+                'out_of_stock_products' => Product::where('stock', 0)->count(),
+            ];
+
+            return Inertia::render('Admin/Products/Index', [
+                'products' => $products,
+                'categories' => $categories,
+                'statistics' => $statistics,
+                'filters' => $request->only([
+                    'search', 'category', 'status', 'stock_status'
+                ]),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@index error: ' . $e->getMessage());
+
+            return Inertia::render('Admin/Products/Index', [
+                'products' => collect([]),
+                'categories' => collect([]),
+                'statistics' => [
+                    'total_products' => 0,
+                    'active_products' => 0,
+                    'low_stock_products' => 0,
+                    'out_of_stock_products' => 0,
+                ],
+                'filters' => [],
+                'error' => 'Terjadi kesalahan saat memuat data produk.'
+            ]);
         }
-
-        $products = $query->orderBy('created_at', 'desc')
-            ->paginate(15)
-            ->withQueryString();
-
-        // Get categories for filter
-        $categories = Product::select('category')
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
-
-        // Get statistics
-        $statistics = [
-            'total_products' => Product::count(),
-            'active_products' => Product::where('is_active', true)->count(),
-            'low_stock_products' => Product::where('stock', '<=', 10)->count(),
-            'out_of_stock_products' => Product::where('stock', 0)->count(),
-        ];
-
-        return Inertia::render('Admin/Products/Index', [
-            'products' => $products,
-            'categories' => $categories,
-            'statistics' => $statistics,
-            'filters' => $request->only([
-                'search', 'category', 'status', 'stock_status'
-            ]),
-        ]);
     }
 
     /**
@@ -102,6 +118,8 @@ class AdminProductController extends Controller
     {
         $categories = Product::select('category')
             ->distinct()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
             ->orderBy('category')
             ->pluck('category');
 
@@ -140,26 +158,28 @@ class AdminProductController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2MB',
         ]);
 
-        $data = $request->only([
-            'name', 'description', 'price', 'stock', 'category'
-        ]);
+        try {
+            $data = $request->only([
+                'name', 'description', 'price', 'stock', 'category'
+            ]);
 
-        // Set default is_active to true if not provided
-        $data['is_active'] = $request->boolean('is_active', true);
+            // Set default is_active to true if not provided
+            $data['is_active'] = $request->boolean('is_active', true);
 
-        // Handle image upload using service
-        if ($request->hasFile('image')) {
-            try {
+            // Handle image upload using service
+            if ($request->hasFile('image')) {
                 $data['image'] = $this->imageUploadService->uploadProductImage($request->file('image'));
-            } catch (\Exception $e) {
-                return back()->withErrors(['image' => 'Gagal mengupload gambar: ' . $e->getMessage()]);
             }
+
+            $product = Product::create($data);
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Produk "' . $product->name . '" berhasil ditambahkan');
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@store error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal menyimpan produk: ' . $e->getMessage()]);
         }
-
-        $product = Product::create($data);
-
-        return redirect()->route('admin.products.index')
-            ->with('success', 'Produk "' . $product->name . '" berhasil ditambahkan');
     }
 
     /**
@@ -167,25 +187,25 @@ class AdminProductController extends Controller
      */
     public function show(Product $product)
     {
-        // Load related data
-        $product->load(['orderItems.order']);
+        try {
+            // Calculate statistics for this product (placeholder for now)
+            $statistics = [
+                'total_sold' => 0,
+                'total_revenue' => 0,
+                'total_orders' => 0,
+                'average_order_quantity' => 0,
+            ];
 
-        // Calculate statistics for this product
-        $statistics = [
-            'total_sold' => $product->orderItems->sum('quantity'),
-            'total_revenue' => $product->orderItems->sum(function($item) {
-                return $item->quantity * $item->price;
-            }),
-            'total_orders' => $product->orderItems->count(),
-            'average_order_quantity' => $product->orderItems->count() > 0
-                ? round($product->orderItems->sum('quantity') / $product->orderItems->count(), 2)
-                : 0,
-        ];
+            return Inertia::render('Admin/Products/Show', [
+                'product' => $product,
+                'statistics' => $statistics,
+            ]);
 
-        return Inertia::render('Admin/Products/Show', [
-            'product' => $product,
-            'statistics' => $statistics,
-        ]);
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@show error: ' . $e->getMessage());
+            return redirect()->route('admin.products.index')
+                ->with('error', 'Produk tidak ditemukan');
+        }
     }
 
     /**
@@ -195,6 +215,8 @@ class AdminProductController extends Controller
     {
         $categories = Product::select('category')
             ->distinct()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
             ->orderBy('category')
             ->pluck('category');
 
@@ -234,28 +256,30 @@ class AdminProductController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2MB',
         ]);
 
-        $data = $request->only([
-            'name', 'description', 'price', 'stock', 'category'
-        ]);
+        try {
+            $data = $request->only([
+                'name', 'description', 'price', 'stock', 'category'
+            ]);
 
-        $data['is_active'] = $request->boolean('is_active');
+            $data['is_active'] = $request->boolean('is_active');
 
-        // Handle image upload using service
-        if ($request->hasFile('image')) {
-            try {
+            // Handle image upload using service
+            if ($request->hasFile('image')) {
                 $data['image'] = $this->imageUploadService->uploadProductImage(
                     $request->file('image'),
                     $product->image
                 );
-            } catch (\Exception $e) {
-                return back()->withErrors(['image' => 'Gagal mengupload gambar: ' . $e->getMessage()]);
             }
+
+            $product->update($data);
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Produk "' . $product->name . '" berhasil diperbarui');
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@update error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal memperbarui produk: ' . $e->getMessage()]);
         }
-
-        $product->update($data);
-
-        return redirect()->route('admin.products.index')
-            ->with('success', 'Produk "' . $product->name . '" berhasil diupdate');
     }
 
     /**
@@ -263,27 +287,23 @@ class AdminProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        // Check if product has orders
-        if ($product->orderItems()->exists()) {
-            return back()->withErrors(['delete' => 'Produk tidak dapat dihapus karena sudah ada dalam pesanan']);
-        }
+        try {
+            $productName = $product->name;
 
-        $productName = $product->name;
-
-        // Delete image using service
-        if ($product->image) {
-            try {
+            // Delete image using service
+            if ($product->image) {
                 $this->imageUploadService->deleteProductImage($product->image);
-            } catch (\Exception $e) {
-                // Log error but continue with deletion
-                Log::warning('Failed to delete product image: ' . $e->getMessage());
             }
+
+            $product->delete();
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Produk "' . $productName . '" berhasil dihapus');
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@destroy error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal menghapus produk: ' . $e->getMessage()]);
         }
-
-        $product->delete();
-
-        return redirect()->route('admin.products.index')
-            ->with('success', 'Produk "' . $productName . '" berhasil dihapus');
     }
 
     /**
@@ -304,48 +324,41 @@ class AdminProductController extends Controller
             'product_ids.*.exists' => 'Produk tidak ditemukan',
         ]);
 
-        $products = Product::whereIn('id', $request->product_ids);
-        $affectedCount = $products->count();
+        try {
+            $products = Product::whereIn('id', $request->product_ids);
+            $affectedCount = $products->count();
 
-        switch ($request->action) {
-            case 'activate':
-                $products->update(['is_active' => true]);
-                $message = $affectedCount . ' produk berhasil diaktifkan';
-                break;
+            switch ($request->action) {
+                case 'activate':
+                    $products->update(['is_active' => true]);
+                    $message = $affectedCount . ' produk berhasil diaktifkan';
+                    break;
 
-            case 'deactivate':
-                $products->update(['is_active' => false]);
-                $message = $affectedCount . ' produk berhasil dinonaktifkan';
-                break;
+                case 'deactivate':
+                    $products->update(['is_active' => false]);
+                    $message = $affectedCount . ' produk berhasil dinonaktifkan';
+                    break;
 
-            case 'delete':
-                // Check if any product has orders
-                $productsWithOrders = $products->whereHas('orderItems')->pluck('name');
-                if ($productsWithOrders->isNotEmpty()) {
-                    return back()->withErrors([
-                        'bulk_delete' => 'Produk berikut tidak dapat dihapus karena sudah ada dalam pesanan: ' .
-                        $productsWithOrders->implode(', ')
-                    ]);
-                }
-
-                // Delete images for all products
-                $productList = $products->get();
-                foreach ($productList as $product) {
-                    if ($product->image) {
-                        try {
+                case 'delete':
+                    // Delete images for all products
+                    $productList = $products->get();
+                    foreach ($productList as $product) {
+                        if ($product->image) {
                             $this->imageUploadService->deleteProductImage($product->image);
-                        } catch (\Exception $e) {
-                            Log::warning('Failed to delete product image: ' . $e->getMessage());
                         }
                     }
-                }
 
-                $products->delete();
-                $message = $affectedCount . ' produk berhasil dihapus';
-                break;
+                    $products->delete();
+                    $message = $affectedCount . ' produk berhasil dihapus';
+                    break;
+            }
+
+            return back()->with('success', $message);
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@bulkAction error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal melakukan aksi: ' . $e->getMessage()]);
         }
-
-        return back()->with('success', $message);
     }
 
     /**
@@ -356,7 +369,6 @@ class AdminProductController extends Controller
         $request->validate([
             'stock' => 'required|integer|min:0|max:999999',
             'action' => 'required|in:set,add,subtract',
-            'reason' => 'nullable|string|max:255',
         ], [
             'stock.required' => 'Jumlah stok wajib diisi',
             'stock.integer' => 'Stok harus berupa angka bulat',
@@ -364,53 +376,82 @@ class AdminProductController extends Controller
             'stock.max' => 'Stok maksimal 999999',
             'action.required' => 'Aksi wajib dipilih',
             'action.in' => 'Aksi tidak valid',
-            'reason.max' => 'Alasan maksimal 255 karakter',
         ]);
 
-        $oldStock = $product->stock;
-        $newStock = $oldStock;
+        try {
+            $oldStock = $product->stock;
+            $newStock = $oldStock;
 
-        switch ($request->action) {
-            case 'set':
-                $newStock = $request->stock;
-                break;
-            case 'add':
-                $newStock = $oldStock + $request->stock;
-                break;
-            case 'subtract':
-                $newStock = max(0, $oldStock - $request->stock);
-                break;
+            switch ($request->action) {
+                case 'set':
+                    $newStock = $request->stock;
+                    break;
+                case 'add':
+                    $newStock = $oldStock + $request->stock;
+                    break;
+                case 'subtract':
+                    $newStock = max(0, $oldStock - $request->stock);
+                    break;
+            }
+
+            $product->update(['stock' => $newStock]);
+
+            $actionText = [
+                'set' => 'diset menjadi',
+                'add' => 'ditambah',
+                'subtract' => 'dikurangi'
+            ][$request->action];
+
+            return back()->with('success',
+                "Stok produk \"{$product->name}\" berhasil {$actionText}. " .
+                "Stok sebelumnya: {$oldStock}, Stok sekarang: {$newStock}"
+            );
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@updateStock error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal memperbarui stok: ' . $e->getMessage()]);
         }
-
-        $product->update(['stock' => $newStock]);
-
-        // Log stock movement (optional - implement if you have stock movement tracking)
-        // $this->logStockMovement($product, $request->action, $request->stock, $request->reason);
-
-        $actionText = [
-            'set' => 'diset menjadi',
-            'add' => 'ditambah',
-            'subtract' => 'dikurangi'
-        ][$request->action];
-
-        return back()->with('success',
-            "Stok produk \"{$product->name}\" berhasil {$actionText}. " .
-            "Stok sebelumnya: {$oldStock}, Stok sekarang: {$newStock}"
-        );
     }
 
     /**
-     * Get low stock products for dashboard alerts.
+     * Get products with low stock.
      */
-    public function lowStockAlert()
+    public function lowStock()
     {
-        $lowStockProducts = Product::where('stock', '<=', 10)
+        $products = Product::where('stock', '<=', 10)
             ->where('is_active', true)
-            ->select('id', 'name', 'stock', 'category')
             ->orderBy('stock', 'asc')
-            ->get();
+            ->paginate(15);
 
-        return response()->json($lowStockProducts);
+        return Inertia::render('Admin/Products/LowStock', [
+            'products' => $products,
+        ]);
+    }
+
+    /**
+     * Manage product categories.
+     */
+    public function categories()
+    {
+        $categories = Product::select('category')
+            ->distinct()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->get()
+            ->pluck('category')
+            ->map(function ($category) {
+                return [
+                    'name' => $category,
+                    'products_count' => Product::where('category', $category)->count(),
+                    'active_products_count' => Product::where('category', $category)
+                                                     ->where('is_active', true)
+                                                     ->count(),
+                ];
+            });
+
+        return Inertia::render('Admin/Categories/Index', [
+            'categories' => $categories,
+        ]);
     }
 
     /**
@@ -418,64 +459,70 @@ class AdminProductController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Product::query();
+        try {
+            $query = Product::query();
 
-        // Apply same filters as index
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
-
-        $products = $query->orderBy('created_at', 'desc')->get();
-
-        $filename = 'products_' . date('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($products) {
-            $file = fopen('php://output', 'w');
-
-            // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            // Header
-            fputcsv($file, [
-                'ID', 'Nama', 'Deskripsi', 'Harga', 'Stok',
-                'Kategori', 'Status', 'Tanggal Dibuat'
-            ]);
-
-            // Data
-            foreach ($products as $product) {
-                fputcsv($file, [
-                    $product->id,
-                    $product->name,
-                    $product->description,
-                    $product->price,
-                    $product->stock,
-                    $product->category,
-                    $product->is_active ? 'Aktif' : 'Tidak Aktif',
-                    $product->created_at->format('Y-m-d H:i:s'),
-                ]);
+            // Apply same filters as index
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
             }
 
-            fclose($file);
-        };
+            if ($request->filled('category')) {
+                $query->where('category', $request->category);
+            }
 
-        return response()->stream($callback, 200, $headers);
+            if ($request->filled('status')) {
+                $query->where('is_active', $request->status === 'active');
+            }
+
+            $products = $query->orderBy('created_at', 'desc')->get();
+
+            $filename = 'products_' . date('Y-m-d_H-i-s') . '.csv';
+
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($products) {
+                $file = fopen('php://output', 'w');
+
+                // Add BOM for UTF-8
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+                // Header
+                fputcsv($file, [
+                    'ID', 'Nama', 'Deskripsi', 'Harga', 'Stok',
+                    'Kategori', 'Status', 'Tanggal Dibuat'
+                ]);
+
+                // Data
+                foreach ($products as $product) {
+                    fputcsv($file, [
+                        $product->id,
+                        $product->name,
+                        $product->description,
+                        $product->price,
+                        $product->stock,
+                        $product->category,
+                        $product->is_active ? 'Aktif' : 'Tidak Aktif',
+                        $product->created_at->format('Y-m-d H:i:s'),
+                    ]);
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@export error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal mengekspor data: ' . $e->getMessage()]);
+        }
     }
 }
