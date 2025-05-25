@@ -111,9 +111,6 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
 
     // Check if user is admin
     const isAdmin = auth.user.roles?.some(role => role.name === 'admin') || false;
-
-    console.log('User roles:', auth.user.roles);
-    console.log('Is admin:', isAdmin);
     const navigation = isAdmin ? adminNavigation : userNavigation;
 
     const handleLogout = (): void => {
@@ -596,11 +593,11 @@ function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: UserDropdownMenu
 }
 
 interface FlashMessagesProps {
-    flash?: PageProps['flash'];
+    flash?: PageProps['flash']; // Tambahkan optional (?)
 }
 
 function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
-    // Perbaikan: Tambahkan optional chaining dan null check
+    // Perbaikan: Tambahkan null check dan optional chaining
     if (!flash || (!flash.success && !flash.error)) {
         return <></>;
     }
