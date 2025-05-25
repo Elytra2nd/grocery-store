@@ -1,4 +1,3 @@
-// database/migrations/create_order_items_table.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
