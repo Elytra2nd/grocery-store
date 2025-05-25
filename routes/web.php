@@ -73,3 +73,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 require __DIR__.'/auth.php';
+
+use App\Http\Controllers\CartController;
+
+Route::middleware('auth')->group(function () {
+    Route::post('/cart', [CartController::class, 'add']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'delete']);
+});
+
+use App\Http\Controllers\OrderController;
+
+Route::middleware('auth')->group(function () {
+    Route::post('/orders', [OrderController::class, 'create']);
+    Route::get('/orders/{id}', [OrderController::class, 'view']);
+    Route::get('/orders', [OrderController::class, 'history']);
+});
