@@ -1,6 +1,7 @@
 // resources/js/Components/MobileSidebar.tsx
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { route } from 'ziggy-js';
 import Sidebar from './Sidebar';
 
 interface MobileSidebarProps {

@@ -1,5 +1,6 @@
 // resources/js/Layouts/AuthenticatedLayout.tsx
 import React, { useState, ReactNode } from 'react';
+import { route } from 'ziggy-js';
 import { Link, usePage, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import {
