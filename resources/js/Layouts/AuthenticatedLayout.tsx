@@ -1,3 +1,4 @@
+// resources/js/Layouts/AuthenticatedLayout.tsx
 import React, { useState, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -34,73 +35,74 @@ interface AuthenticatedLayoutProps {
     header?: ReactNode;
 }
 
+// Gunakan relative URLs untuk menghindari CORS
 const adminNavigation: NavigationItem[] = [
     {
         name: 'Dashboard',
-        href: 'admin.dashboard',
+        href: '/admin/dashboard',
         icon: HomeIcon
     },
     {
         name: 'Produk',
-        href: 'admin.products.index',
+        href: '/admin/products',
         icon: CubeIcon,
         children: [
-            { name: 'Semua Produk', href: 'admin.products.index' },
-            { name: 'Tambah Produk', href: 'admin.products.create' },
-            { name: 'Kategori', href: 'admin.categories.index' },
-            { name: 'Stok Rendah', href: 'admin.products.low-stock' },
+            { name: 'Semua Produk', href: '/admin/products' },
+            { name: 'Tambah Produk', href: '/admin/products/create' },
+            { name: 'Kategori', href: '/admin/categories' },
+            { name: 'Stok Rendah', href: '/admin/products/low-stock' },
         ]
     },
     {
         name: 'Pesanan',
-        href: 'admin.orders.index',
+        href: '/admin/orders',
         icon: ShoppingCartIcon,
         badge: 5,
         children: [
-            { name: 'Semua Pesanan', href: 'admin.orders.index' },
-            { name: 'Pesanan Baru', href: 'admin.orders.pending' },
-            { name: 'Sedang Diproses', href: 'admin.orders.processing' },
-            { name: 'Dikirim', href: 'admin.orders.shipped' },
-            { name: 'Selesai', href: 'admin.orders.completed' },
+            { name: 'Semua Pesanan', href: '/admin/orders' },
+            { name: 'Pesanan Baru', href: '/admin/orders/pending' },
+            { name: 'Sedang Diproses', href: '/admin/orders/processing' },
+            { name: 'Dikirim', href: '/admin/orders/shipped' },
+            { name: 'Selesai', href: '/admin/orders/completed' },
         ]
     },
     {
         name: 'Pelanggan',
-        href: 'admin.users.index',
+        href: '/admin/users',
         icon: UsersIcon,
         children: [
-            { name: 'Semua Pelanggan', href: 'admin.users.index' },
-            { name: 'Pelanggan Aktif', href: 'admin.users.active' },
-            { name: 'Pelanggan Baru', href: 'admin.users.new' },
+            { name: 'Semua Pelanggan', href: '/admin/users' },
+            { name: 'Pelanggan Aktif', href: '/admin/users/active' },
+            { name: 'Pelanggan Baru', href: '/admin/users/new' },
         ]
     },
     {
         name: 'Laporan',
-        href: 'admin.reports.index',
+        href: '/admin/reports',
         icon: ChartBarIcon,
         children: [
-            { name: 'Laporan Penjualan', href: 'admin.reports.sales' },
-            { name: 'Laporan Produk', href: 'admin.reports.products' },
-            { name: 'Laporan Pelanggan', href: 'admin.reports.customers' },
-            { name: 'Laporan Keuangan', href: 'admin.reports.financial' },
+            { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
+            { name: 'Laporan Produk', href: '/admin/reports/products' },
+            { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },
+            { name: 'Laporan Keuangan', href: '/admin/reports/financial' },
         ]
     },
     {
         name: 'Pengaturan',
-        href: 'admin.settings.index',
+        href: '/admin/settings',
         icon: CogIcon,
         children: [
-            { name: 'Pengaturan Umum', href: 'admin.settings.general' },
-            { name: 'Pengaturan Toko', href: 'admin.settings.store' },
-            { name: 'Pengaturan Pembayaran', href: 'admin.settings.payment' },
-            { name: 'Pengaturan Pengiriman', href: 'admin.settings.shipping' },
+            { name: 'Pengaturan Umum', href: '/admin/settings/general' },
+            { name: 'Pengaturan Toko', href: '/admin/settings/store' },
+            { name: 'Pengaturan Pembayaran', href: '/admin/settings/payment' },
+            { name: 'Pengaturan Pengiriman', href: '/admin/settings/shipping' },
         ]
     },
 ];
 
 const userNavigation: NavigationItem[] = [
-    { name: 'Dashboard', href: 'dashboard', icon: HomeIcon },
-    { name: 'Profile', href: 'profile.edit', icon: UserCircleIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
 ];
 
 export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {
@@ -108,15 +110,16 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
 
-    // Check if user is admin
-    const isAdmin = auth.user.roles?.some(role => role.name === 'admin') || false;
+    // Check if user is admin dengan null safety
+    const isAdmin = auth?.user?.roles?.some(role => role.name === 'admin') || false;
 
-    console.log('User roles:', auth.user.roles);
+    console.log('User roles:', auth?.user?.roles);
     console.log('Is admin:', isAdmin);
+
     const navigation = isAdmin ? adminNavigation : userNavigation;
 
     const handleLogout = (): void => {
-        router.post(route('logout'));
+        router.post('/logout');
     };
 
     // Admin layout
@@ -177,7 +180,7 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
                                 {userNavigation.map((item) => (
                                     <Link
                                         key={item.name}
-                                        href={route(item.href)}
+                                        href={item.href}
                                         className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
                                     >
                                         {item.name}
@@ -195,11 +198,11 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
                                     >
                                         <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
                                             <span className="text-sm font-medium text-white">
-                                                {auth.user.name.charAt(0).toUpperCase()}
+                                                {auth?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                             </span>
                                         </div>
                                         <span className="ml-2 text-gray-700 text-sm font-medium">
-                                            {auth.user.name}
+                                            {auth?.user?.name || 'User'}
                                         </span>
                                     </button>
                                 </div>
@@ -352,13 +355,13 @@ interface NavigationItemProps {
 }
 
 function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: NavigationItemProps): JSX.Element {
-    const isActive = currentUrl.startsWith(route(item.href));
+    const isActive = currentUrl.startsWith(item.href);
     const hasChildren = item.children && item.children.length > 0;
 
     if (!hasChildren) {
         return (
             <Link
-                href={route(item.href)}
+                href={item.href}
                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out ${
                     isActive
                         ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
@@ -427,11 +430,11 @@ function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: Navi
             {isExpanded && (
                 <div className="mt-1 ml-8 space-y-1">
                     {item.children?.map((subItem) => {
-                        const isSubActive = currentUrl.startsWith(route(subItem.href));
+                        const isSubActive = currentUrl.startsWith(subItem.href);
                         return (
                             <Link
                                 key={subItem.name}
-                                href={route(subItem.href)}
+                                href={subItem.href}
                                 className={`group flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-150 ease-in-out ${
                                     isSubActive
                                         ? 'bg-indigo-50 text-indigo-700 border-r-2 border-indigo-500'
@@ -485,7 +488,7 @@ function AdminTopNavigation({
 
                 <div className="ml-4 flex items-center md:ml-6 space-x-4">
                     <Link
-                        href={route('admin.products.create')}
+                        href="/admin/products/create"
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         <CubeIcon className="h-4 w-4 mr-1" />
@@ -512,11 +515,11 @@ function AdminTopNavigation({
                                 <span className="sr-only">Open user menu</span>
                                 <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
                                     <span className="text-sm font-medium text-white">
-                                        {user.name.charAt(0).toUpperCase()}
+                                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </span>
                                 </div>
                                 <span className="ml-2 text-gray-700 text-sm font-medium">
-                                    {user.name}
+                                    {user?.name || 'User'}
                                 </span>
                             </button>
                         </div>
@@ -553,12 +556,12 @@ function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: UserDropdownMenu
 
             <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                 <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                    <p className="text-sm text-gray-500">{user?.email || 'user@example.com'}</p>
                 </div>
 
                 <Link
-                    href={route('profile.edit')}
+                    href="/profile"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={onClose}
                 >
@@ -568,7 +571,7 @@ function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: UserDropdownMenu
 
                 {isAdmin && (
                     <Link
-                        href={route('admin.settings.index')}
+                        href="/admin/settings"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={onClose}
                     >
@@ -599,7 +602,6 @@ interface FlashMessagesProps {
 }
 
 function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
-    // Perbaikan: Tambahkan optional chaining dan null check
     if (!flash || (!flash.success && !flash.error)) {
         return <></>;
     }
