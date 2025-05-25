@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Admin/AdminProductController.php
+
 
 namespace App\Http\Controllers\Admin;
 
@@ -25,6 +25,7 @@ class AdminProductController extends Controller
         $this->imageUploadService = $imageUploadService;
     }
 
+
     /**
      * Display a listing of the resource.
      */
@@ -35,10 +36,10 @@ class AdminProductController extends Controller
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -90,7 +91,10 @@ class AdminProductController extends Controller
             'categories' => $categories,
             'statistics' => $statistics,
             'filters' => $request->only([
-                'search', 'category', 'status', 'stock_status'
+                'search',
+                'category',
+                'status',
+                'stock_status'
             ]),
         ]);
     }
@@ -141,7 +145,11 @@ class AdminProductController extends Controller
         ]);
 
         $data = $request->only([
-            'name', 'description', 'price', 'stock', 'category'
+            'name',
+            'description',
+            'price',
+            'stock',
+            'category'
         ]);
 
         // Set default is_active to true if not provided
@@ -173,7 +181,7 @@ class AdminProductController extends Controller
         // Calculate statistics for this product
         $statistics = [
             'total_sold' => $product->orderItems->sum('quantity'),
-            'total_revenue' => $product->orderItems->sum(function($item) {
+            'total_revenue' => $product->orderItems->sum(function ($item) {
                 return $item->quantity * $item->price;
             }),
             'total_orders' => $product->orderItems->count(),
@@ -235,7 +243,11 @@ class AdminProductController extends Controller
         ]);
 
         $data = $request->only([
-            'name', 'description', 'price', 'stock', 'category'
+            'name',
+            'description',
+            'price',
+            'stock',
+            'category'
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
@@ -324,7 +336,7 @@ class AdminProductController extends Controller
                 if ($productsWithOrders->isNotEmpty()) {
                     return back()->withErrors([
                         'bulk_delete' => 'Produk berikut tidak dapat dihapus karena sudah ada dalam pesanan: ' .
-                        $productsWithOrders->implode(', ')
+                            $productsWithOrders->implode(', ')
                     ]);
                 }
 
@@ -393,7 +405,8 @@ class AdminProductController extends Controller
             'subtract' => 'dikurangi'
         ][$request->action];
 
-        return back()->with('success',
+        return back()->with(
+            'success',
             "Stok produk \"{$product->name}\" berhasil {$actionText}. " .
             "Stok sebelumnya: {$oldStock}, Stok sekarang: {$newStock}"
         );
@@ -423,10 +436,10 @@ class AdminProductController extends Controller
         // Apply same filters as index
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -447,16 +460,22 @@ class AdminProductController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($products) {
+        $callback = function () use ($products) {
             $file = fopen('php://output', 'w');
 
             // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Header
             fputcsv($file, [
-                'ID', 'Nama', 'Deskripsi', 'Harga', 'Stok',
-                'Kategori', 'Status', 'Tanggal Dibuat'
+                'ID',
+                'Nama',
+                'Deskripsi',
+                'Harga',
+                'Stok',
+                'Kategori',
+                'Status',
+                'Tanggal Dibuat'
             ]);
 
             // Data
