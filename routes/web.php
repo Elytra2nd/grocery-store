@@ -110,6 +110,54 @@ Route::middleware(['auth', 'role:buyer',])
 
     });
 
+Route::prefix('admin/reports')->name('admin.reports.')->group(function () {
+    
+    // Sales Report
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', [AdminReportController::class, 'indexSales'])->name('index');
+        Route::get('/create', [AdminReportController::class, 'createSales'])->name('create');
+        Route::post('/', [AdminReportController::class, 'storeSales'])->name('store');
+        Route::get('/{id}', [AdminReportController::class, 'showSales'])->name('show');
+        Route::get('/{id}/edit', [AdminReportController::class, 'editSales'])->name('edit');
+        Route::put('/{id}', [AdminReportController::class, 'updateSales'])->name('update');
+        Route::delete('/{id}', [AdminReportController::class, 'destroySales'])->name('destroy');
+    });
+
+    // Products Report
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [AdminReportController::class, 'indexProducts'])->name('index');
+        Route::get('/create', [AdminReportController::class, 'createProducts'])->name('create');
+        Route::post('/', [AdminReportController::class, 'storeProducts'])->name('store');
+        Route::get('/{id}', [AdminReportController::class, 'showProducts'])->name('show');
+        Route::get('/{id}/edit', [AdminReportController::class, 'editProducts'])->name('edit');
+        Route::put('/{id}', [AdminReportController::class, 'updateProducts'])->name('update');
+        Route::delete('/{id}', [AdminReportController::class, 'destroyProducts'])->name('destroy');
+    });
+
+    // Customers Report
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', [AdminReportController::class, 'indexCustomers'])->name('index');
+        Route::get('/create', [AdminReportController::class, 'createCustomers'])->name('create');
+        Route::post('/', [AdminReportController::class, 'storeCustomers'])->name('store');
+        Route::get('/{id}', [AdminReportController::class, 'showCustomers'])->name('show');
+        Route::get('/{id}/edit', [AdminReportController::class, 'editCustomers'])->name('edit');
+        Route::put('/{id}', [AdminReportController::class, 'updateCustomers'])->name('update');
+        Route::delete('/{id}', [AdminReportController::class, 'destroyCustomers'])->name('destroy');
+    });
+
+    // Financial Report
+    Route::prefix('financial')->name('financial.')->group(function () {
+        Route::get('/', [AdminReportController::class, 'indexFinancial'])->name('index');
+        Route::get('/create', [AdminReportController::class, 'createFinancial'])->name('create');
+        Route::post('/', [AdminReportController::class, 'storeFinancial'])->name('store');
+        Route::get('/{id}', [AdminReportController::class, 'showFinancial'])->name('show');
+        Route::get('/{id}/edit', [AdminReportController::class, 'editFinancial'])->name('edit');
+        Route::put('/{id}', [AdminReportController::class, 'updateFinancial'])->name('update');
+        Route::delete('/{id}', [AdminReportController::class, 'destroyFinancial'])->name('destroy');
+    });
+
+});
+
 
 
 
