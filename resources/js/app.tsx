@@ -25,6 +25,9 @@ function route(name: string, params?: Record<string, any>, absolute?: boolean): 
             'admin.orders.create': '/admin/orders/create',
             'profile.edit': '/profile',
             'logout': '/logout',
+            'password.request': '/forgot-password',
+            'login': '/login',
+
         };
 
         let url = routes[name];
