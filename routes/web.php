@@ -109,7 +109,7 @@ Route::middleware(['auth', 'role:admin'])
         // Users Management
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
-            Route::get('/new', [AdminUserController::class, 'new'])->name('new');
+            Route::get('/create', [AdminUserController::class, 'create'])->name('users.create');
             Route::post('/', [AdminUserController::class, 'store'])->name('store');
 
             // Specific routes di atas dynamic routes
