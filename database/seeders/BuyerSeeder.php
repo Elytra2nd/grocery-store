@@ -18,8 +18,8 @@ class BuyerSeeder extends Seeder
         // Data pembeli sample (hanya dengan kolom yang ada)
         $buyers = [
             [
-                'name' => 'John Doe',
-                'email' => 'john.doe@example.com',
+                'name' => 'Abi',
+                'email' => 'Abi@example.com',
             ],
             [
                 'name' => 'Jane Smith',

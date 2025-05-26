@@ -102,7 +102,6 @@ const adminNavigation: NavigationItem[] = [
 
 const userNavigation: NavigationItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
 ];
 
 export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {
