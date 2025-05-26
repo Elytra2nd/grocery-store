@@ -106,8 +106,18 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
         });
 
-            // Users Management
-            Route::prefix('users')->name('users.')->group(function () {
-                // Add your user management routes here
-            });
+        // Users Management
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [AdminUserController::class, 'index'])->name('index');
+            Route::get('/new', [AdminUserController::class, 'new'])->name('new');
+            Route::post('/', [AdminUserController::class, 'store'])->name('store');
+
+            // Specific routes di atas dynamic routes
+            Route::get('/active', [AdminUserController::class, 'active'])->name('active');
+
+            // Dynamic routes di bawah
+            Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
+            Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
         });
+    });
