@@ -1,58 +1,54 @@
 <?php
+// app/Services/ImageUploadService.php
 
 namespace App\Services;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image; // Import langsung
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\Log;
 
 class ImageUploadService
 {
-    public function uploadProductImage(UploadedFile $file, $oldImagePath = null)
+    public function uploadProductImage(UploadedFile $file, $oldImage = null)
     {
-        // Delete old image if exists
-        if ($oldImagePath) {
-            Storage::disk('public')->delete($oldImagePath);
+        try {
+            // Delete old image if exists
+            if ($oldImage && Storage::disk('public')->exists('products/' . $oldImage)) {
+                Storage::disk('public')->delete('products/' . $oldImage);
+            }
+
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Gunakan read() untuk v3.x
+            $image = Image::read($file);
+
+            // Resize image - v3.x hanya menerima width dan height
+            $image->resize(800, 600);
+
+            // Atau gunakan scale untuk mempertahankan aspect ratio
+            // $image->scale(800, 600);
+
+            // Save to storage
+            $path = 'products/' . $filename;
+            Storage::disk('public')->put($path, $image->encode());
+
+            return $filename;
+
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to upload image: ' . $e->getMessage());
         }
-
-        // Generate unique filename
-        $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-
-        // Resize and optimize image
-        $image = Image::make($file)
-            ->resize(800, 600, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            })
-            ->encode('jpg', 85);
-
-        // Store image
-        $path = 'products/' . $filename;
-        Storage::disk('public')->put($path, $image);
-
-        // Create thumbnail
-        $thumbnailPath = 'products/thumbnails/' . $filename;
-        $thumbnail = Image::make($file)
-            ->resize(300, 225, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            })
-            ->encode('jpg', 80);
-
-        Storage::disk('public')->put($thumbnailPath, $thumbnail);
-
-        return $path;
     }
 
-    public function deleteProductImage($imagePath)
+    public function deleteProductImage($filename)
     {
-        if ($imagePath) {
-            Storage::disk('public')->delete($imagePath);
-
-            // Delete thumbnail
-            $thumbnailPath = str_replace('products/', 'products/thumbnails/', $imagePath);
-            Storage::disk('public')->delete($thumbnailPath);
+        try {
+            if ($filename && Storage::disk('public')->exists('products/' . $filename)) {
+                Storage::disk('public')->delete('products/' . $filename);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to delete image: ' . $e->getMessage());
         }
     }
 }

@@ -27,7 +27,7 @@ export default function ProductsIndex({
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const searchParams = Object.fromEntries(formData) as ProductFilters;
-        router.get(route('admin.products.index'), searchParams as Record<string, any>, {
+        router.get('/admin/products', searchParams as Record<string, any>, {
             preserveState: true,
             replace: true,
         });
@@ -36,7 +36,7 @@ export default function ProductsIndex({
     const handleBulkAction = (): void => {
         if (selectedProducts.length === 0 || !bulkAction) return;
 
-        router.post(route('admin.products.bulk-action'), {
+        router.post('/admin/products/bulk-action', {
             action: bulkAction,
             product_ids: selectedProducts,
         }, {
@@ -66,7 +66,7 @@ export default function ProductsIndex({
 
     const handleDelete = (product: Product): void => {
         if (confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}"?`)) {
-            router.delete(route('admin.products.destroy', product.id));
+            router.delete(`/admin/products/${product.id}`);
         }
     };
 
@@ -85,7 +85,7 @@ export default function ProductsIndex({
                         </div>
                         <div className="mt-4 flex md:mt-0 md:ml-4">
                             <Link
-                                href={route('admin.products.create')}
+                                href="/admin/products/create"
                                 className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
                                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
@@ -307,7 +307,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                         </button>
 
                         <Link
-                            href={route('admin.products.index')}
+                            href="/admin/products"
                             className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
                             Reset
@@ -435,11 +435,38 @@ interface ProductRowProps {
 }
 
 function ProductRow({ product, isSelected, onToggleSelection, onDelete }: ProductRowProps): JSX.Element {
+    const [imageError, setImageError] = useState<boolean>(false);
+    const [imageLoading, setImageLoading] = useState<boolean>(true);
+
+    const getImageSrc = (product: Product): string => {
+        if (!product.image) {
+            return '';
+        }
+        return `/storage/products/${product.image}`;
+    };
+
+    const handleImageError = (): void => {
+        setImageError(true);
+        setImageLoading(false);
+    };
+
+    const handleImageLoad = (): void => {
+        setImageLoading(false);
+    };
+
     const getStockBadgeClass = (stock: number): string => {
         if (stock === 0) return 'bg-red-100 text-red-800';
         if (stock <= 10) return 'bg-yellow-100 text-yellow-800';
         return 'bg-green-100 text-green-800';
     };
+
+    const PlaceholderImage = (): JSX.Element => (
+        <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center border border-gray-300">
+            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        </div>
+    );
 
     return (
         <tr className="hover:bg-gray-50">
@@ -454,18 +481,33 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                     <div className="flex-shrink-0 h-16 w-16">
-                        <img
-                            className="h-16 w-16 rounded-lg object-cover"
-                            src={product.image ? `/storage/${product.image}` : '/placeholder-image.jpg'}
-                            alt={product.name}
-                        />
+                        {imageError || !product.image ? (
+                            <PlaceholderImage />
+                        ) : (
+                            <>
+                                {imageLoading && (
+                                    <div className="h-16 w-16 bg-gray-200 animate-pulse rounded-lg border border-gray-300" />
+                                )}
+                                <img
+                                    className={`h-16 w-16 rounded-lg object-cover border border-gray-200 ${imageLoading ? 'hidden' : 'block'}`}
+                                    src={getImageSrc(product)}
+                                    alt={product.name}
+                                    onLoad={handleImageLoad}
+                                    onError={handleImageError}
+                                    loading="lazy"
+                                />
+                            </>
+                        )}
                     </div>
                     <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
                             {product.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                            {product.description.substring(0, 50)}...
+                        <div className="text-sm text-gray-500 max-w-xs truncate">
+                            {product.description.length > 50
+                                ? `${product.description.substring(0, 50)}...`
+                                : product.description
+                            }
                         </div>
                     </div>
                 </div>
@@ -495,20 +537,23 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center space-x-2">
                     <Link
-                        href={route('admin.products.show', product.id)}
+                        href={`/admin/products/${product.id}`}
                         className="text-indigo-600 hover:text-indigo-900"
+                        title="Lihat Detail"
                     >
                         <EyeIcon className="h-5 w-5" />
                     </Link>
                     <Link
-                        href={route('admin.products.edit', product.id)}
+                        href={`/admin/products/${product.id}/edit`}
                         className="text-indigo-600 hover:text-indigo-900"
+                        title="Edit Produk"
                     >
                         <PencilIcon className="h-5 w-5" />
                     </Link>
                     <button
                         onClick={() => onDelete(product)}
                         className="text-red-600 hover:text-red-900"
+                        title="Hapus Produk"
                     >
                         <TrashIcon className="h-5 w-5" />
                     </button>
