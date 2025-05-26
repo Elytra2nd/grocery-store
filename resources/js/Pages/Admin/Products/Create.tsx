@@ -55,7 +55,7 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        post(route('admin.products.store'), {
+        post('/admin/products', {
             forceFormData: true, // Penting untuk file upload
         });
     };
