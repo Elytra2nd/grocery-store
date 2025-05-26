@@ -5,13 +5,12 @@ import { PageProps as AppPageProps } from './';
 
 declare global {
     interface Window {
-        axios: AxiosInstance;
+        route: (name: string, params?: Record<string, any>, absolute?: boolean) => string;
+        axios: any;
     }
 
-    /* eslint-disable no-var */
-    var route: typeof ziggyRoute;
+    var route: (name: string, params?: Record<string, any>, absolute?: boolean) => string;
+    var axios: any;
 }
 
-declare module '@inertiajs/core' {
-    interface PageProps extends InertiaPageProps, AppPageProps {}
-}
+export {};
