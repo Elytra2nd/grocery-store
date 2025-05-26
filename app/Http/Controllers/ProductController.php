@@ -8,6 +8,7 @@ use Inertia\Inertia;
 
 class ProductController extends Controller
 {
+    
     public function index(Request $request)
     {
         $query = Product::where('is_active', true);
