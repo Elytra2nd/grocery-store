@@ -106,6 +106,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
         });
 
-        // Users Management
-        Route::prefix('users')->name('users.')->group(function () {
-            Route
+            // Users Management
+            Route::prefix('users')->name('users.')->group(function () {
+                // Add your user management routes here
+            });
+        });
