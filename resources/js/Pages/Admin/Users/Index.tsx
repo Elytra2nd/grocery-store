@@ -33,7 +33,7 @@ export default function Index({ auth, users }: Props): JSX.Element {
 
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus user ini?')) {
-            destroy(route('admin.users.destroy', id));
+            destroy(route('admin.users.destroy', { user: id }));
         }
     };
 
@@ -122,7 +122,7 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                         </td>
                                         <td className="px-4 py-2 border text-center space-x-2">
                                             <Link
-                                                href={route('admin.users.edit', user.id)}
+                                                href={route('admin.users.edit', { user: user.id })}
                                                 className="inline-flex items-center px-3 py-1 bg-yellow-400 text-white text-xs rounded hover:bg-yellow-500"
                                             >
                                                 Edit
