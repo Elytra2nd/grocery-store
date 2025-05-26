@@ -3,6 +3,12 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
+import {
+    CubeIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
+    ShoppingBagIcon
+} from '@heroicons/react/24/outline';
 
 interface AdminDashboardProps extends PageProps {
     statistics?: {
@@ -17,7 +23,8 @@ interface AdminDashboardProps extends PageProps {
     };
 }
 
-export default function AdminDashboard({ statistics }: AdminDashboardProps) {
+// PASTIKAN menggunakan default export yang benar
+export default function AdminDashboard({ statistics }: AdminDashboardProps): JSX.Element {
     const stats = statistics || {
         total_products: 0,
         active_products: 0,
@@ -47,101 +54,30 @@ export default function AdminDashboard({ statistics }: AdminDashboardProps) {
 
                     {/* Statistics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Total Produk
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.total_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Produk Aktif
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.active_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Stok Rendah
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.low_stock_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Total Pesanan
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.total_orders}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <StatCard
+                            title="Total Produk"
+                            value={stats.total_products}
+                            icon={CubeIcon}
+                            color="blue"
+                        />
+                        <StatCard
+                            title="Produk Aktif"
+                            value={stats.active_products}
+                            icon={CheckCircleIcon}
+                            color="green"
+                        />
+                        <StatCard
+                            title="Stok Rendah"
+                            value={stats.low_stock_products}
+                            icon={ExclamationTriangleIcon}
+                            color="yellow"
+                        />
+                        <StatCard
+                            title="Total Pesanan"
+                            value={stats.total_orders}
+                            icon={ShoppingBagIcon}
+                            color="indigo"
+                        />
                     </div>
 
                     {/* Quick Actions */}
@@ -154,25 +90,25 @@ export default function AdminDashboard({ statistics }: AdminDashboardProps) {
                                 <div className="grid grid-cols-2 gap-4">
                                     <a
                                         href="/admin/products/create"
-                                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-150"
                                     >
                                         Tambah Produk
                                     </a>
                                     <a
                                         href="/admin/orders"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
                                     >
                                         Lihat Pesanan
                                     </a>
                                     <a
                                         href="/admin/products/low-stock"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
                                     >
                                         Stok Rendah
                                     </a>
                                     <a
                                         href="/admin/reports"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
                                     >
                                         Laporan
                                     </a>
@@ -205,5 +141,47 @@ export default function AdminDashboard({ statistics }: AdminDashboardProps) {
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+// StatCard Component
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    color: 'blue' | 'green' | 'yellow' | 'indigo' | 'red';
+}
+
+function StatCard({ title, value, icon: Icon, color }: StatCardProps): JSX.Element {
+    const colorClasses = {
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        yellow: 'bg-yellow-500',
+        indigo: 'bg-indigo-500',
+        red: 'bg-red-500',
+    };
+
+    return (
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+                <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                        <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
+                            <Icon className="w-5 h-5 text-white" />
+                        </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt className="text-sm font-medium text-gray-500 truncate">
+                                {title}
+                            </dt>
+                            <dd className="text-lg font-medium text-gray-900">
+                                {value.toLocaleString('id-ID')}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

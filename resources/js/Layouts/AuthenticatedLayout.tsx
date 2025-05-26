@@ -35,7 +35,7 @@ interface AuthenticatedLayoutProps {
     header?: ReactNode;
 }
 
-// Gunakan relative URLs untuk menghindari CORS
+// Navigation items untuk admin
 const adminNavigation: NavigationItem[] = [
     {
         name: 'Dashboard',
@@ -106,15 +106,13 @@ const userNavigation: NavigationItem[] = [
 ];
 
 export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {
-    const { auth, flash } = usePage<PageProps>().props;
+    const pageProps = usePage<PageProps>().props;
+    const { auth, flash } = pageProps;
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
 
     // Check if user is admin dengan null safety
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'admin') || false;
-
-    console.log('User roles:', auth?.user?.roles);
-    console.log('Is admin:', isAdmin);
 
     const navigation = isAdmin ? adminNavigation : userNavigation;
 
@@ -145,7 +143,7 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
                     {/* Top navigation */}
                     <AdminTopNavigation
                         setSidebarOpen={setSidebarOpen}
-                        user={auth.user}
+                        user={auth?.user}
                         userMenuOpen={userMenuOpen}
                         setUserMenuOpen={setUserMenuOpen}
                         onLogout={handleLogout}
@@ -209,7 +207,7 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
 
                                 {userMenuOpen && (
                                     <UserDropdownMenu
-                                        user={auth.user}
+                                        user={auth?.user}
                                         onLogout={handleLogout}
                                         onClose={() => setUserMenuOpen(false)}
                                         isAdmin={false}
@@ -456,7 +454,7 @@ function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: Navi
 
 interface AdminTopNavigationProps {
     setSidebarOpen: (open: boolean) => void;
-    user: PageProps['auth']['user'];
+    user?: PageProps['auth']['user'];
     userMenuOpen: boolean;
     setUserMenuOpen: (open: boolean) => void;
     onLogout: () => void;
@@ -482,7 +480,7 @@ function AdminTopNavigation({
             <div className="flex-1 px-4 flex justify-between items-center">
                 <div className="flex-1 flex">
                     <div className="w-full flex md:ml-0">
-                        {/* Search bar can be added here */}
+                        {/* Search bar dapat ditambahkan di sini */}
                     </div>
                 </div>
 
@@ -540,7 +538,7 @@ function AdminTopNavigation({
 }
 
 interface UserDropdownMenuProps {
-    user: PageProps['auth']['user'];
+    user?: PageProps['auth']['user'];
     onLogout: () => void;
     onClose: () => void;
     isAdmin: boolean;
