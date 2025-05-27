@@ -268,19 +268,8 @@ function ProductInfoSection({
                                         {category}
                                     </option>
                                 ))}
-                                <option value="new">+ Kategori Baru</option>
                             </select>
-                            {data.category === 'new' && (
-                                <input
-                                    type="text"
-                                    onChange={(e) => setData('category', e.target.value)}
-                                    className="mt-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                    placeholder="Masukkan kategori baru"
-                                />
-                            )}
-                            {errors.category && (
-                                <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-                            )}
+                            
                         </div>
 
                         <div className="col-span-6 sm:col-span-3">
