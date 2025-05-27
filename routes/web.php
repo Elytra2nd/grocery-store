@@ -203,7 +203,7 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
-// Buyer Routes - DITAMBAHKAN
+    // Buyer Routes - DITAMBAHKAN
 Route::middleware(['auth', 'role:buyer'])
     ->prefix('buyer')
     ->name('buyer.')
@@ -211,8 +211,11 @@ Route::middleware(['auth', 'role:buyer'])
         Route::get('/dashboard', function () {
             return Inertia::render('Buyer/Dashboard');
         })->name('dashboard');
-        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+
+        Route::get('/products/{product}', [ProductController::class, 'show'])
+            ->name('products.show');
     });
+
 
 // API Routes (untuk AJAX requests) - DITAMBAHKAN
 Route::middleware(['auth', 'role:admin'])
