@@ -29,9 +29,10 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function new()
+    public function create()
     {
-        return Inertia::render('Admin/Users/New');
+        return Inertia::render('Admin/Users/Create');
+        
     }
 
     public function store(Request $request)

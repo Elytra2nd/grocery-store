@@ -53,7 +53,7 @@ export default function Index({ auth, users }: Props): JSX.Element {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold text-gray-700">Daftar User</h2>
                     <Link
-                        href={route('admin.users.new')}
+                        href='/admin/users/create'
                         className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700"
                     >
                         + Tambah User
