@@ -110,7 +110,6 @@ const adminNavigation: NavigationItem[] = [
 ];
 
 const userNavigation: NavigationItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
 ];
 
 export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {

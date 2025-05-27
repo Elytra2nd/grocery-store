@@ -1,6 +1,8 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Product } from '@/types';
+import { router } from '@inertiajs/react';
+
 
 interface ProductShowProps {
   product: Product;
@@ -8,6 +10,14 @@ interface ProductShowProps {
 }
 
 export default function ProductShow({ product, relatedProducts }: ProductShowProps): JSX.Element {
+  // Tambahkan fungsi handleAddToCart agar tidak error
+const handleAddToCart = () => {
+  router.post('/cart', { product_id: product.id }, {
+    onSuccess: () => {
+      alert(`Produk "${product.name}" ditambahkan ke keranjang!`);
+    },
+  });
+};
   return (
     <>
       <Head title={product.name} />
@@ -89,6 +99,8 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mt-2">
                   <button
+                    type="button"
+                    onClick={handleAddToCart}
                     className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   >
                     Tambah ke Keranjang
