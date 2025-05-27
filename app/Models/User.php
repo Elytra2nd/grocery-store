@@ -33,6 +33,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'is_active',
     ];
 
     /**
@@ -45,12 +46,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
     /**
      * Get all orders associated with the user.
-     * 
+     *
      * @return HasMany<Order>
      */
     public function orders(): HasMany
@@ -60,11 +62,16 @@ class User extends Authenticatable
 
     /**
      * Get all cart items associated with the user.
-     * 
+     *
      * @return HasMany<Cart>
      */
     public function cart(): HasMany
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
     }
 }

@@ -12,16 +12,29 @@ interface Props extends PageProps {
     filters: ProductFilters;
 }
 
+// PASTIKAN menggunakan default export yang benar
 export default function ProductsIndex({
     products,
     categories,
     statistics,
     filters
 }: Props): JSX.Element {
-    const flash = (usePage().props as any).flash ?? {};
+    const pageProps = usePage<PageProps>().props;
+    const flash = pageProps.flash ?? {};
     const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
     const [bulkAction, setBulkAction] = useState<string>('');
     const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
+
+    // Safe fallbacks untuk data yang mungkin undefined
+    const safeProducts = products?.data || [];
+    const safeCategories = categories || [];
+    const safeStatistics = statistics || {
+        total_products: 0,
+        active_products: 0,
+        low_stock_products: 0,
+        out_of_stock_products: 0,
+    };
+    const safeFilters = filters || {};
 
     const handleSearch = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
@@ -57,10 +70,10 @@ export default function ProductsIndex({
     };
 
     const toggleSelectAll = (): void => {
-        if (selectedProducts.length === products.data.length) {
+        if (selectedProducts.length === safeProducts.length) {
             setSelectedProducts([]);
         } else {
-            setSelectedProducts(products.data.map(product => product.id));
+            setSelectedProducts(safeProducts.map(product => product.id));
         }
     };
 
@@ -111,22 +124,22 @@ export default function ProductsIndex({
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <StatCard
                             title="Total Produk"
-                            value={statistics.total_products}
+                            value={safeStatistics.total_products}
                             color="blue"
                         />
                         <StatCard
                             title="Produk Aktif"
-                            value={statistics.active_products}
+                            value={safeStatistics.active_products}
                             color="green"
                         />
                         <StatCard
                             title="Stok Rendah"
-                            value={statistics.low_stock_products}
+                            value={safeStatistics.low_stock_products}
                             color="yellow"
                         />
                         <StatCard
                             title="Stok Habis"
-                            value={statistics.out_of_stock_products}
+                            value={safeStatistics.out_of_stock_products}
                             color="red"
                         />
                     </div>
@@ -134,8 +147,8 @@ export default function ProductsIndex({
                     {/* Filters */}
                     <FilterForm
                         onSubmit={handleSearch}
-                        categories={categories}
-                        filters={filters}
+                        categories={safeCategories}
+                        filters={safeFilters}
                     />
 
                     {/* Bulk Actions */}
@@ -150,7 +163,7 @@ export default function ProductsIndex({
 
                     {/* Products Table */}
                     <ProductsTable
-                        products={products.data}
+                        products={safeProducts}
                         selectedProducts={selectedProducts}
                         onToggleSelection={toggleProductSelection}
                         onToggleSelectAll={toggleSelectAll}
@@ -158,13 +171,15 @@ export default function ProductsIndex({
                     />
 
                     {/* Pagination */}
-                    <Pagination
-                        links={products.links.map(link => ({
-                            ...link,
-                            url: link.url === undefined ? null : link.url
-                        }))}
-                        meta={products}
-                    />
+                    {products?.links && (
+                        <Pagination
+                            links={products.links.map(link => ({
+                                ...link,
+                                url: link.url === undefined ? null : link.url
+                            }))}
+                            meta={products}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -181,7 +196,7 @@ export default function ProductsIndex({
     );
 }
 
-// Sub-components with TypeScript
+// Sub-components dengan perbaikan
 interface StatCardProps {
     title: string;
     value: number;
@@ -213,7 +228,7 @@ function StatCard({ title, value, color }: StatCardProps): JSX.Element {
                                 {title}
                             </dt>
                             <dd className="text-lg font-medium text-gray-900">
-                                {value}
+                                {value.toLocaleString('id-ID')}
                             </dd>
                         </dl>
                     </div>
@@ -242,7 +257,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             <input
                                 type="text"
                                 name="search"
-                                defaultValue={filters.search}
+                                defaultValue={filters.search || ''}
                                 placeholder="Cari produk..."
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -254,7 +269,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             </label>
                             <select
                                 name="category"
-                                defaultValue={filters.category}
+                                defaultValue={filters.category || ''}
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
                                 <option value="">Semua Kategori</option>
@@ -272,7 +287,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             </label>
                             <select
                                 name="status"
-                                defaultValue={filters.status}
+                                defaultValue={filters.status || ''}
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
                                 <option value="">Semua Status</option>
@@ -287,7 +302,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             </label>
                             <select
                                 name="stock_status"
-                                defaultValue={filters.stock_status}
+                                defaultValue={filters.stock_status || ''}
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
                                 <option value="">Semua Stok</option>
@@ -376,6 +391,34 @@ function ProductsTable({
     onToggleSelectAll,
     onDelete
 }: ProductsTableProps): JSX.Element {
+    // Handle empty products
+    if (!products || products.length === 0) {
+        return (
+            <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-12 text-center">
+                    <div className="mx-auto h-12 w-12 text-gray-400">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m0 0V9a2 2 0 012-2h2m0 0V6a2 2 0 012-2h2m0 0V4a2 2 0 012-2h2m0 0V2a2 2 0 012-2h2" />
+                        </svg>
+                    </div>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada produk</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                        Mulai dengan menambahkan produk baru.
+                    </p>
+                    <div className="mt-6">
+                        <Link
+                            href="/admin/products/create"
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Tambah Produk
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <div className="overflow-x-auto">
@@ -427,6 +470,7 @@ function ProductsTable({
     );
 }
 
+// ProductRow component (sama seperti kode sebelumnya)
 interface ProductRowProps {
     product: Product;
     isSelected: boolean;
@@ -469,7 +513,7 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
     );
 
     return (
-        <tr className="hover:bg-gray-50">
+        <tr className="hover:bg-gray-50 transition-colors duration-150">
             <td className="px-6 py-4 whitespace-nowrap">
                 <input
                     type="checkbox"
@@ -480,16 +524,18 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                    <div className="flex-shrink-0 h-16 w-16">
+                    <div className="flex-shrink-0 h-16 w-16 relative">
                         {imageError || !product.image ? (
                             <PlaceholderImage />
                         ) : (
                             <>
                                 {imageLoading && (
-                                    <div className="h-16 w-16 bg-gray-200 animate-pulse rounded-lg border border-gray-300" />
+                                    <div className="absolute inset-0 h-16 w-16 bg-gray-200 animate-pulse rounded-lg border border-gray-300" />
                                 )}
                                 <img
-                                    className={`h-16 w-16 rounded-lg object-cover border border-gray-200 ${imageLoading ? 'hidden' : 'block'}`}
+                                    className={`h-16 w-16 rounded-lg object-cover border border-gray-200 transition-opacity duration-300 ${
+                                        imageLoading ? 'opacity-0' : 'opacity-100'
+                                    }`}
                                     src={getImageSrc(product)}
                                     alt={product.name}
                                     onLoad={handleImageLoad}
@@ -499,14 +545,14 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
                             </>
                         )}
                     </div>
-                    <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
+                    <div className="ml-4 flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate max-w-xs" title={product.name}>
                             {product.name}
                         </div>
-                        <div className="text-sm text-gray-500 max-w-xs truncate">
-                            {product.description.length > 50
+                        <div className="text-sm text-gray-500 truncate max-w-xs" title={product.description}>
+                            {product.description && product.description.length > 50
                                 ? `${product.description.substring(0, 50)}...`
-                                : product.description
+                                : product.description || 'Tidak ada deskripsi'
                             }
                         </div>
                     </div>
@@ -514,15 +560,15 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {product.category}
+                    {product.category || 'Tidak ada kategori'}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Rp {product.price.toLocaleString('id-ID')}
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                Rp {(product.price || 0).toLocaleString('id-ID')}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStockBadgeClass(product.stock)}`}>
-                    {product.stock}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStockBadgeClass(product.stock || 0)}`}>
+                    {product.stock || 0}
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -535,24 +581,24 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-end space-x-2">
                     <Link
                         href={`/admin/products/${product.id}`}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
                         title="Lihat Detail"
                     >
                         <EyeIcon className="h-5 w-5" />
                     </Link>
                     <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
                         title="Edit Produk"
                     >
                         <PencilIcon className="h-5 w-5" />
                     </Link>
                     <button
                         onClick={() => onDelete(product)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 p-1 rounded transition-colors duration-150"
                         title="Hapus Produk"
                     >
                         <TrashIcon className="h-5 w-5" />
@@ -563,6 +609,7 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
     );
 }
 
+// Pagination dan BulkActionModal components (sama seperti sebelumnya)
 interface PaginationLink {
     url: string | null;
     label: string;
@@ -599,11 +646,11 @@ function Pagination({ links, meta }: PaginationProps): JSX.Element {
                 <div>
                     <p className="text-sm text-gray-700">
                         Showing{' '}
-                        <span className="font-medium">{meta.from}</span>
+                        <span className="font-medium">{meta.from || 0}</span>
                         {' '}to{' '}
-                        <span className="font-medium">{meta.to}</span>
+                        <span className="font-medium">{meta.to || 0}</span>
                         {' '}of{' '}
-                        <span className="font-medium">{meta.total}</span>
+                        <span className="font-medium">{meta.total || 0}</span>
                         {' '}results
                     </p>
                 </div>

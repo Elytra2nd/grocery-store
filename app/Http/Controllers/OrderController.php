@@ -8,10 +8,22 @@ use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+        public function index()
+    {
+        // Mengambil semua orders milik user yang sedang login
+        $orders = Order::where('user_id', auth()->id())
+                      ->with(['orderItems.product']) // Include relasi jika ada
+                      ->orderBy('created_at', 'desc')
+                      ->get();
+
+        return Inertia::render('Orders/Index', [
+            'orders' => $orders
+        ]);
+    }
     // Membuat pesanan dari keranjang
     public function create(Request $request)
     {

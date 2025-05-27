@@ -1,8 +1,14 @@
 // resources/js/Pages/Admin/Dashboard.tsx
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
+import {
+    CubeIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
+    ShoppingBagIcon
+} from '@heroicons/react/24/outline';
 
 interface AdminDashboardProps extends PageProps {
     statistics?: {
@@ -17,193 +23,173 @@ interface AdminDashboardProps extends PageProps {
     };
 }
 
-export default function AdminDashboard({ statistics }: AdminDashboardProps) {
-    const stats = statistics || {
-        total_products: 0,
-        active_products: 0,
-        low_stock_products: 0,
-        out_of_stock_products: 0,
-        total_orders: 0,
-        pending_orders: 0,
-        total_revenue: 0,
-        total_users: 0,
+function formatCurrency(value: number): string {
+    return `Rp ${value.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export default function AdminDashboard({ statistics }: AdminDashboardProps): JSX.Element {
+    const stats = {
+        total_products: statistics?.total_products ?? 0,
+        active_products: statistics?.active_products ?? 0,
+        low_stock_products: statistics?.low_stock_products ?? 0,
+        out_of_stock_products: statistics?.out_of_stock_products ?? 0,
+        total_orders: statistics?.total_orders ?? 0,
+        pending_orders: statistics?.pending_orders ?? 0,
+        total_revenue: statistics?.total_revenue ?? 0,
+        total_users: statistics?.total_users ?? 0,
     };
 
     return (
         <AuthenticatedLayout>
             <Head title="Admin Dashboard" />
 
-            <div className="py-6">
+            <div className="py-6 min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
                     {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            Admin Dashboard
+                    <div className="mb-8 animate-fade-in-down">
+                        <h1 className="text-3xl font-extrabold text-amber-900 tracking-tight drop-shadow-sm">
+                            Selamat Datang, Admin! 👋
                         </h1>
-                        <p className="mt-2 text-gray-600">
-                            Selamat datang di panel admin Grocery Store
+                        <p className="mt-2 text-amber-700">
+                            Pantau statistik toko dan kelola data dengan mudah.
                         </p>
                     </div>
 
-                    {/* Statistics Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Total Produk
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.total_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Produk Aktif
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.active_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Stok Rendah
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.low_stock_products}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="p-5">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                                Total Pesanan
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-900">
-                                                {stats.total_orders}
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Statistik Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 animate-fade-in-up">
+                        <StatCard
+                            title="Total Produk"
+                            value={stats.total_products}
+                            icon={CubeIcon}
+                            color="bg-amber-700"
+                        />
+                        <StatCard
+                            title="Produk Aktif"
+                            value={stats.active_products}
+                            icon={CheckCircleIcon}
+                            color="bg-green-500"
+                        />
+                        <StatCard
+                            title="Stok Rendah"
+                            value={stats.low_stock_products}
+                            icon={ExclamationTriangleIcon}
+                            color="bg-amber-400"
+                        />
+                        <StatCard
+                            title="Total Pesanan"
+                            value={stats.total_orders}
+                            icon={ShoppingBagIcon}
+                            color="bg-indigo-500"
+                        />
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                                    Aksi Cepat
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <a
-                                        href="/admin/products/create"
-                                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                                    >
-                                        Tambah Produk
-                                    </a>
-                                    <a
-                                        href="/admin/orders"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                    >
-                                        Lihat Pesanan
-                                    </a>
-                                    <a
-                                        href="/admin/products/low-stock"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                    >
-                                        Stok Rendah
-                                    </a>
-                                    <a
-                                        href="/admin/reports"
-                                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                    >
-                                        Laporan
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Statistik Revenue & Users */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 animate-fade-in-up">
+                        <StatCard
+                            title="Total Pendapatan"
+                            value={stats.total_revenue}
+                            icon={CurrencyIcon}
+                            color="bg-amber-500"
+                            isCurrency
+                        />
+                        <StatCard
+                            title="Total Pengguna"
+                            value={stats.total_users}
+                            icon={UserGroupIcon}
+                            color="bg-amber-300"
+                        />
+                    </div>
 
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                                    Aktivitas Terbaru
-                                </h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
-                                        Sistem berjalan normal
-                                    </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
-                                        {stats.pending_orders} pesanan menunggu konfirmasi
-                                    </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
-                                        {stats.low_stock_products} produk stok rendah
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Quick Actions - satu baris penuh */}
+                    <div className="bg-white shadow rounded-xl p-6 animate-fade-in-up">
+                        <h3 className="text-lg font-semibold text-amber-900 mb-4 flex items-center">
+                            Aksi Cepat
+                        </h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <QuickAction
+                                href="/admin/products/create"
+                                label="Tambah Produk"
+                                icon={<CubeIcon className="w-5 h-5" />}
+                                color="bg-amber-600"
+                                textColor="text-white"
+                            />
+                            <QuickAction
+                                href="/admin/orders"
+                                label="Lihat Pesanan"
+                                icon={<ShoppingBagIcon className="w-5 h-5" />}
+                                color="bg-white border border-amber-300"
+                                textColor="text-amber-700"
+                            />
+                            <QuickAction
+                                href="/admin/products/low-stock"
+                                label="Stok Rendah"
+                                icon={<ExclamationTriangleIcon className="w-5 h-5" />}
+                                color="bg-amber-100"
+                                textColor="text-amber-900"
+                            />
+                            <QuickAction
+                                href="/admin/reports"
+                                label="Laporan"
+                                icon={<ShoppingBagIcon className="w-5 h-5" />}
+                                color="bg-indigo-50"
+                                textColor="text-indigo-800"
+                            />
                         </div>
                     </div>
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+// --- StatCard Modern ---
+import { UserGroupIcon, CurrencyDollarIcon as CurrencyIcon } from '@heroicons/react/24/outline';
+
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    color: string;
+    isCurrency?: boolean;
+}
+function StatCard({ title, value, icon: Icon, color, isCurrency }: StatCardProps): JSX.Element {
+    return (
+        <div className={`overflow-hidden shadow rounded-xl group hover:shadow-lg transition-shadow duration-200 bg-white animate-fade-in-up`}>
+            <div className="p-5 flex items-center">
+                <div className={`w-12 h-12 flex items-center justify-center rounded-lg ${color} shadow group-hover:scale-110 transition-transform duration-200`}>
+                    <Icon className="w-6 h-6 text-white" />
+                </div>
+                <div className="ml-5 flex-1">
+                    <dt className="text-sm font-medium text-amber-700 group-hover:text-amber-900 transition-colors duration-200">
+                        {title}
+                    </dt>
+                    <dd className="text-2xl font-extrabold text-amber-900 group-hover:text-amber-700 transition-colors duration-200">
+                        {isCurrency ? formatCurrency(value) : value.toLocaleString('id-ID')}
+                    </dd>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// --- Quick Action Button ---
+interface QuickActionProps {
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+    color: string;
+    textColor: string;
+}
+
+function QuickAction({ href, label, icon, color, textColor }: QuickActionProps) {
+    return (
+        <Link
+            href={href}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 ${color} ${textColor} hover:scale-105`}
+        >
+            {icon}
+            {label}
+        </Link>
     );
 }
