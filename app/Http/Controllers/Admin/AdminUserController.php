@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class AdminUserController extends Controller
 {
@@ -32,7 +33,6 @@ class AdminUserController extends Controller
     public function create()
     {
         return Inertia::render('Admin/Users/Create');
-        
     }
 
     public function store(Request $request)
@@ -72,19 +72,43 @@ class AdminUserController extends Controller
             'password' => 'nullable|string|min:8',
         ]);
 
-        $user->update([
+        $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
-        ]);
+        ];
+
+        // Only update password if provided
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
-        $user->delete();
+        try {
+            // Prevent deleting currently authenticated user
+            if ($user->id === auth()->id()) {
+                return back()->withErrors(['delete' => 'Anda tidak dapat menghapus akun Anda sendiri']);
+            }
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
+            // Check if user has related data (adjust based on your relationships)
+            if (method_exists($user, 'orders') && $user->orders()->exists()) {
+                return back()->withErrors(['delete' => 'User tidak dapat dihapus karena memiliki data terkait']);
+            }
+
+            $userName = $user->name;
+            $user->delete();
+
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User "' . $userName . '" berhasil dihapus');
+
+        } catch (\Exception $e) {
+            Log::error('AdminUserController@destroy error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Gagal menghapus user: ' . $e->getMessage()]);
+        }
     }
 }

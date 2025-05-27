@@ -484,14 +484,6 @@ function AdminTopNavigation({
                 </div>
 
                 <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                    <Link
-                        href="/admin/products/create"
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        <CubeIcon className="h-4 w-4 mr-1" />
-                        Tambah Produk
-                    </Link>
-
                     <button
                         type="button"
                         className="relative bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
