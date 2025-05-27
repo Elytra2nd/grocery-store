@@ -223,6 +223,12 @@ Route::middleware(['auth', 'role:buyer'])
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     });
 
+    use App\Http\Controllers\Admin\AdminCategoryController;
+
+    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+        Route::resource('categories', AdminCategoryController::class);
+    });
+
 // API Routes (untuk AJAX requests)
 Route::middleware(['auth', 'role:admin'])
     ->prefix('api/admin')
