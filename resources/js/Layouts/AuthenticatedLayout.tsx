@@ -1,70 +1,80 @@
-// resources/js/Layouts/AuthenticatedLayout.tsx
 import React, { useState, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-
-import { PageProps } from '@/types';
 import {
     Bars3Icon,
-    BellIcon,
-    UserCircleIcon,
-    ArrowRightOnRectangleIcon,
-    CogIcon,
-    CubeIcon,
+    XMarkIcon,
+    ChevronRightIcon,
     HomeIcon,
+    CubeIcon,
     ShoppingCartIcon,
     UsersIcon,
     ChartBarIcon,
+    CogIcon,
     ShoppingBagIcon,
-    XMarkIcon,
-    DocumentChartBarIcon,
-    CurrencyDollarIcon,
-    UserGroupIcon,
-    ClipboardDocumentListIcon,
+    BellIcon,
+    UserCircleIcon,
+    ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 
-// Autumn Modern Minimalist Palette
-const autumn = {
-    burnt: 'bg-[#a14e3e]',     // burnt orange
-    amber: 'bg-[#f9d282]',     // cozy amber
-    olive: 'bg-[#7d835a]',     // muted olive
-    brown: 'bg-[#5d4035]',     // bark brown
-    cream: 'bg-[#e9e4db]',     // soft cream
-    black: 'bg-[#18181b]',     // rich black
-    accent: 'bg-[#c19a5b]',    // warm gold
-    text: 'text-[#5d4035]',    // brown text
-    textDark: 'text-[#18181b]',
-    textLight: 'text-[#e9e4db]',
-    border: 'border-[#c19a5b]',
-};
-
-interface NavigationItem {
-    name: string;
-    href: string;
-    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    badge?: number;
-    children?: NavigationSubItem[];
+// --- Breadcrumb Component ---
+function Breadcrumb() {
+    const labelMap: Record<string, string> = {
+        admin: 'Dashboard',
+        products: 'Produk',
+        orders: 'Pesanan',
+        users: 'Pelanggan',
+        reports: 'Laporan',
+        settings: 'Pengaturan',
+        create: 'Tambah',
+        edit: 'Edit',
+        active: 'Aktif',
+        pending: 'Baru',
+        completed: 'Selesai',
+        categories: 'Kategori',
+        sales: 'Penjualan',
+        customers: 'Pelanggan',
+        financial: 'Keuangan',
+        inventory: 'Inventori',
+    };
+    let pathname = '/';
+    if (typeof window !== 'undefined') {
+        pathname = window.location.pathname;
+    } else {
+        const page = usePage();
+        pathname = (page as any)?.url || '/';
+    }
+    const segments = pathname.split('/').filter(Boolean);
+    const breadcrumbs = segments.map((seg, idx) => {
+        const url = '/' + segments.slice(0, idx + 1).join('/');
+        const label = labelMap[seg] || seg.charAt(0).toUpperCase() + seg.slice(1);
+        return { url, label };
+    });
+    return (
+        <nav className="flex items-center text-sm text-amber-700 mb-4 animate-fade-in" aria-label="Breadcrumb">
+            <Link href="/admin/dashboard" className="flex items-center hover:underline font-semibold transition-colors duration-200">
+                <HomeIcon className="h-4 w-4 mr-1 text-amber-700" />
+                Dashboard
+            </Link>
+            {breadcrumbs.map((item, idx) => (
+                <span key={item.url} className="flex items-center">
+                    <ChevronRightIcon className="h-4 w-4 mx-1 text-amber-500" />
+                    {idx === breadcrumbs.length - 1 ? (
+                        <span className="font-semibold text-amber-900">{item.label}</span>
+                    ) : (
+                        <Link href={item.url} className="hover:underline text-amber-700 transition-colors duration-200">{item.label}</Link>
+                    )}
+                </span>
+            ))}
+        </nav>
+    );
 }
 
-interface NavigationSubItem {
-    name: string;
-    href: string;
-}
-
-interface AuthenticatedLayoutProps {
-    children: ReactNode;
-    header?: ReactNode;
-}
-
-// Get order_count from pageProps if available
-function getPesananBadge(pageProps: PageProps): number {
-    const count = (pageProps as any)?.order_count ?? (pageProps as any)?.orders_count;
-    return typeof count === 'number' ? count : 0;
-}
-const adminNavigation = (pesananBadge: number): NavigationItem[] => [
+// --- Sidebar Navigation Data ---
+const adminNavigation = (pesananBadge: number) => [
     {
         name: 'Dashboard',
         href: '/admin/dashboard',
-        icon: HomeIcon
+        icon: HomeIcon,
     },
     {
         name: 'Produk',
@@ -73,8 +83,6 @@ const adminNavigation = (pesananBadge: number): NavigationItem[] => [
         children: [
             { name: 'Semua Produk', href: '/admin/products' },
             { name: 'Tambah Produk', href: '/admin/products/create' },
-            { name: 'Kategori', href: '/admin/categories' },
-            { name: 'Stok Rendah', href: '/admin/products/low-stock' },
         ]
     },
     {
@@ -91,379 +99,190 @@ const adminNavigation = (pesananBadge: number): NavigationItem[] => [
         name: 'Pelanggan',
         href: '/admin/users',
         icon: UsersIcon,
-        children: [
-            { name: 'Semua Pelanggan', href: '/admin/users' },
-            { name: 'Pelanggan Aktif', href: '/admin/users/active' },
-        ]
     },
     {
         name: 'Laporan',
         href: '/admin/reports',
         icon: ChartBarIcon,
-        children: [
-            { name: 'Dashboard Laporan', href: '/admin/reports' },
-            { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
-            { name: 'Laporan Produk', href: '/admin/reports/products' },
-            { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },
-        ]
     },
     {
         name: 'Pengaturan',
         href: '/admin/settings',
         icon: CogIcon,
-        children: [
-            { name: 'Pengaturan Umum', href: '/admin/settings/general' },
-            { name: 'Pengaturan Toko', href: '/admin/settings/store' },
-            { name: 'Pengaturan Pembayaran', href: '/admin/settings/payment' },
-            { name: 'Pengaturan Pengiriman', href: '/admin/settings/shipping' },
-        ]
-    },
+    }
 ];
 
-export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {
-    const pageProps = usePage<PageProps>().props;
-    // Check if user is admin dengan null safety
-    const isAdmin = pageProps.auth?.user?.roles?.some((role: { name: string }) => role.name === 'admin') || false;
-    const pesananBadge = getPesananBadge(pageProps);
-    const navigation = isAdmin ? adminNavigation(pesananBadge) : [];
+// --- Desktop Sidebar ---
+type SidebarProps = {
+    collapsed: boolean;
+    onToggle: () => void;
+    navigation: any[];
+    onAnyNavigate?: () => void;
+};
 
-    // Add sidebarOpen and userMenuOpen state
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
+function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProps) {
+    const { url } = usePage();
+    const [expanded, setExpanded] = useState<string | null>(null);
 
-    const handleLogout = (): void => {
-        router.post('/logout');
+    // Handler: navigate to main menu, open/close submenu if ada children
+    const handleMainClick = (item: any) => {
+        if (item.children) {
+            setExpanded(expanded === item.name ? null : item.name);
+        } else {
+            setExpanded(null);
+            if (onAnyNavigate) onAnyNavigate();
+        }
     };
 
-    // Admin layout
-    const flash = pageProps.flash;
+    // Handler: click chevron only toggles submenu, not link
+    const handleChevronClick = (e: React.MouseEvent<HTMLButtonElement>, item: any) => {
+        e.preventDefault();
+        setExpanded(expanded === item.name ? null : item.name);
+    };
 
-    if (isAdmin) {
-        return (
-            <div className="h-screen flex overflow-hidden bg-[#e9e4db] font-sans">
-                {/* Mobile sidebar */}
-                <MobileSidebar
-                    sidebarOpen={sidebarOpen}
-                    setSidebarOpen={setSidebarOpen}
-                    navigation={navigation}
-                />
-
-                {/* Desktop sidebar */}
-                <div className="hidden md:flex md:flex-shrink-0">
-                    <div className="flex flex-col w-64">
-                        <AdminSidebar navigation={navigation} />
-                    </div>
-                </div>
-
-                {/* Main content */}
-                <div className="flex flex-col w-0 flex-1 overflow-hidden">
-                    {/* Top navigation */}
-                    <AdminTopNavigation
-                        setSidebarOpen={setSidebarOpen}
-                        user={pageProps.auth?.user}
-                        userMenuOpen={userMenuOpen}
-                        setUserMenuOpen={setUserMenuOpen}
-                        onLogout={handleLogout}
-                    />
-
-                    {/* Main content area */}
-                    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none bg-[#e9e4db]">
-                        <FlashMessages flash={flash} />
-                        {children}
-                    </main>
-                </div>
-            </div>
-        );
-    }
-
-    // User layout (original Breeze layout)
     return (
-        <div className="min-h-screen bg-[#e9e4db]">
-            <nav className="bg-[#e9e4db] border-b border-[#c19a5b]">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
-                        <div className="flex">
-                            <div className="shrink-0 flex items-center">
-                                <Link href="/">
-                                    <div className="h-8 w-8 bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] rounded-lg flex items-center justify-center">
-                                        <ShoppingBagIcon className="h-5 w-5 text-[#e9e4db]" />
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
+        <div className={`transition-all duration-300 bg-[#fffbea] border-r border-amber-200 shadow-sm
+            ${collapsed ? 'w-16' : 'w-64'} flex flex-col min-h-0`}>
+            <div className="flex items-center justify-between px-4 py-4">
+                <div className="flex items-center">
+                    <div className="h-8 w-8 bg-gradient-to-r from-amber-700 to-amber-400 rounded-lg flex items-center justify-center">
+                        <ShoppingBagIcon className="h-5 w-5 text-white" />
                     </div>
+                    {!collapsed && <span className="ml-3 font-bold text-amber-800 text-lg">Grocery Admin</span>}
                 </div>
+                <button
+                    onClick={onToggle}
+                    className="ml-2 p-2 rounded-full hover:bg-amber-100 transition"
+                    aria-label="Toggle sidebar"
+                >
+                    {collapsed ? <Bars3Icon className="h-6 w-6 text-amber-700" /> : <XMarkIcon className="h-6 w-6 text-amber-700" />}
+                </button>
+            </div>
+            <nav className="flex-1 px-2 space-y-1">
+                {navigation.map((item) => {
+                    const isActive = url.startsWith(item.href);
+                    const hasChildren = !!item.children;
+                    return (
+                        <div key={item.name}>
+                            <Link
+                                href={item.href}
+                                className={`group flex items-center px-3 py-2 rounded-md text-base font-medium transition-all ${
+                                    isActive
+                                        ? 'bg-amber-100 text-amber-900'
+                                        : 'text-amber-700 hover:bg-amber-50 hover:text-amber-900'
+                                } ${collapsed ? 'justify-center' : ''}`}
+                                onClick={e => {
+                                    handleMainClick(item);
+                                    // Only navigate for main menu if no children
+                                    if (hasChildren) e.preventDefault();
+                                }}
+                            >
+                                <item.icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />
+                                {!collapsed && <span className="flex-1">{item.name}</span>}
+                                {item.badge !== undefined && item.badge > 0 && !collapsed && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-600 text-white animate-bounce">
+                                        {item.badge}
+                                    </span>
+                                )}
+                                {hasChildren && !collapsed && (
+                                    <button
+                                        tabIndex={-1}
+                                        type="button"
+                                        onClick={e => handleChevronClick(e, item)}
+                                        className="ml-2 p-1 rounded hover:bg-amber-200 transition"
+                                    >
+                                        <ChevronRightIcon className={`h-4 w-4 transition-transform ${expanded === item.name ? 'rotate-90' : ''}`} />
+                                    </button>
+                                )}
+                            </Link>
+                            {/* Submenu */}
+                            {item.children && expanded === item.name && !collapsed && (
+                                <div className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out overflow-hidden animate-fadeIn">
+                                    {item.children.map((sub: { name: string; href: string }) => (
+                                        <Link
+                                            key={sub.name}
+                                            href={sub.href}
+                                            className={`block px-2 py-1 rounded text-sm ${
+                                                url.startsWith(sub.href)
+                                                    ? 'bg-amber-200 text-amber-900'
+                                                    : 'text-amber-700 hover:bg-amber-50'
+                                            }`}
+                                            onClick={onAnyNavigate}
+                                        >
+                                            {sub.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </nav>
-            {header && (
-                <header className="bg-[#e9e4db] shadow">
-                    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
-            <main>
-                <FlashMessages flash={flash} />
-                {children}
-            </main>
         </div>
     );
 }
 
-// === ADMIN COMPONENTS ===
+// --- Mobile Sidebar ---
+type MobileSidebarProps = {
+    open: boolean;
+    onClose: () => void;
+    navigation: any[];
+};
 
-function MobileSidebar({
-    sidebarOpen,
-    setSidebarOpen,
-    navigation,
-}: {
-    sidebarOpen: boolean;
-    setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    navigation: NavigationItem[];
-}): JSX.Element {
-    if (!sidebarOpen) return <></>;
+function MobileSidebar({ open, onClose, navigation }: MobileSidebarProps) {
+    // Handler: close sidebar on any menu/submenu click
+    const handleAnyNavigate = () => {
+        onClose();
+    };
     return (
-        <div className="fixed inset-0 flex z-40 md:hidden">
+        <div className="fixed inset-0 z-40 md:hidden">
+            {/* Overlay */}
             <div
-                className="fixed inset-0 bg-[#a14e3e] bg-opacity-70 transition-opacity duration-300"
-                onClick={() => setSidebarOpen(false)}
+                className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                onClick={onClose}
             />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#e9e4db] shadow-xl transition-transform duration-300 animate-slide-in-left">
+            {/* Sidebar */}
+            <div
+                className={`
+                    fixed left-0 top-0 bottom-0 w-64 bg-[#fffbea] shadow-xl
+                    transform transition-transform duration-300 ease-in-out
+                    ${open ? 'translate-x-0' : '-translate-x-full'}
+                `}
+                style={{ zIndex: 50 }}
+            >
                 <div className="absolute top-0 right-0 -mr-12 pt-2">
                     <button
-                        onClick={() => setSidebarOpen((v: boolean) => !v)}
-                        className="p-2 rounded focus:outline-none hover:bg-gray-200"
-                        aria-label="Toggle sidebar"
+                        onClick={onClose}
+                        className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-700"
+                        aria-label="Close sidebar"
                     >
-                        <Bars3Icon className="h-6 w-6 text-gray-600" />
+                        <XMarkIcon className="h-6 w-6 text-amber-700" />
                     </button>
                 </div>
-                <AdminSidebar navigation={navigation} />
+                <Sidebar collapsed={false} onToggle={() => {}} navigation={navigation} onAnyNavigate={handleAnyNavigate} />
             </div>
         </div>
     );
 }
 
-function AdminSidebar({ navigation }: { navigation: NavigationItem[] }): JSX.Element {
-    const { url } = usePage();
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Laporan']);
-    const toggleExpanded = (itemName: string): void => {
-        setExpandedItems(prev =>
-            prev.includes(itemName)
-                ? prev.filter(name => name !== itemName)
-                : [...prev, itemName]
-        );
-    };
-    return (
-        <div className="flex-1 flex flex-col min-h-0 border-r border-[#c19a5b] bg-[#e9e4db]">
-            <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-                <div className="flex items-center flex-shrink-0 px-4 mb-5">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="h-10 w-10 bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] rounded-xl flex items-center justify-center shadow-lg">
-                                <ShoppingBagIcon className="h-6 w-6 text-[#e9e4db]" />
-                            </div>
-                        </div>
-                        <div className="ml-3">
-                            <h1 className="text-xl font-bold text-[#5d4035]">Grocery Admin</h1>
-                            <p className="text-xs text-[#a14e3e]">Management System</p>
-                        </div>
-                    </div>
-                </div>
-                <nav className="flex-1 px-2 space-y-1">
-                    {navigation.map((item) => (
-                        <NavigationItem
-                            key={item.name}
-                            item={item}
-                            currentUrl={url}
-                            isExpanded={expandedItems.includes(item.name)}
-                            onToggleExpanded={toggleExpanded}
-                        />
-                    ))}
-                </nav>
-                <div className="flex-shrink-0 flex border-t border-[#c19a5b] p-4">
-                    <div className="flex-shrink-0 w-full group block">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-[#a14e3e]">Grocery Store Admin</p>
-                                <p className="text-xs text-[#c19a5b]">v1.0.0</p>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <div className="h-2 w-2 bg-[#f9d282] rounded-full animate-pulse"></div>
-                                <span className="text-xs text-[#a14e3e]">Online</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+// --- User Dropdown Menu & FlashMessages (tidak berubah, tetap autumn) ---
+type UserType = {
+    name?: string;
+    email?: string;
+    [key: string]: any;
+};
 
-function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: { item: NavigationItem; currentUrl: string; isExpanded: boolean; onToggleExpanded: (itemName: string) => void }): JSX.Element {
-    const isActive = currentUrl.startsWith(item.href);
-    const hasChildren = item.children && item.children.length > 0;
-    // Badge autumn style + animasi bounce jika badge > 0
-    const badgeColor = "bg-[#f9d282] text-[#a14e3e] ring-2 ring-[#a14e3e] animate-bounce";
-    if (!hasChildren) {
-        return (
-            <Link
-                href={item.href}
-                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out ${
-                    isActive
-                        ? 'bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] text-[#e9e4db] shadow-md'
-                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
-                }`}
-            >
-                <item.icon
-                    className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200 ${
-                        isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e] group-hover:text-[#7d835a]'
-                    }`}
-                />
-                <span className="flex-1">{item.name}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                    <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${badgeColor}`}
-                        style={{
-                            fontFamily: 'Inter, ui-sans-serif, system-ui',
-                            letterSpacing: '0.02em'
-                        }}
-                    >
-                        {item.badge}
-                    </span>
-                )}
-            </Link>
-        );
-    }
-    return (
-        <div>
-            <button
-                onClick={() => onToggleExpanded(item.name)}
-                className={`group flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out ${
-                    isActive
-                        ? 'bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] text-[#e9e4db] shadow-md'
-                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
-                }`}
-            >
-                <item.icon
-                    className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200 ${
-                        isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e] group-hover:text-[#7d835a]'
-                    }`}
-                />
-                <span className="flex-1 text-left">{item.name}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold mr-2 ${badgeColor}`}>
-                        {item.badge}
-                    </span>
-                )}
-                <svg
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                        isExpanded ? 'transform rotate-90' : ''
-                    } ${isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e]'}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                >
-                    <path
-                        fillRule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                    />
-                </svg>
-            </button>
-            {isExpanded && (
-                <div className="mt-1 ml-8 space-y-1 animate-fade-in">
-                    {item.children?.map((subItem) => {
-                        const isSubActive = currentUrl.startsWith(subItem.href);
-                        return (
-                            <Link
-                                key={subItem.name}
-                                href={subItem.href}
-                                className={`group flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-150 ease-in-out ${
-                                    isSubActive
-                                        ? 'bg-[#f9d282] text-[#a14e3e] border-r-2 border-[#a14e3e]'
-                                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
-                                }`}
-                            >
-                                <span className={`mr-3 h-1.5 w-1.5 rounded-full ${
-                                    isSubActive ? 'bg-[#a14e3e]' : 'bg-[#c19a5b]'
-                                }`}></span>
-                                {subItem.name}
-                            </Link>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function AdminTopNavigation({
-    setSidebarOpen,
+function UserDropdownMenu({
     user,
-    userMenuOpen,
-    setUserMenuOpen,
-    onLogout
+    onLogout,
+    onClose,
+    isAdmin,
 }: {
-    setSidebarOpen: (open: boolean) => void;
-    user?: PageProps['auth']['user'];
-    userMenuOpen: boolean;
-    setUserMenuOpen: (open: boolean) => void;
+    user?: UserType;
     onLogout: () => void;
-}): JSX.Element {
-    return (
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-[#e9e4db] border-b border-[#c19a5b]">
-            <button
-                onClick={() => setSidebarOpen(true)}
-                className="px-4 border-r border-[#c19a5b] text-[#a14e3e] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#a14e3e] md:hidden"
-                aria-label="Open sidebar"
-            >
-                <Bars3Icon className="h-6 w-6" />
-            </button>
-            <div className="flex-1 px-4 flex justify-between items-center">
-                <div className="flex-1 flex" />
-                <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                    <button
-                        type="button"
-                        className="relative bg-[#e9e4db] p-1 rounded-full text-[#a14e3e] hover:text-[#c19a5b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a14e3e]"
-                        aria-label="View notifications"
-                    >
-                        <BellIcon className="h-6 w-6" />
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-[#f9d282] ring-2 ring-[#a14e3e] animate-ping"></span>
-                    </button>
-                    <div className="ml-3 relative">
-                        <div>
-                            <button
-                                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                className="max-w-xs bg-[#e9e4db] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a14e3e]"
-                                aria-expanded={userMenuOpen}
-                                aria-haspopup="true"
-                            >
-                                <span className="sr-only">Open user menu</span>
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] flex items-center justify-center">
-                                    <span className="text-sm font-medium text-[#e9e4db]">
-                                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                                    </span>
-                                </div>
-                                <span className="ml-2 text-[#a14e3e] text-sm font-medium">
-                                    {user?.name || 'User'}
-                                </span>
-                            </button>
-                        </div>
-                        {userMenuOpen && (
-                            <UserDropdownMenu
-                                user={user}
-                                onLogout={onLogout}
-                                onClose={() => setUserMenuOpen(false)}
-                                isAdmin={true}
-                            />
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: { user?: PageProps['auth']['user']; onLogout: () => void; onClose: () => void; isAdmin: boolean }): JSX.Element {
+    onClose: () => void;
+    isAdmin: boolean;
+}) {
     return (
         <>
             <div className="fixed inset-0 z-10" onClick={onClose} />
@@ -507,7 +326,7 @@ function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: { user?: PagePro
     );
 }
 
-function FlashMessages({ flash }: { flash?: PageProps['flash'] }): JSX.Element {
+function FlashMessages({ flash }: { flash?: { success?: string; error?: string } }) {
     if (!flash || (!flash.success && !flash.error)) {
         return <></>;
     }
@@ -545,7 +364,132 @@ function FlashMessages({ flash }: { flash?: PageProps['flash'] }): JSX.Element {
     );
 }
 
-/* Tambahkan animasi tailwind di tailwind.config.js:
+// --- Layout Main ---
+type AuthenticatedUser = {
+    name?: string;
+    email?: string;
+    roles?: { name: string }[];
+    [key: string]: any;
+};
 
-*/
+type PageProps = {
+    auth?: {
+        user?: AuthenticatedUser;
+    };
+    order_count?: number;
+    flash?: { success?: string; error?: string };
+    [key: string]: any;
+};
 
+export default function AuthenticatedLayout({ children, header }: { children: ReactNode; header?: ReactNode }) {
+    const pageProps = usePage<PageProps>().props;
+    const pesananBadge = pageProps?.order_count ?? 0;
+    const navigation = adminNavigation(pesananBadge);
+    const isAdmin = pageProps.auth?.user?.roles?.some((role: { name: string }) => role.name === 'admin') || false;
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+    const handleLogout = (): void => {
+        router.post('/logout');
+    };
+
+    if (isAdmin) {
+        return (
+            <div className="min-h-screen flex bg-[#fffbea]">
+                {/* Mobile sidebar */}
+                <MobileSidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} navigation={navigation} />
+
+                {/* Desktop sidebar */}
+                <div className={`hidden md:flex transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+                    <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} navigation={navigation} />
+                </div>
+                {/* Main content */}
+                <div className="flex-1 flex flex-col">
+                    {/* Topbar */}
+                    <div className="flex items-center h-16 px-4 shadow-sm bg-[#fffbea] border-b border-amber-200">
+                        <button
+                            className="md:hidden p-2 rounded-full hover:bg-amber-100 transition"
+                            onClick={() => setMobileSidebarOpen(true)}
+                            aria-label="Open sidebar"
+                        >
+                            <Bars3Icon className="h-6 w-6 text-amber-700" />
+                        </button>
+                        <button
+                            className="hidden md:inline-flex p-2 rounded-full hover:bg-amber-100 transition"
+                            onClick={() => setSidebarCollapsed(v => !v)}
+                            aria-label="Toggle sidebar"
+                        >
+                            {sidebarCollapsed ? <Bars3Icon className="h-6 w-6 text-amber-700" /> : <XMarkIcon className="h-6 w-6 text-amber-700" />}
+                        </button>
+                        {header && <div className="ml-4 flex-1">{header}</div>}
+                        {/* User Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                className="ml-2 flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a14e3e]"
+                            >
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] flex items-center justify-center">
+                                    <span className="text-sm font-medium text-[#e9e4db]">
+                                        {pageProps.auth?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    </span>
+                                </div>
+                                <span className="ml-2 text-[#a14e3e] text-sm font-medium">
+                                    {pageProps.auth?.user?.name || 'User'}
+                                </span>
+                            </button>
+                            {userMenuOpen && (
+                                <UserDropdownMenu
+                                    user={pageProps.auth?.user}
+                                    onLogout={handleLogout}
+                                    onClose={() => setUserMenuOpen(false)}
+                                    isAdmin={isAdmin}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    {/* Breadcrumb */}
+                    <div className="px-6 pt-4">
+                        <Breadcrumb />
+                    </div>
+                    <main className="flex-1 p-6">
+                        <FlashMessages flash={pageProps.flash as { success?: string; error?: string }} />
+                        {children}
+                    </main>
+                </div>
+            </div>
+        );
+    }
+
+    // User layout (original Breeze layout)
+    return (
+        <div className="min-h-screen bg-[#e9e4db]">
+            <nav className="bg-[#e9e4db] border-b border-[#c19a5b]">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16">
+                        <div className="flex">
+                            <div className="shrink-0 flex items-center">
+                                <Link href="/">
+                                    <div className="h-8 w-8 bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] rounded-lg flex items-center justify-center">
+                                        <ShoppingBagIcon className="h-5 w-5 text-[#e9e4db]" />
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            {header && (
+                <header className="bg-[#e9e4db] shadow">
+                    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {header}
+                    </div>
+                </header>
+            )}
+            <main>
+                <FlashMessages flash={pageProps.flash as { success?: string; error?: string }} />
+                {children}
+            </main>
+        </div>
+    );
+}
