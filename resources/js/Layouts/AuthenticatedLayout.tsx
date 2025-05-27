@@ -15,6 +15,11 @@ import {
     ChartBarIcon,
     ShoppingBagIcon,
     XMarkIcon,
+    DocumentChartBarIcon,
+    CurrencyDollarIcon,
+    UserGroupIcon,
+    ClipboardDocumentListIcon,
+    ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
 interface NavigationItem {
@@ -35,7 +40,7 @@ interface AuthenticatedLayoutProps {
     header?: ReactNode;
 }
 
-// Navigation items untuk admin
+// Navigation items untuk admin - DIPERBARUI DENGAN MENU LAPORAN LENGKAP
 const adminNavigation: NavigationItem[] = [
     {
         name: 'Dashboard',
@@ -74,17 +79,21 @@ const adminNavigation: NavigationItem[] = [
             { name: 'Semua Pelanggan', href: '/admin/users' },
             { name: 'Pelanggan Aktif', href: '/admin/users/active' },
             { name: 'Pelanggan Baru', href: '/admin/users/new' },
+            { name: 'Tambah Pelanggan', href: '/admin/users/create' },
         ]
     },
+    // MENU LAPORAN YANG DIPERBARUI DAN LENGKAP
     {
         name: 'Laporan',
         href: '/admin/reports',
         icon: ChartBarIcon,
         children: [
+            { name: 'Dashboard Laporan', href: '/admin/reports' },
             { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
             { name: 'Laporan Produk', href: '/admin/reports/products' },
             { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },
             { name: 'Laporan Keuangan', href: '/admin/reports/financial' },
+            { name: 'Laporan Inventori', href: '/admin/reports/inventory' },
         ]
     },
     {
@@ -281,7 +290,7 @@ interface AdminSidebarProps {
 
 function AdminSidebar({ navigation }: AdminSidebarProps): JSX.Element {
     const { url } = usePage();
-    const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Laporan']); // DEFAULT EXPAND LAPORAN
 
     const toggleExpanded = (itemName: string): void => {
         setExpandedItems(prev =>
