@@ -1,12 +1,12 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 export default function Dashboard() {
     return (
-        <AuthenticatedLayout
+        <BuyerAuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard
+                <h2 className="text-xl font-semibold leading-tight text-yellow-800">
+                    Buyer Dashboard
                 </h2>
             }
         >
@@ -16,11 +16,11 @@ export default function Dashboard() {
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            olor sit amet consectetur adipisicing elit. Amet quia placeat accusamus voluptas aspernatur distinctio rerum vero similique autem veritatis pariatur eos, ab ad, suscipit aliquam. Architecto ipsam amet perferendis.
+                            Halo saya adalah orang yang baru saja masuk
                         </div>
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </BuyerAuthenticatedLayout>
     );
 }
