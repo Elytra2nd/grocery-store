@@ -6,17 +6,22 @@ export default function Dashboard() {
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard
+                    Buyer Dashboard
                 </h2>
             }
         >
-            <Head title="Dashboard" />
+            <Head title="Buyer Dashboard" />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            olor sit amet consectetur adipisicing elit. Amet quia placeat accusamus voluptas aspernatur distinctio rerum vero similique autem veritatis pariatur eos, ab ad, suscipit aliquam. Architecto ipsam amet perferendis.
+                            <h1 className="text-3xl font-bold text-center">
+                                Hello World - Buyer Dashboard!
+                            </h1>
+                            <p className="text-center mt-4 text-gray-600">
+                                Selamat datang di dashboard buyer Neo-Forest
+                            </p>
                         </div>
                     </div>
                 </div>
