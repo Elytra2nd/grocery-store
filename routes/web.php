@@ -61,10 +61,8 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        // Dashboard - PENTING: gunakan controller agar data statistik terhubung!
+        // Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-        // (Opsional) Statistik endpoint khusus (misal untuk AJAX)
         Route::get('/statistics', [AdminDashboardController::class, 'statistics'])->name('statistics');
 
         // Products
@@ -128,7 +126,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [AdminReportController::class, 'index'])->name('index');
             Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
             Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
-            Route::get('/products', [AdminReportController::class, 'products'])->name('products');
+            Route::get('/products', [AdminReportController::class, 'products'])->name('products'); // INI YANG DIPAKAI VIEW LAPORAN PRODUK
             Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
             Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
             Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');

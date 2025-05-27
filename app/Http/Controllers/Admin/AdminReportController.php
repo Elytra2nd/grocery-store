@@ -10,10 +10,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
 
-// TAMBAHKAN IMPORT FASTEXCEL
+// Tambahkan FastExcel untuk ekspor
 use Rap2hpoutre\FastExcel\FastExcel;
 
-// IMPORT EXPORT CLASSES YANG DIPERLUKAN SAJA
+// Import export classes jika diperlukan
 use App\Exports\{
     SalesReportExport,
     ProductsReportExport,
@@ -28,15 +28,14 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Display reports dashboard
+     * Dashboard laporan ringkas
      */
     public function index(): Response
     {
         try {
             $currentMonth = Carbon::now();
-            $lastMonth = Carbon::now()->subMonth();
 
-            // Quick statistics
+            // Statistik ringkas
             $stats = [
                 'total_sales' => Order::where('status', 'delivered')->sum('total_amount'),
                 'monthly_sales' => Order::where('status', 'delivered')
@@ -51,7 +50,7 @@ class AdminReportController extends Controller
                 'active_products' => Product::where('is_active', true)->count(),
             ];
 
-            // Sales trend (last 12 months)
+            // Trend penjualan 12 bulan terakhir
             $salesTrend = [];
             for ($i = 11; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
@@ -67,7 +66,7 @@ class AdminReportController extends Controller
                 ];
             }
 
-            // Top products
+            // Produk terlaris
             $topProducts = OrderItem::select('product_id', DB::raw('SUM(quantity) as total_sold'), DB::raw('SUM(quantity * price) as total_revenue'))
                 ->with('product')
                 ->groupBy('product_id')
@@ -101,7 +100,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Sales report
+     * Laporan penjualan
      */
     public function sales(Request $request): Response
     {
@@ -174,84 +173,63 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Products report
+     * Laporan produk
      */
     public function products(Request $request): Response
     {
         try {
-            $category = $request->get('category', 'all');
-            $sortBy = $request->get('sort_by', 'total_sold');
-            $sortOrder = $request->get('sort_order', 'desc');
+            // Ambil data produk beserta total terjual dan pendapatan per produk
+            $products = Product::select([
+                    'products.id',
+                    'products.name',
+                    DB::raw('COALESCE(SUM(order_items.quantity),0) as total_sold'),
+                    DB::raw('COALESCE(SUM(order_items.quantity * order_items.price),0) as revenue')
 
-            // Product performance query
-            $query = Product::select('products.*')
+                ])
                 ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-                ->selectRaw('
-                    products.*,
-                    COALESCE(SUM(order_items.quantity), 0) as total_sold,
-                    COALESCE(SUM(order_items.quantity * order_items.price), 0) as total_revenue,
-                    COALESCE(AVG(order_items.price), products.price) as average_price
-                ')
-                ->groupBy('products.id');
+                ->groupBy('products.id', 'products.name')
+                ->orderByDesc('total_sold')
+                ->get();
 
-            if ($category !== 'all') {
-                $query->where('products.category', $category);
-            }
-
-            $products = $query->orderBy($sortBy, $sortOrder)->paginate(20);
-
-            // Categories for filter
-            $categories = Product::select('category')
-                ->distinct()
-                ->whereNotNull('category')
-                ->pluck('category');
-
-            // Product summary
+            // Ringkasan
             $summary = [
-                'total_products' => Product::count(),
-                'active_products' => Product::where('is_active', true)->count(),
-                'low_stock_products' => Product::where('stock', '<=', 10)->count(),
-                'out_of_stock_products' => Product::where('stock', 0)->count(),
-                'total_categories' => $categories->count(),
+                'total_products'    => Product::count(),
+                'total_sold_items'  => $products->sum('total_sold'),
+                'total_revenue'     => 0, // Akan diisi setelah perhitungan
             ];
 
-            // Top performing products
-            $topProducts = OrderItem::select('product_id')
-                ->selectRaw('SUM(quantity) as total_sold, SUM(quantity * price) as revenue')
-                ->with('product')
-                ->groupBy('product_id')
-                ->orderBy('total_sold', 'desc')
-                ->limit(10)
-                ->get();
+            // Hitung total pendapatan
+            $totalRevenue = OrderItem::select(DB::raw('SUM(quantity * price) as total_revenue'))
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', 'delivered')
+                ->whereIn('order_items.product_id', $products->pluck('id'))
+                ->value('total_revenue');
+            $summary['total_revenue'] = $totalRevenue ? 'Rp ' . number_format($totalRevenue, 0, ',', '.') : 'Rp 0';
 
             return Inertia::render('Admin/Reports/Products', [
                 'products' => $products,
-                'summary' => $summary,
-                'topProducts' => $topProducts,
-                'categories' => $categories,
-                'filters' => [
-                    'category' => $category,
-                    'sort_by' => $sortBy,
-                    'sort_order' => $sortOrder,
-                ],
+                'total_Revenue' => $summary['total_revenue'],
+                'summary'  => $summary,
+                'error'    => null,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminReportController@products error: ' . $e->getMessage());
 
             return Inertia::render('Admin/Reports/Products', [
                 'products' => [],
-                'summary' => [],
-                'topProducts' => [],
-                'categories' => [],
-                'filters' => [],
-                'error' => 'Terjadi kesalahan saat memuat laporan produk.'
+                'summary'  => [
+                    'total_products' => 0,
+                    'total_sold_items' => 0,
+                    'total_revenue' => 0,
+                ],
+                'error' => 'Terjadi kesalahan saat memuat laporan produk: ' . $e->getMessage(),
             ]);
         }
     }
 
+
     /**
-     * Customers report
+     * Laporan pelanggan
      */
     public function customers(Request $request): Response
     {
@@ -262,7 +240,6 @@ class AdminReportController extends Controller
 
             $startDate = Carbon::now()->subDays($dateRange);
 
-            // Customer analytics
             $customers = User::role('buyer')
                 ->select('users.*')
                 ->leftJoin('orders', 'users.id', '=', 'orders.user_id')
@@ -277,7 +254,6 @@ class AdminReportController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(20);
 
-            // Customer summary
             $summary = [
                 'total_customers' => User::role('buyer')->count(),
                 'active_customers' => User::role('buyer')
@@ -293,7 +269,6 @@ class AdminReportController extends Controller
                     })->count(),
             ];
 
-            // Customer acquisition trend
             $acquisitionTrend = [];
             for ($i = 29; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
@@ -330,7 +305,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Financial report - MENGGUNAKAN FASTEXCEL LANGSUNG
+     * Laporan keuangan
      */
     public function financial(Request $request): Response
     {
@@ -338,7 +313,6 @@ class AdminReportController extends Controller
             $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
             $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-            // Revenue analysis
             $revenue = [
                 'gross_revenue' => Order::where('status', 'delivered')
                     ->whereBetween('created_at', [$startDate, $endDate])
@@ -353,11 +327,8 @@ class AdminReportController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->sum('total_amount'),
             ];
-
-            // Calculate net revenue
             $revenue['net_revenue'] = $revenue['gross_revenue'] - $revenue['refunds'];
 
-            // Monthly comparison
             $currentMonth = Carbon::parse($startDate);
             $previousMonth = $currentMonth->copy()->subMonth();
 
@@ -372,7 +343,6 @@ class AdminReportController extends Controller
                 ? (($revenue['gross_revenue'] - $previousRevenue) / $previousRevenue) * 100
                 : 0;
 
-            // Revenue by category
             $revenueByCategory = OrderItem::select('products.category')
                 ->selectRaw('SUM(order_items.quantity * order_items.price) as revenue')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
@@ -383,7 +353,6 @@ class AdminReportController extends Controller
                 ->orderBy('revenue', 'desc')
                 ->get();
 
-            // Daily revenue trend
             $dailyRevenue = Order::select(
                     DB::raw('DATE(created_at) as date'),
                     DB::raw('SUM(total_amount) as revenue'),
@@ -419,7 +388,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Inventory report - MENGGUNAKAN FASTEXCEL LANGSUNG
+     * Laporan inventori
      */
     public function inventory(Request $request): Response
     {
@@ -447,7 +416,6 @@ class AdminReportController extends Controller
 
             $products = $query->orderBy('stock', 'asc')->paginate(20);
 
-            // Inventory summary
             $summary = [
                 'total_products' => Product::count(),
                 'low_stock' => Product::where('stock', '<=', 10)->where('stock', '>', 0)->count(),
@@ -456,13 +424,11 @@ class AdminReportController extends Controller
                 'total_inventory_value' => Product::selectRaw('SUM(stock * price)')->value('SUM(stock * price)') ?? 0,
             ];
 
-            // Categories
             $categories = Product::select('category')
                 ->distinct()
                 ->whereNotNull('category')
                 ->pluck('category');
 
-            // Stock alerts
             $stockAlerts = Product::where('stock', '<=', 5)
                 ->orderBy('stock', 'asc')
                 ->limit(10)
@@ -494,7 +460,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Export sales report menggunakan Export Class
+     * Export sales report
      */
     public function exportSales(Request $request)
     {
@@ -513,7 +479,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Export products report menggunakan Export Class
+     * Export products report
      */
     public function exportProducts(Request $request)
     {
@@ -532,7 +498,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Export customers report menggunakan Export Class
+     * Export customers report
      */
     public function exportCustomers(Request $request)
     {
@@ -551,7 +517,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Export financial report menggunakan FastExcel langsung
+     * Export financial report
      */
     public function exportFinancial(Request $request)
     {
@@ -567,20 +533,15 @@ class AdminReportController extends Controller
 
             $data = $orders->map(function ($order) {
                 $grossRevenue = $order->total_amount;
-
-                // Calculate COGS
                 $cogs = 0;
                 foreach ($order->orderItems as $item) {
                     $productCost = $item->product->cost ?? 0;
                     $cogs += $item->quantity * $productCost;
                 }
-
                 $grossProfit = $grossRevenue - $cogs;
-                $tax = $grossRevenue * 0.11; // PPN 11%
+                $tax = $grossRevenue * 0.11;
                 $netRevenue = $grossRevenue - $tax;
                 $profitMargin = $grossRevenue > 0 ? ($grossProfit / $grossRevenue) * 100 : 0;
-
-                // Get main category
                 $mainCategory = $order->orderItems->first()->product->category ?? 'N/A';
 
                 return [
@@ -611,7 +572,7 @@ class AdminReportController extends Controller
     }
 
     /**
-     * Export inventory report menggunakan FastExcel langsung
+     * Export inventory report
      */
     public function exportInventory(Request $request)
     {
@@ -646,7 +607,6 @@ class AdminReportController extends Controller
                 } elseif ($product->stock <= 10) {
                     $stockStatus = 'Low Stock';
                 }
-
                 $stockValue = $product->stock * $product->price;
 
                 return [

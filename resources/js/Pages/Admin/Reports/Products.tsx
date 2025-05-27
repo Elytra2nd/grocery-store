@@ -21,7 +21,14 @@ interface ProductsProps extends Record<string, unknown> {
 }
 
 export default function Products() {
-    const { products, summary, error } = usePage<PageProps<ProductsProps>>().props;
+    // Ambil props dari backend
+    const { products = [], summary = { total_products: null, total_sold_items: null, total_revenue: null }, error } = usePage<PageProps<ProductsProps>>().props;
+
+    // Helper format rupiah
+    const formatRupiah = (value: number | null | undefined) =>
+        typeof value === "number"
+            ? "Rp " + value.toLocaleString("id-ID")
+            : "-";
 
     const handleExport = () => {
         window.location.href = "/admin/reports/products/export";
@@ -36,7 +43,7 @@ export default function Products() {
                     <h1 className="text-2xl font-bold">Laporan Produk</h1>
                     <button
                         onClick={handleExport}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition"
                     >
                         Export Laporan Produk
                     </button>
@@ -50,31 +57,19 @@ export default function Products() {
 
                 {/* Ringkasan Produk */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-xl border bg-white p-4 shadow">
-                        <div className="text-sm text-gray-500">Total Produk</div>
-                        <div className="text-xl font-bold">
-                            {summary.total_products != null
-                                ? summary.total_products.toLocaleString()
-                                : "-"}
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-white p-4 shadow">
-                        <div className="text-sm text-gray-500">Total Terjual</div>
-                        <div className="text-xl font-bold">
-                            {summary.total_sold_items != null
-                                ? summary.total_sold_items.toLocaleString()
-                                : "-"}
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-white p-4 shadow">
-                        <div className="text-sm text-gray-500">Total Pendapatan</div>
-                        <div className="text-xl font-bold">
-                            Rp{" "}
-                            {summary.total_revenue != null
-                                ? summary.total_revenue.toLocaleString()
-                                : "-"}
-                        </div>
-                    </div>
+                    <SummaryCard
+                        label="Total Produk"
+                        value={summary.total_products}
+                    />
+                    <SummaryCard
+                        label="Total Terjual"
+                        value={summary.total_sold_items}
+                    />
+                    <SummaryCard
+                        label="Total Pendapatan"
+                        value={summary.total_revenue}
+                        isCurrency
+                    />
                 </div>
 
                 {/* Tabel Produk */}
@@ -91,23 +86,57 @@ export default function Products() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map((product) => (
-                                    <tr key={product.id} className="border-b">
-                                        <td className="py-2">{product.id}</td>
-                                        <td className="py-2">{product.name}</td>
-                                        <td className="py-2">
-                                            {product.total_sold.toLocaleString()}
-                                        </td>
-                                        <td className="py-2">
-                                            Rp {product.revenue.toLocaleString()}
+                                {products.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="py-4 text-center text-gray-400">
+                                            Tidak ada data produk.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    products.map((product) => (
+                                        <tr key={product.id} className="border-b">
+                                            <td className="py-2">{product.id}</td>
+                                            <td className="py-2">{product.name}</td>
+                                            <td className="py-2">
+                                                {typeof product.total_sold === 'number'
+                                                    ? product.total_sold.toLocaleString("id-ID")
+                                                    : "-"}
+                                            </td>
+                                            <td className="py-2">
+                                                {formatRupiah(product.revenue)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+// Komponen kartu ringkasan
+function SummaryCard({
+    label,
+    value,
+    isCurrency = false,
+}: {
+    label: string;
+    value: number | null | undefined;
+    isCurrency?: boolean;
+}) {
+    const formatRupiah = (val: number | null | undefined) =>
+        typeof val === "number"
+            ? "Rp " + val.toLocaleString("id-ID")
+            : "-";
+    return (
+        <div className="rounded-xl border bg-white p-4 shadow">
+            <div className="text-sm text-gray-500">{label}</div>
+            <div className="text-xl font-bold">
+                {isCurrency ? formatRupiah(value) : (typeof value === "number" ? value.toLocaleString("id-ID") : "-")}
+            </div>
+        </div>
     );
 }

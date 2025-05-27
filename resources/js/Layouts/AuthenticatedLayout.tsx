@@ -99,11 +99,21 @@ const adminNavigation = (pesananBadge: number) => [
         name: 'Pelanggan',
         href: '/admin/users',
         icon: UsersIcon,
+        children: [
+            { name: 'pelanggan aktif', href: '/admin/users/active' },
+
+        ]
     },
     {
         name: 'Laporan',
         href: '/admin/reports',
         icon: ChartBarIcon,
+        children: [
+            {name: 'Semua Laporan', href: '/admin/reports' },
+            { name: 'Penjualan', href: '/admin/reports/sales' },
+            { name: 'pelanggan', href: '/admin/reports/customers' },
+            { name: 'produk', href: '/admin/reports/products' },
+        ]
     },
     {
         name: 'Pengaturan',
