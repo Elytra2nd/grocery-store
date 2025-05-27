@@ -30,7 +30,7 @@ interface Props extends PageProps {
 
 export default function Edit({ product, categories }: Props): JSX.Element {
     // PERBAIKAN: ProductFormData sekarang compatible dengan useForm
-    const { data, setData, post, processing, errors } = useForm<ProductFormData>({
+    const { data, setData, put, processing, errors } = useForm<ProductFormData>({
         name: product.name || '',
         description: product.description || '',
         price: product.price || 0,
@@ -54,7 +54,7 @@ export default function Edit({ product, categories }: Props): JSX.Element {
         e.preventDefault();
 
         // Use direct URL instead of route helper
-        post(`/admin/products/${product.id}`, {
+        put(`/admin/products/${product.id}`, {
             method: 'put',
             onSuccess: () => {
                 // Handle success
