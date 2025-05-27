@@ -40,7 +40,7 @@ const buyerNavigation: NavigationItem[] = [
     },
     {
         name: 'Keranjang',
-        href: '/buyer/cart',
+        href: '/cart',
         icon: ShoppingCartIcon,
         badge: 3, // Dynamic cart count
     },
