@@ -6,10 +6,26 @@ use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Inertia\Inertia;
 
 class CartController extends Controller
 {
+
+    public function index()
+    {
+        $cartItems = Cart::with(['product'])
+            ->where('user_id', Auth::id())
+            ->get();
+
+        $totalAmount = $cartItems->sum(function ($item) {
+            return $item->quantity * $item->product->price;
+        });
+
+        return Inertia::render('Cart/Index', [
+            'cartItems' => $cartItems,
+            'totalAmount' => $totalAmount,
+        ]);
+    }
     // Tambah item ke keranjang
     public function add(Request $request)
     {
