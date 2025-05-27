@@ -36,7 +36,7 @@ interface SidebarProps {
     onToggleCollapse?: () => void;
 }
 
-// Navigation items untuk admin dengan perbaikan
+// --- NAVIGATION DATA ---
 const adminNavigation: NavigationItem[] = [
     {
         name: 'Dashboard',
@@ -58,7 +58,7 @@ const adminNavigation: NavigationItem[] = [
         name: 'Pesanan',
         href: '/admin/orders',
         icon: ShoppingCartIcon,
-        badge: 5,
+        // badge will be set dynamically in the Sidebar component
         children: [
             { name: 'Semua Pesanan', href: '/admin/orders' },
             { name: 'Pesanan Baru', href: '/admin/orders/pending' },
@@ -102,6 +102,7 @@ const adminNavigation: NavigationItem[] = [
     },
 ];
 
+// --- SIDEBAR UTAMA (DESKTOP) ---
 export default function Sidebar({
     isOpen = true,
     onClose,
@@ -115,24 +116,12 @@ export default function Sidebar({
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-    // Check if user is admin dengan null safety
+    // Check if user is admin
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'admin') || false;
 
-    // Auto-collapse on mobile
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 768 && onToggleCollapse && !isCollapsed) {
-                onToggleCollapse();
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [isCollapsed, onToggleCollapse]);
-
+    // Toggle submenu
     const toggleExpanded = (itemName: string): void => {
-        if (isCollapsed) return; // Don't expand in collapsed mode
-
+        if (isCollapsed) return;
         setExpandedItems(prev =>
             prev.includes(itemName)
                 ? prev.filter(name => name !== itemName)
@@ -140,21 +129,27 @@ export default function Sidebar({
         );
     };
 
-    // Jika bukan admin, return empty component
-    if (!isAdmin) {
-        return <></>;
-    }
+    // Jika bukan admin, return empty
+    if (!isAdmin) return <></>;
 
+    // Sidebar classes untuk animasi collapse/expand
     const sidebarClasses = `
         flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white transition-all duration-300 ease-in-out
         ${isCollapsed ? 'w-16' : 'w-64'}
         ${className}
     `;
 
+    // Clone adminNavigation and inject badge dynamically for "Pesanan"
+    const navigationWithBadge = adminNavigation.map(item =>
+        item.name === 'Pesanan'
+            ? { ...item, badge: typeof pageProps.order_count === 'number' ? pageProps.order_count : 0 }
+            : item
+    );
+
     return (
         <div className={sidebarClasses}>
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-                {/* Logo */}
+                {/* Logo & Collapse */}
                 <div className="flex items-center flex-shrink-0 px-4 mb-5">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
@@ -165,7 +160,6 @@ export default function Sidebar({
                                 <ShoppingBagIcon className="h-6 w-6 text-white" />
                             </button>
                         </div>
-
                         {!isCollapsed && (
                             <div className="ml-3 transition-opacity duration-200">
                                 <h1 className="text-xl font-bold text-gray-900">Grocery Admin</h1>
@@ -173,7 +167,6 @@ export default function Sidebar({
                             </div>
                         )}
                     </div>
-
                     {/* Close button untuk mobile */}
                     {onClose && (
                         <button
@@ -184,10 +177,9 @@ export default function Sidebar({
                         </button>
                     )}
                 </div>
-
                 {/* Navigation */}
                 <nav className="flex-1 px-2 bg-white space-y-1">
-                    {adminNavigation.map((item) => (
+                    {navigationWithBadge.map((item) => (
                         <NavigationItem
                             key={item.name}
                             item={item}
@@ -200,7 +192,6 @@ export default function Sidebar({
                         />
                     ))}
                 </nav>
-
                 {/* Footer */}
                 {!isCollapsed && (
                     <div className="flex-shrink-0 flex border-t border-gray-200 p-4 transition-opacity duration-200">
@@ -225,7 +216,7 @@ export default function Sidebar({
     );
 }
 
-// Navigation Item Component dengan perbaikan
+// --- NAVIGATION ITEM (with submenu, badge, tooltip, animasi) ---
 interface NavigationItemProps {
     item: NavigationItem;
     currentUrl: string;
@@ -267,29 +258,23 @@ function NavigationItem({
                             isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
                         } ${isCollapsed ? '' : 'mr-3'}`}
                     />
-
                     {!isCollapsed && (
                         <>
                             <span className="flex-1">{item.name}</span>
-                            {item.badge && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    isActive
-                                        ? 'bg-white bg-opacity-20 text-white'
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
+                            {item.badge !== undefined && item.badge > 0 && (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-600 text-white ml-2 animate-bounce`}>
                                     {item.badge}
                                 </span>
                             )}
                         </>
                     )}
                 </Link>
-
                 {/* Tooltip for collapsed state */}
                 {isCollapsed && isHovered && (
-                    <div className="absolute left-full ml-2 top-0 z-50 px-2 py-1 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap">
+                    <div className="absolute left-full ml-2 top-0 z-50 px-2 py-1 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap animate-fadeIn">
                         {item.name}
-                        {item.badge && (
-                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                        {item.badge !== undefined && item.badge > 0 && (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-600 text-white">
                                 {item.badge}
                             </span>
                         )}
@@ -317,16 +302,11 @@ function NavigationItem({
                         isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
                     } ${isCollapsed ? '' : 'mr-3'}`}
                 />
-
                 {!isCollapsed && (
                     <>
                         <span className="flex-1 text-left">{item.name}</span>
-                        {item.badge && (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mr-2 ${
-                                isActive
-                                    ? 'bg-white bg-opacity-20 text-white'
-                                    : 'bg-red-100 text-red-800'
-                            }`}>
+                        {item.badge !== undefined && item.badge > 0 && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mr-2 bg-amber-600 text-white animate-bounce`}>
                                 {item.badge}
                             </span>
                         )}
@@ -338,7 +318,6 @@ function NavigationItem({
                     </>
                 )}
             </button>
-
             {/* Submenu */}
             {!isCollapsed && isExpanded && (
                 <div className="mt-1 ml-8 space-y-1 animate-fadeIn">
@@ -363,15 +342,14 @@ function NavigationItem({
                     })}
                 </div>
             )}
-
             {/* Tooltip for collapsed state with children */}
             {isCollapsed && isHovered && (
-                <div className="absolute left-full ml-2 top-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-48">
+                <div className="absolute left-full ml-2 top-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-48 animate-fadeIn">
                     <div className="p-2">
                         <div className="font-medium text-gray-900 mb-2 flex items-center">
                             {item.name}
-                            {item.badge && (
-                                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {item.badge !== undefined && item.badge > 0 && (
+                                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-600 text-white">
                                     {item.badge}
                                 </span>
                             )}
@@ -402,53 +380,41 @@ function NavigationItem({
     );
 }
 
-// Mobile Sidebar Component dengan perbaikan
+// --- MOBILE SIDEBAR DENGAN SLIDE IN/OUT ANIMASI ---
 interface MobileSidebarProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps): JSX.Element {
-    if (!isOpen) return <></>;
-
+    // Sidebar selalu ada, tapi posisinya di luar layar jika tidak open
     return (
-        <div className="fixed inset-0 flex z-40 md:hidden">
+        <div className="fixed inset-0 z-40 md:hidden">
+            {/* Overlay */}
             <div
-                className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity duration-300"
+                className={`fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={onClose}
             />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white transform transition-transform duration-300 ease-in-out">
+            {/* Sidebar */}
+            <div
+                className={`
+                    fixed left-0 top-0 bottom-0 w-64 bg-white shadow-xl
+                    transform transition-transform duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+                style={{ zIndex: 50 }}
+            >
                 <div className="absolute top-0 right-0 -mr-12 pt-2">
                     <button
                         onClick={onClose}
-                        className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white transition-colors duration-150"
+                        className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
                         aria-label="Close sidebar"
                     >
-                        <XMarkIcon className="h-6 w-6 text-white" />
+                        <XMarkIcon className="h-6 w-6 text-gray-600" />
                     </button>
                 </div>
                 <Sidebar onClose={onClose} />
             </div>
         </div>
-    );
-}
-
-// Sidebar Trigger Component dengan perbaikan
-interface SidebarTriggerProps {
-    onClick: () => void;
-    className?: string;
-}
-
-export function SidebarTrigger({ onClick, className = '' }: SidebarTriggerProps): JSX.Element {
-    return (
-        <button
-            onClick={onClick}
-            className={`inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out ${className}`}
-            aria-label="Toggle sidebar"
-        >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
     );
 }

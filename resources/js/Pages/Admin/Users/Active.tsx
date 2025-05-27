@@ -1,4 +1,3 @@
-// resources/js/Pages/Admin/Users/Active.tsx
 import React, { useState, FormEvent } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -146,7 +145,6 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
         const ordersCount = user.orders_count || 0;
         const lastLogin = user.last_login_at ? new Date(user.last_login_at) : null;
         const daysSinceLogin = lastLogin ? Math.floor((Date.now() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)) : 999;
-
         if (ordersCount >= 10 && daysSinceLogin <= 7) {
             return { level: 'high', color: 'bg-green-100 text-green-800', label: 'Sangat Aktif' };
         } else if (ordersCount >= 5 && daysSinceLogin <= 14) {
@@ -217,49 +215,16 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
 
                     {/* Statistics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                        <StatCard
-                            title="Total Aktif"
-                            value={formatNumber(safeStatistics.total_active)}
-                            color="green"
-                            icon="👥"
-                        />
-                        <StatCard
-                            title="Baru Bulan Ini"
-                            value={formatNumber(safeStatistics.new_this_month)}
-                            color="blue"
-                            icon="🆕"
-                        />
-                        <StatCard
-                            title="Pernah Belanja"
-                            value={formatNumber(safeStatistics.with_orders)}
-                            color="purple"
-                            icon="🛒"
-                        />
-                        <StatCard
-                            title="Total Belanja"
-                            value={formatCurrency(safeStatistics.total_spent)}
-                            color="emerald"
-                            icon="💰"
-                        />
-                        <StatCard
-                            title="Rata-rata Order"
-                            value={formatNumber(safeStatistics.average_orders)}
-                            color="yellow"
-                            icon="📊"
-                        />
-                        <StatCard
-                            title="Aktif 30 Hari"
-                            value={formatNumber(safeStatistics.last_30_days)}
-                            color="indigo"
-                            icon="📅"
-                        />
+                        <StatCard title="Total Aktif" value={formatNumber(safeStatistics.total_active)} color="green" icon="👥" />
+                        <StatCard title="Baru Bulan Ini" value={formatNumber(safeStatistics.new_this_month)} color="blue" icon="🆕" />
+                        <StatCard title="Pernah Belanja" value={formatNumber(safeStatistics.with_orders)} color="purple" icon="🛒" />
+                        <StatCard title="Total Belanja" value={formatCurrency(safeStatistics.total_spent)} color="emerald" icon="💰" />
+                        <StatCard title="Rata-rata Order" value={formatNumber(safeStatistics.average_orders)} color="yellow" icon="📊" />
+                        <StatCard title="Aktif 30 Hari" value={formatNumber(safeStatistics.last_30_days)} color="indigo" icon="📅" />
                     </div>
 
                     {/* Filters */}
-                    <FilterForm
-                        onSubmit={handleSearch}
-                        filters={safeFilters}
-                    />
+                    <FilterForm onSubmit={handleSearch} filters={safeFilters} />
 
                     {/* Bulk Actions */}
                     {selectedUsers.length > 0 && (
@@ -293,7 +258,7 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
                                 from: users.from,
                                 to: users.to,
                                 first_page_url: users.first_page_url,
-                                last_page_url: users.first_page_url, // Replace with the correct property if you have users.last_page_url
+                                last_page_url: users.first_page_url, // Ganti jika ada users.last_page_url
                                 next_page_url: users.next_page_url,
                                 prev_page_url: users.prev_page_url,
                                 path: users.path,
@@ -383,7 +348,6 @@ function FilterForm({ onSubmit, filters }: FilterFormProps): JSX.Element {
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"
                             />
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Level Aktivitas
@@ -400,7 +364,6 @@ function FilterForm({ onSubmit, filters }: FilterFormProps): JSX.Element {
                                 <option value="inactive">Kurang Aktif</option>
                             </select>
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Dari Tanggal
@@ -412,7 +375,6 @@ function FilterForm({ onSubmit, filters }: FilterFormProps): JSX.Element {
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"
                             />
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Sampai Tanggal
@@ -425,7 +387,6 @@ function FilterForm({ onSubmit, filters }: FilterFormProps): JSX.Element {
                             />
                         </div>
                     </div>
-
                     <div className="flex justify-between">
                         <button
                             type="submit"
@@ -434,7 +395,6 @@ function FilterForm({ onSubmit, filters }: FilterFormProps): JSX.Element {
                             <FunnelIcon className="-ml-1 mr-2 h-4 w-4" />
                             Filter
                         </button>
-
                         <Link
                             href="/admin/users/active"
                             className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
