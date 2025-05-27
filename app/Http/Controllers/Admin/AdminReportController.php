@@ -3,156 +3,266 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\{Order, Product, User, OrderItem};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\{DB, Log};
 use Inertia\Inertia;
+use Inertia\Response;
+use Carbon\Carbon;
+
+// HAPUS BARIS INI:
+// use Maatwebsite\Excel\Facades\Excel;
+// use App\Exports\{SalesReportExport, ProductsReportExport, CustomersReportExport, FinancialReportExport};
 
 class AdminReportController extends Controller
 {
-    // ================= SALES REPORT =================
+    // ... existing methods ...
 
-    public function indexSales()
+    /**
+     * Export sales report - Simple CSV
+     */
+    public function exportSales(Request $request)
     {
-        return Inertia::render('Admin/Reports/Sales/Index');
+        try {
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+            $status = $request->get('status', 'all');
+
+            $query = Order::with(['user', 'orderItems'])
+                ->whereBetween('created_at', [$startDate, $endDate]);
+
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+
+            $orders = $query->get();
+
+            // Simple CSV export tanpa package external
+            $filename = 'sales_report_' . $startDate . 'to' . $endDate . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($orders) {
+                $file = fopen('php://output', 'w');
+                
+                // Header CSV
+                fputcsv($file, [
+                    'Order Number',
+                    'Customer Name', 
+                    'Customer Email',
+                    'Total Amount',
+                    'Status',
+                    'Created Date',
+                    'Items Count'
+                ]);
+                
+                // Data rows
+                foreach ($orders as $order) {
+                    fputcsv($file, [
+                        $order->order_number,
+                        $order->user->name ?? 'N/A',
+                        $order->user->email ?? 'N/A',
+                        number_format($order->total_amount, 2),
+                        ucfirst($order->status),
+                        $order->created_at->format('Y-m-d H:i:s'),
+                        $order->orderItems->count()
+                    ]);
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Export sales error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan penjualan.');
+        }
     }
 
-    public function createSales()
+    /**
+     * Export products report - Simple CSV
+     */
+    public function exportProducts(Request $request)
     {
-        return Inertia::render('Admin/Reports/Sales/Create');
+        try {
+            $category = $request->get('category', 'all');
+            
+            $query = Product::with(['orderItems']);
+            
+            if ($category !== 'all') {
+                $query->where('category', $category);
+            }
+            
+            $products = $query->get();
+            
+            $filename = 'products_report_' . date('Y-m-d') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($products) {
+                $file = fopen('php://output', 'w');
+                
+                fputcsv($file, [
+                    'Product Name',
+                    'Category',
+                    'Price',
+                    'Stock',
+                    'Total Sold',
+                    'Revenue',
+                    'Status',
+                    'Created Date'
+                ]);
+                
+                foreach ($products as $product) {
+                    $totalSold = $product->orderItems->sum('quantity');
+                    $revenue = $product->orderItems->sum(function($item) {
+                        return $item->quantity * $item->price;
+                    });
+                    
+                    fputcsv($file, [
+                        $product->name,
+                        $product->category,
+                        number_format($product->price, 2),
+                        $product->stock,
+                        $totalSold,
+                        number_format($revenue, 2),
+                        $product->is_active ? 'Active' : 'Inactive',
+                        $product->created_at->format('Y-m-d H:i:s')
+                    ]);
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Export products error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan produk.');
+        }
     }
 
-    public function storeSales(Request $request)
+    /**
+     * Export customers report - Simple CSV
+     */
+    public function exportCustomers(Request $request)
     {
-        // Validasi & Simpan Laporan Penjualan
+        try {
+            $users = User::role('buyer')
+                ->with(['orders'])
+                ->withCount('orders')
+                ->withSum('orders', 'total_amount')
+                ->get();
+            
+            $filename = 'customers_report_' . date('Y-m-d') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($users) {
+                $file = fopen('php://output', 'w');
+                
+                fputcsv($file, [
+                    'Customer Name',
+                    'Email',
+                    'Phone',
+                    'Total Orders',
+                    'Total Spent',
+                    'Registration Date',
+                    'Last Login',
+                    'Status'
+                ]);
+                
+                foreach ($users as $user) {
+                    fputcsv($file, [
+                        $user->name,
+                        $user->email,
+                        $user->phone ?? 'N/A',
+                        $user->orders_count ?? 0,
+                        number_format($user->orders_sum_total_amount ?? 0, 2),
+                        $user->created_at->format('Y-m-d H:i:s'),
+                        $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : 'Never',
+                        $user->is_active ? 'Active' : 'Inactive'
+                    ]);
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Export customers error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan pelanggan.');
+        }
     }
 
-    public function showSales($id)
+    /**
+     * Export financial report - Simple CSV
+     */
+    public function exportFinancial(Request $request)
     {
-        return Inertia::render('Admin/Reports/Sales/Show', ['id' => $id]);
-    }
+        try {
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+            
+            $orders = Order::where('status', 'delivered')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->with(['user'])
+                ->get();
+            
+            $filename = 'financial_report_' . $startDate . 'to' . $endDate . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
 
-    public function editSales($id)
-    {
-        return Inertia::render('Admin/Reports/Sales/Edit', ['id' => $id]);
-    }
+            $callback = function() use ($orders) {
+                $file = fopen('php://output', 'w');
+                
+                fputcsv($file, [
+                    'Date',
+                    'Order Number',
+                    'Customer',
+                    'Gross Revenue',
+                    'Tax (10%)',
+                    'Net Revenue',
+                    'Status'
+                ]);
+                
+                foreach ($orders as $order) {
+                    $tax = $order->total_amount * 0.1;
+                    $netRevenue = $order->total_amount - $tax;
+                    
+                    fputcsv($file, [
+                        $order->created_at->format('Y-m-d'),
+                        $order->order_number,
+                        $order->user->name ?? 'N/A',
+                        number_format($order->total_amount, 2),
+                        number_format($tax, 2),
+                        number_format($netRevenue, 2),
+                        ucfirst($order->status)
+                    ]);
+                }
+                
+                fclose($file);
+            };
 
-    public function updateSales(Request $request, $id)
-    {
-        // Validasi & Update Laporan Penjualan
-    }
+            return response()->stream($callback, 200, $headers);
 
-    public function destroySales($id)
-    {
-        // Hapus Laporan Penjualan
-    }
-
-    // ================= PRODUCTS REPORT =================
-
-    public function indexProducts()
-    {
-        return Inertia::render('Admin/Reports/Products/Index');
-    }
-
-    public function createProducts()
-    {
-        return Inertia::render('Admin/Reports/Products/Create');
-    }
-
-    public function storeProducts(Request $request)
-    {
-        // Validasi & Simpan Laporan Produk
-    }
-
-    public function showProducts($id)
-    {
-        return Inertia::render('Admin/Reports/Products/Show', ['id' => $id]);
-    }
-
-    public function editProducts($id)
-    {
-        return Inertia::render('Admin/Reports/Products/Edit', ['id' => $id]);
-    }
-
-    public function updateProducts(Request $request, $id)
-    {
-        // Validasi & Update Laporan Produk
-    }
-
-    public function destroyProducts($id)
-    {
-        // Hapus Laporan Produk
-    }
-
-    // ================= CUSTOMERS REPORT =================
-
-    public function indexCustomers()
-    {
-        return Inertia::render('Admin/Reports/Customers/Index');
-    }
-
-    public function createCustomers()
-    {
-        return Inertia::render('Admin/Reports/Customers/Create');
-    }
-
-    public function storeCustomers(Request $request)
-    {
-        // Validasi & Simpan Laporan Pelanggan
-    }
-
-    public function showCustomers($id)
-    {
-        return Inertia::render('Admin/Reports/Customers/Show', ['id' => $id]);
-    }
-
-    public function editCustomers($id)
-    {
-        return Inertia::render('Admin/Reports/Customers/Edit', ['id' => $id]);
-    }
-
-    public function updateCustomers(Request $request, $id)
-    {
-        // Validasi & Update Laporan Pelanggan
-    }
-
-    public function destroyCustomers($id)
-    {
-        // Hapus Laporan Pelanggan
-    }
-
-    // ================= FINANCIAL REPORT =================
-
-    public function indexFinancial()
-    {
-        return Inertia::render('Admin/Reports/Financial/Index');
-    }
-
-    public function createFinancial()
-    {
-        return Inertia::render('Admin/Reports/Financial/Create');
-    }
-
-    public function storeFinancial(Request $request)
-    {
-        // Validasi & Simpan Laporan Keuangan
-    }
-
-    public function showFinancial($id)
-    {
-        return Inertia::render('Admin/Reports/Financial/Show', ['id' => $id]);
-    }
-
-    public function editFinancial($id)
-    {
-        return Inertia::render('Admin/Reports/Financial/Edit', ['id' => $id]);
-    }
-
-    public function updateFinancial(Request $request, $id)
-    {
-        // Validasi & Update Laporan Keuangan
-    }
-
-    public function destroyFinancial($id)
-    {
-        // Hapus Laporan Keuangan
+        } catch (\Exception $e) {
+            Log::error('Export financial error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan keuangan.');
+        }
     }
 }

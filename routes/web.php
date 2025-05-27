@@ -134,20 +134,13 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
         });
 
-        // Reports - DITAMBAHKAN
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [AdminReportController::class, 'index'])->name('index');
-            Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
-            Route::get('/products', [AdminReportController::class, 'products'])->name('products');
-            Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
-            Route::get('/financial', [AdminReportController::class, 'financial'])->name('financial');
-            Route::get('/inventory', [AdminReportController::class, 'inventory'])->name('inventory');
-
-            // Report exports
-            Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
-            Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
-            Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');
-            Route::get('/financial/export', [AdminReportController::class, 'exportFinancial'])->name('financial.export');
+        
+        // Group route khusus admin (opsional, jika kamu pakai middleware admin)
+        Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+            Route::get('/report/export/sales', [AdminReportController::class, 'exportSales'])->name('report.export.sales');
+            Route::get('/report/export/products', [AdminReportController::class, 'exportProducts'])->name('report.export.products');
+            Route::get('/report/export/customers', [AdminReportController::class, 'exportCustomers'])->name('report.export.customers');
+            Route::get('/report/export/financial', [AdminReportController::class, 'exportFinancial'])->name('report.export.financial');
         });
 
         // Settings - DITAMBAHKAN
