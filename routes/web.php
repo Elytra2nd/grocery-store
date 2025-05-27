@@ -10,7 +10,8 @@ use App\Http\Controllers\Admin\{
     AdminOrderController,
     AdminUserController,
     AdminReportController,
-    AdminSettingController
+    AdminSettingController,
+    AdminCategoryController
 };
 use App\Http\Controllers\{CartController, OrderController, ProductController};
 
@@ -191,14 +192,13 @@ Route::middleware(['auth', 'role:admin'])
 
         // Categories
         Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/', [AdminProductController::class, 'categories'])->name('index');
-            Route::get('/create', [AdminProductController::class, 'createCategory'])->name('create');
-            Route::post('/', [AdminProductController::class, 'storeCategory'])->name('store');
-            Route::get('/{category}', [AdminProductController::class, 'showCategory'])->name('show');
-            Route::get('/{category}/edit', [AdminProductController::class, 'editCategory'])->name('edit');
-            Route::put('/{category}', [AdminProductController::class, 'updateCategory'])->name('update');
-            Route::delete('/{category}', [AdminProductController::class, 'destroyCategory'])->name('destroy');
-        });
+        Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
+        Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
+        Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
+        Route::get('/{category}/edit', [AdminCategoryController::class, 'edit'])->name('edit');
+        Route::put('/{category}', [AdminCategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
+    });
 
         // Additional Admin Routes
         Route::prefix('system')->name('system.')->group(function () {
@@ -221,12 +221,6 @@ Route::middleware(['auth', 'role:buyer'])
             return Inertia::render('Buyer/Dashboard');
         })->name('dashboard');
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-    });
-
-    use App\Http\Controllers\Admin\AdminCategoryController;
-
-    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-        Route::resource('categories', AdminCategoryController::class);
     });
 
 // API Routes (untuk AJAX requests)
