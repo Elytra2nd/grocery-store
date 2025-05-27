@@ -14,6 +14,8 @@ class AdminUserSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@grocery.com',
             'password' => Hash::make('password'),
+            'is_active' => true, // tambahkan ini
+            'email_verified_at' => now(),
         ]);
 
         $admin->assignRole('admin');

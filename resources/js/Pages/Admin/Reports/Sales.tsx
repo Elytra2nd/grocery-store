@@ -49,12 +49,30 @@ export default function Sales() {
         error,
     } = usePage<PageProps<SalesProps>>().props;
 
+    const handleExport = () => {
+        const query = new URLSearchParams({
+            startDate: filters.start_date,
+            endDate: filters.end_date,
+            status: filters.status,
+        }).toString();
+
+        window.location.href = `/admin/reports/sales/export?${query}`;
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Laporan Penjualan" />
 
             <div className="p-6 space-y-6">
-                <h1 className="text-2xl font-bold">Laporan Penjualan</h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold">Laporan Penjualan</h1>
+                    <button
+                        onClick={handleExport}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
+                    >
+                        Export Laporan Penjualan
+                    </button>
+                </div>
 
                 {error && (
                     <div className="bg-red-100 text-red-700 p-3 rounded">

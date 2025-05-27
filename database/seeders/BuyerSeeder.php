@@ -1,5 +1,4 @@
 <?php
-// database/seeders/BuyerSeeder.php
 
 namespace Database\Seeders;
 
@@ -66,6 +65,7 @@ class BuyerSeeder extends Seeder
                 'email' => $buyerData['email'],
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
+                'is_active' => true, // tambahkan ini
             ]);
 
             // Assign role buyer
@@ -76,6 +76,7 @@ class BuyerSeeder extends Seeder
         User::factory()->count(15)->create([
             'password' => Hash::make('password123'),
             'email_verified_at' => now(),
+            'is_active' => true, // tambahkan ini
         ])->each(function ($user) use ($buyerRole) {
             $user->assignRole($buyerRole);
         });

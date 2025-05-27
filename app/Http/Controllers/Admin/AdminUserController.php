@@ -23,7 +23,7 @@ class AdminUserController extends Controller
 
     public function active()
     {
-        $users = User::where('active', true)->latest()->paginate(10);
+        $users = User::where('is_active', true)->latest()->paginate(10);
 
         return Inertia::render('Admin/Users/Active', [
             'users' => $users,
