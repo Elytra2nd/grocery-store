@@ -1,3 +1,4 @@
+// resources/js/Pages/Admin/Users/Create.tsx
 import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -59,8 +60,13 @@ export default function UsersCreate({ roles }: Props): JSX.Element {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        post(route('admin.users.store'), {
+        // PERBAIKAN: Gunakan URL langsung
+        post('/admin/users', {
             forceFormData: true,
+            onSuccess: () => {
+                // Redirect ke index setelah berhasil
+                window.location.href = '/admin/users';
+            }
         });
     };
 
@@ -73,8 +79,9 @@ export default function UsersCreate({ roles }: Props): JSX.Element {
                     {/* Header */}
                     <div className="mb-6">
                         <div className="flex items-center">
+                            {/* PERBAIKAN: URL yang benar untuk kembali */}
                             <Link
-                                href='/admin/users/index'
+                                href="/admin/users"
                                 className="mr-4 inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-150"
                             >
                                 <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -109,8 +116,9 @@ export default function UsersCreate({ roles }: Props): JSX.Element {
 
                         {/* Submit Buttons */}
                         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                            {/* PERBAIKAN: URL yang benar untuk tombol Batal */}
                             <Link
-                                href='/admin/users/index'
+                                href="/admin/users"
                                 className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
                             >
                                 Batal
@@ -140,6 +148,7 @@ export default function UsersCreate({ roles }: Props): JSX.Element {
     );
 }
 
+// PERBAIKAN: UserInfoSection dengan roles dropdown yang benar
 interface UserInfoSectionProps {
     data: UserFormData;
     setData: (key: string, value: any) => void;
@@ -187,6 +196,7 @@ function UserInfoSection({
                                     errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
                                 }`}
                                 placeholder="Contoh: John Doe"
+                                required
                             />
                             {errors.name && (
                                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -206,6 +216,7 @@ function UserInfoSection({
                                     errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
                                 }`}
                                 placeholder="john@example.com"
+                                required
                             />
                             {errors.email && (
                                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -245,6 +256,7 @@ function UserInfoSection({
                                         errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
                                     }`}
                                     placeholder="Minimal 8 karakter"
+                                    required
                                 />
                                 <button
                                     type="button"
@@ -277,6 +289,7 @@ function UserInfoSection({
                                         errors.password_confirmation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
                                     }`}
                                     placeholder="Ulangi password"
+                                    required
                                 />
                                 <button
                                     type="button"
@@ -306,7 +319,22 @@ function UserInfoSection({
                                 className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
                                     errors.role ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
                                 }`}
+                                required
                             >
+                                <option value="">Pilih Role</option>
+                                {/* PERBAIKAN: Tambahkan options untuk roles */}
+                                {roles && roles.length > 0 ? (
+                                    roles.map((role) => (
+                                        <option key={role} value={role}>
+                                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="admin">Admin</option>
+                                        <option value="buyer">Buyer</option>
+                                    </>
+                                )}
                             </select>
                             {errors.role && (
                                 <p className="mt-1 text-sm text-red-600">{errors.role}</p>
@@ -357,6 +385,7 @@ function UserInfoSection({
     );
 }
 
+// AvatarUploadSection tetap sama
 interface AvatarUploadSectionProps {
     avatarPreview: string | null;
     onAvatarChange: (e: ChangeEvent<HTMLInputElement>) => void;
