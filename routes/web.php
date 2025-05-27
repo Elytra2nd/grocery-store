@@ -3,45 +3,51 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
+
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\{CartController, OrderController, ProductController};
 use App\Http\Controllers\Admin\{
     AdminDashboardController,
     AdminProductController,
     AdminOrderController,
     AdminUserController,
     AdminReportController,
-    AdminSettingController
+    AdminSettingController,
+    AdminCategoryController
 };
-use App\Http\Controllers\{CartController, OrderController, ProductController};
 
-use App\Http\Controllers\Admin\AdminCategoryController;
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-    Route::resource('categories', AdminCategoryController::class);
-});
-
-// Public Routes
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
-// Newsletter subscription (jika ada form di homepage)
+// Newsletter
 Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     $request->validate(['email' => 'required|email']);
-    // Handle newsletter subscription
     return redirect()->route('home')->with('success', 'Thank you for subscribing!');
 })->name('newsletter.subscribe');
 
-// Auth Routes
+/*
+|--------------------------------------------------------------------------
+| Authenticated User Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth')->group(function () {
+
     // Dashboard
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
 
     // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::patch('/', [ProfileController::class, 'update'])->name('update');
+        Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+    });
 
     // Cart
     Route::prefix('cart')->name('cart.')->group(function () {
@@ -52,7 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
 
-    // Orders (User)
+    // Orders
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
         Route::post('/', [OrderController::class, 'store'])->name('store');
@@ -61,11 +67,31 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Admin Routes
+/*
+|--------------------------------------------------------------------------
+| Buyer Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:buyer'])
+    ->prefix('buyer')
+    ->name('buyer.')
+    ->group(function () {
+        Route::get('/dashboard', fn() => Inertia::render('Buyer/Dashboard'))->name('dashboard');
+        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
         // Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/statistics', [AdminDashboardController::class, 'statistics'])->name('statistics');
@@ -76,13 +102,11 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
             Route::post('/', [AdminProductController::class, 'store'])->name('store');
 
-            // Specific routes harus di atas dynamic routes
             Route::get('/low-stock', [AdminProductController::class, 'lowStock'])->name('low-stock');
             Route::get('/out-of-stock', [AdminProductController::class, 'outOfStock'])->name('out-of-stock');
             Route::get('/export', [AdminProductController::class, 'export'])->name('export');
             Route::post('/bulk-action', [AdminProductController::class, 'bulkAction'])->name('bulk-action');
 
-            // Dynamic routes di bawah
             Route::get('/{product}', [AdminProductController::class, 'show'])->name('show');
             Route::get('/{product}/edit', [AdminProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [AdminProductController::class, 'update'])->name('update');
@@ -97,19 +121,16 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/create', [AdminOrderController::class, 'create'])->name('create');
             Route::post('/', [AdminOrderController::class, 'store'])->name('store');
 
-            // Status routes - specific routes di atas dynamic routes
             Route::get('/pending', [AdminOrderController::class, 'pending'])->name('pending');
             Route::get('/processing', [AdminOrderController::class, 'processing'])->name('processing');
             Route::get('/shipped', [AdminOrderController::class, 'shipped'])->name('shipped');
             Route::get('/completed', [AdminOrderController::class, 'completed'])->name('completed');
             Route::get('/cancelled', [AdminOrderController::class, 'cancelled'])->name('cancelled');
 
-            // Other specific routes
             Route::get('/export', [AdminOrderController::class, 'export'])->name('export');
             Route::get('/statistics', [AdminOrderController::class, 'statistics'])->name('statistics');
             Route::post('/bulk-action', [AdminOrderController::class, 'bulkAction'])->name('bulk-action');
 
-            // Dynamic routes di bawah
             Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
             Route::get('/{order}/edit', [AdminOrderController::class, 'edit'])->name('edit');
             Route::put('/{order}', [AdminOrderController::class, 'update'])->name('update');
@@ -117,13 +138,12 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
         });
 
-        // Users Management - DIPERBAIKI DAN DILENGKAPI
+        // Users
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
             Route::post('/', [AdminUserController::class, 'store'])->name('store');
 
-            // Filter routes - specific routes di atas dynamic routes
             Route::get('/active', [AdminUserController::class, 'active'])->name('active');
             Route::get('/inactive', [AdminUserController::class, 'inactive'])->name('inactive');
             Route::get('/new', [AdminUserController::class, 'new'])->name('new');
@@ -132,7 +152,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/export', [AdminUserController::class, 'export'])->name('export');
             Route::post('/bulk-action', [AdminUserController::class, 'bulkAction'])->name('bulk-action');
 
-            // Dynamic routes di bawah
             Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
             Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
             Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
@@ -140,58 +159,35 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
         });
 
-        
-        // Group route khusus admin (opsional, jika kamu pakai middleware admin)
-        Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
-            Route::get('/report/export/sales', [AdminReportController::class, 'exportSales'])->name('report.export.sales');
-            Route::get('/report/export/products', [AdminReportController::class, 'exportProducts'])->name('report.export.products');
-            Route::get('/report/export/customers', [AdminReportController::class, 'exportCustomers'])->name('report.export.customers');
-            Route::get('/report/export/financial', [AdminReportController::class, 'exportFinancial'])->name('report.export.financial');
+        // Reports
+        Route::prefix('report/export')->name('report.export.')->group(function () {
+            Route::get('/sales', [AdminReportController::class, 'exportSales'])->name('sales');
+            Route::get('/products', [AdminReportController::class, 'exportProducts'])->name('products');
+            Route::get('/customers', [AdminReportController::class, 'exportCustomers'])->name('customers');
+            Route::get('/financial', [AdminReportController::class, 'exportFinancial'])->name('financial');
         });
 
-        // Settings - DITAMBAHKAN
+        // Settings
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-
-            // General Settings
             Route::get('/general', [AdminSettingController::class, 'general'])->name('general');
             Route::put('/general', [AdminSettingController::class, 'updateGeneral'])->name('general.update');
-
-            // Store Settings
             Route::get('/store', [AdminSettingController::class, 'store'])->name('store');
             Route::put('/store', [AdminSettingController::class, 'updateStore'])->name('store.update');
-
-            // Payment Settings
             Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
             Route::put('/payment', [AdminSettingController::class, 'updatePayment'])->name('payment.update');
-
-            // Shipping Settings
             Route::get('/shipping', [AdminSettingController::class, 'shipping'])->name('shipping');
             Route::put('/shipping', [AdminSettingController::class, 'updateShipping'])->name('shipping.update');
-
-            // Email Settings
             Route::get('/email', [AdminSettingController::class, 'email'])->name('email');
             Route::put('/email', [AdminSettingController::class, 'updateEmail'])->name('email.update');
-
-            // Notification Settings
             Route::get('/notifications', [AdminSettingController::class, 'notifications'])->name('notifications');
             Route::put('/notifications', [AdminSettingController::class, 'updateNotifications'])->name('notifications.update');
         });
 
-        // Categories - DITAMBAHKAN
-        Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/', [AdminProductController::class, 'categories'])->name('index');
-            Route::get('/create', [AdminProductController::class, 'createCategory'])->name('create');
-            Route::post('/', [AdminProductController::class, 'storeCategory'])->name('store');
-            Route::get('/{category}', [AdminProductController::class, 'showCategory'])->name('show');
-            Route::get('/{category}/edit', [AdminProductController::class, 'editCategory'])->name('edit');
-            Route::put('/{category}', [AdminProductController::class, 'updateCategory'])->name('update');
-            Route::delete('/{category}', [AdminProductController::class, 'destroyCategory'])->name('destroy');
-        });
+        // Categories
+        Route::resource('categories', AdminCategoryController::class);
 
-
-
-        // Additional Admin Routes - DITAMBAHKAN
+        // System
         Route::prefix('system')->name('system.')->group(function () {
             Route::get('/info', [AdminDashboardController::class, 'systemInfo'])->name('info');
             Route::post('/cache/clear', [AdminDashboardController::class, 'clearCache'])->name('cache.clear');
@@ -203,21 +199,12 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
-    // Buyer Routes - DITAMBAHKAN
-Route::middleware(['auth', 'role:buyer'])
-    ->prefix('buyer')
-    ->name('buyer.')
-    ->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('Buyer/Dashboard');
-        })->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| API Routes for Admin
+|--------------------------------------------------------------------------
+*/
 
-        Route::get('/products/{product}', [ProductController::class, 'show'])
-            ->name('products.show');
-    });
-
-
-// API Routes (untuk AJAX requests) - DITAMBAHKAN
 Route::middleware(['auth', 'role:admin'])
     ->prefix('api/admin')
     ->name('api.admin.')
@@ -230,15 +217,15 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/notifications/{id}/read', [AdminDashboardController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
-// Test Routes (hanya untuk development) - DITAMBAHKAN
-if (app()->environment('local')) {
-    Route::get('/test', function () {
-        return Inertia::render('Test');
-    })->name('test');
+/*
+|--------------------------------------------------------------------------
+| Test Routes (Dev Only)
+|--------------------------------------------------------------------------
+*/
 
-    Route::get('/test-email', function () {
-        return 'Email test route';
-    })->name('test.email');
+if (app()->environment('local')) {
+    Route::get('/test', fn() => Inertia::render('Test'))->name('test');
+    Route::get('/test-email', fn() => 'Email test route')->name('test.email');
 }
 
 require __DIR__.'/auth.php';
