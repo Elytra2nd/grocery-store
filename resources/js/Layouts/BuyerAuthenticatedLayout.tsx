@@ -46,7 +46,7 @@ const buyerNavigation: NavigationItem[] = [
     },
     {
         name: 'Pesanan Saya',
-        href: '/buyer/orders',
+        href: '/orders',
         icon: ShoppingBagIcon,
     },
 ];

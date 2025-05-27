@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
-import GuestLayout from '@/Layouts/GuestLayout';
+import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 
 interface OrderItem {
   id: number;
@@ -33,23 +33,30 @@ interface Order {
 
 interface OrderShowProps {
   order: Order;
+  auth: {
+    user: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  };
 }
 
-export default function OrderShow({ order }: OrderShowProps): JSX.Element {
+export default function OrderShow({ order, auth }: OrderShowProps): JSX.Element {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+        return 'text-yellow-700 bg-yellow-100 border-yellow-200';
       case 'processing':
-        return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+        return 'text-blue-700 bg-blue-100 border-blue-200';
       case 'shipped':
-        return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
+        return 'text-purple-700 bg-purple-100 border-purple-200';
       case 'delivered':
-        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
+        return 'text-green-700 bg-green-100 border-green-200';
       case 'cancelled':
-        return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
+        return 'text-red-700 bg-red-100 border-red-200';
       default:
-        return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+        return 'text-gray-700 bg-gray-100 border-gray-200';
     }
   };
 
@@ -127,246 +134,230 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
   const progress = getOrderProgress(order.status);
 
   return (
-    <GuestLayout>
+    <BuyerAuthenticatedLayout
+      header={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/orders"
+              className="inline-flex items-center text-yellow-600 hover:text-yellow-700 transition-colors duration-200"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Kembali ke Riwayat Pesanan
+            </Link>
+          </div>
+          <h2 className="text-xl font-semibold leading-tight text-yellow-800">
+            Detail Pesanan
+          </h2>
+        </div>
+      }
+    >
       <Head title={`Order ${order.order_number}`} />
 
-      <div className="fixed inset-0 overflow-y-auto bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="relative z-10 min-h-screen flex flex-col">
-          {/* Login Button */}
-          <div className="absolute top-4 right-6 z-10">
-            <a
-              href="/login"
-              className="inline-block px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow transition"
-            >
-              Login
-            </a>
-          </div>
-
-          {/* Header */}
-          <header className="pt-16 sm:pt-20 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 text-center">
-            <div className="mb-4">
-              <Link
-                href="/orders"
-                className="inline-flex items-center text-amber-400 hover:text-amber-300 transition-colors duration-300"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Orders
-              </Link>
-            </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent">
-              Order Details
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto px-4">
-              Track your order status and details
-            </p>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-grow px-4 sm:px-6 lg:px-8 pb-20">
-            <div className="max-w-4xl mx-auto space-y-8">
-              {/* Order Summary Card */}
-              <div className="bg-gray-800/60 backdrop-blur-md rounded-xl border border-gray-700/50 p-6 sm:p-8">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
-                  <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                      {order.order_number}
-                    </h2>
-                    <p className="text-gray-400">
-                      Order placed on {formatDate(order.created_at)}
-                    </p>
+      <div className="py-12">
+        <div className="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
+          {/* Order Summary Card */}
+          <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    {order.order_number}
+                  </h1>
+                  <p className="text-gray-600">
+                    Pesanan dibuat pada {formatDate(order.created_at)}
+                  </p>
+                </div>
+                <div className="flex flex-col items-start lg:items-end space-y-2">
+                  <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
+                    {getStatusIcon(order.status)}
+                    <span>{order.status_label}</span>
                   </div>
-                  <div className="flex flex-col items-start lg:items-end space-y-2">
-                    <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
-                      {getStatusIcon(order.status)}
-                      <span>{order.status_label}</span>
-                    </div>
-                    <div className="text-2xl sm:text-3xl font-bold text-amber-400">
-                      {formatCurrency(order.total_amount)}
-                    </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-yellow-800">
+                    {formatCurrency(order.total_amount)}
                   </div>
                 </div>
+              </div>
 
-                {/* Order Progress */}
-                {order.status !== 'cancelled' && (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-white mb-4">Order Progress</h3>
-                    <div className="flex items-center justify-between">
-                      {['Pending', 'Processing', 'Shipped', 'Delivered'].map((step, index) => (
-                        <div key={step} className="flex flex-col items-center flex-1">
-                          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                            index <= progress.current
-                              ? 'bg-amber-500 border-amber-500 text-white'
-                              : 'bg-gray-700 border-gray-600 text-gray-400'
-                          }`}>
-                            {index <= progress.current ? (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : (
-                              <span className="text-xs font-medium">{index + 1}</span>
-                            )}
-                          </div>
-                          <span className={`text-xs mt-2 ${
-                            index <= progress.current ? 'text-amber-400' : 'text-gray-500'
-                          }`}>
-                            {step}
-                          </span>
-                          {index < 3 && (
-                            <div className={`absolute w-full h-0.5 mt-4 ${
-                              index < progress.current ? 'bg-amber-500' : 'bg-gray-600'
-                            }`} style={{
-                              left: '50%',
-                              right: '-50%',
-                              transform: 'translateY(-16px)',
-                              zIndex: -1
-                            }} />
+              {/* Order Progress */}
+              {order.status !== 'cancelled' && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Pesanan</h3>
+                  <div className="flex items-center justify-between">
+                    {[
+                      { key: 'pending', label: 'Menunggu' },
+                      { key: 'processing', label: 'Diproses' },
+                      { key: 'shipped', label: 'Dikirim' },
+                      { key: 'delivered', label: 'Diterima' }
+                    ].map((step, index) => (
+                      <div key={step.key} className="flex flex-col items-center flex-1 relative">
+                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 bg-white ${
+                          index <= progress.current
+                            ? 'border-yellow-500 text-yellow-600'
+                            : 'border-gray-300 text-gray-400'
+                        }`}>
+                          {index <= progress.current ? (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <span className="text-xs font-medium">{index + 1}</span>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Shipping Information */}
-                <div className="border-t border-gray-700/50 pt-6">
-                  <h3 className="text-lg font-semibold text-white mb-3">Shipping Information</h3>
-                  <div className="bg-gray-700/30 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-amber-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <div>
-                        <p className="text-white font-medium">Delivery Address</p>
-                        <p className="text-gray-300 mt-1">{order.shipping_address}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div className="bg-gray-800/60 backdrop-blur-md rounded-xl border border-gray-700/50 p-6 sm:p-8">
-                <h3 className="text-xl font-bold text-white mb-6">Order Items ({order.order_items.length})</h3>
-                <div className="space-y-6">
-                  {order.order_items.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/40 transition-colors duration-300">
-                      {/* Product Image */}
-                      <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg">
-                        {item.product.image ? (
-                          <img
-                            src={`/storage/${item.product.image}`}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
-                            <span className="text-amber-400 text-sm font-bold">NEO</span>
-                          </div>
+                        <span className={`text-xs mt-2 text-center ${
+                          index <= progress.current ? 'text-yellow-600 font-medium' : 'text-gray-500'
+                        }`}>
+                          {step.label}
+                        </span>
+                        {index < 3 && (
+                          <div className={`absolute top-4 left-1/2 w-full h-0.5 ${
+                            index < progress.current ? 'bg-yellow-500' : 'bg-gray-300'
+                          }`} style={{ transform: 'translateX(50%)' }} />
                         )}
                       </div>
-
-                      {/* Product Info */}
-                      <div className="flex-grow min-w-0">
-                        <Link
-                          href={`/products/${item.product.id}`}
-                          className="block group"
-                        >
-                          <h4 className="text-white font-semibold group-hover:text-amber-300 transition-colors truncate">
-                            {item.product.name}
-                          </h4>
-                        </Link>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {item.product.category}
-                        </p>
-                        <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-                          {item.product.description}
-                        </p>
-                        <div className="flex items-center space-x-4 mt-3">
-                          <span className="text-sm text-gray-300">
-                            <span className="font-medium">Quantity:</span> {item.quantity}
-                          </span>
-                          <span className="text-sm text-gray-300">
-                            <span className="font-medium">Price:</span> {formatCurrency(item.price)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Item Total */}
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-white">
-                          {formatCurrency(item.quantity * item.price)}
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {item.quantity} × {formatCurrency(item.price)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                {/* Order Summary */}
-                <div className="border-t border-gray-700/50 mt-8 pt-6">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-gray-300">
-                      <span>Subtotal ({order.order_items.length} items)</span>
-                      <span>{formatCurrency(order.total_amount)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-gray-300">
-                      <span>Shipping</span>
-                      <span className="text-emerald-400">Free</span>
-                    </div>
-                    <div className="border-t border-gray-700/50 pt-3">
-                      <div className="flex justify-between items-center text-xl font-bold">
-                        <span className="text-white">Total</span>
-                        <span className="text-amber-400">{formatCurrency(order.total_amount)}</span>
-                      </div>
+              {/* Shipping Information */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Pengiriman</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-gray-900 font-medium">Alamat Pengiriman</p>
+                      <p className="text-gray-600 mt-1">{order.shipping_address}</p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Order Actions */}
-              <div className="bg-gray-800/60 backdrop-blur-md rounded-xl border border-gray-700/50 p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                  <div className="text-sm text-gray-400">
-                    Need help with your order? Contact our support team.
+          {/* Order Items */}
+          <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">
+                Item Pesanan ({order.order_items.length})
+              </h3>
+              <div className="space-y-6">
+                {order.order_items.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    {/* Product Image */}
+                    <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                      {item.product.image ? (
+                        <img
+                          src={`/storage/${item.product.image}`}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">NEO</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex-grow min-w-0">
+                      <Link
+                        href={`/products/${item.product.id}`}
+                        className="block group"
+                      >
+                        <h4 className="text-gray-900 font-semibold group-hover:text-yellow-600 transition-colors truncate">
+                          {item.product.name}
+                        </h4>
+                      </Link>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {item.product.category}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        {item.product.description}
+                      </p>
+                      <div className="flex items-center space-x-4 mt-3">
+                        <span className="text-sm text-gray-600">
+                          <span className="font-medium">Jumlah:</span> {item.quantity}
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          <span className="font-medium">Harga:</span> {formatCurrency(item.price)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Item Total */}
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {formatCurrency(item.quantity * item.price)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {item.quantity} × {formatCurrency(item.price)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                    {order.status === 'delivered' && (
-                      <button className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium rounded-lg transition-all duration-300">
-                        Leave Review
-                      </button>
-                    )}
-                    {order.status === 'delivered' && (
-                      <button className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-lg transition-all duration-300">
-                        Reorder
-                      </button>
-                    )}
-                    {(order.status === 'pending' || order.status === 'processing') && (
-                      <button className="px-6 py-2 bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white font-medium rounded-lg transition-all duration-300">
-                        Cancel Order
-                      </button>
-                    )}
-                    <button className="px-6 py-2 bg-gray-600/50 hover:bg-gray-600/70 text-white font-medium rounded-lg transition-all duration-300">
-                      Contact Support
+                ))}
+              </div>
+
+              {/* Order Summary */}
+              <div className="border-t border-gray-200 mt-8 pt-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-gray-600">
+                    <span>Subtotal ({order.order_items.length} item)</span>
+                    <span>{formatCurrency(order.total_amount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-gray-600">
+                    <span>Ongkos Kirim</span>
+                    <span className="text-green-600">Gratis</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex justify-between items-center text-xl font-bold">
+                      <span className="text-gray-900">Total</span>
+                      <span className="text-yellow-800">{formatCurrency(order.total_amount)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Order Actions */}
+          <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <div className="text-sm text-gray-500">
+                  Butuh bantuan dengan pesanan Anda? Hubungi tim dukungan kami.
+                </div>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                  {order.status === 'delivered' && (
+                    <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                      Berikan Ulasan
                     </button>
-                  </div>
+                  )}
+                  {order.status === 'delivered' && (
+                    <button className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors duration-200">
+                      Pesan Lagi
+                    </button>
+                  )}
+                  {(order.status === 'pending' || order.status === 'processing') && (
+                    <button className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                      Batalkan Pesanan
+                    </button>
+                  )}
+                  <button className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200">
+                    Hubungi Dukungan
+                  </button>
                 </div>
               </div>
             </div>
-          </main>
-
-          {/* Footer */}
-          <footer className="py-6 text-center text-gray-400 text-sm border-t border-gray-800/50">
-            <div className="max-w-7xl mx-auto px-4">
-              <p>© {new Date().getFullYear()} Neo-Forest. All rights reserved.</p>
-            </div>
-          </footer>
+          </div>
         </div>
       </div>
-    </GuestLayout>
+    </BuyerAuthenticatedLayout>
   );
 }
