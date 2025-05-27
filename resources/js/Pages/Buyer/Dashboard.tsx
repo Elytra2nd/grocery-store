@@ -1,11 +1,11 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 export default function Dashboard() {
     return (
-        <AuthenticatedLayout
+        <BuyerAuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                <h2 className="text-xl font-semibold leading-tight text-yellow-800">
                     Buyer Dashboard
                 </h2>
             }
@@ -22,10 +22,13 @@ export default function Dashboard() {
                             <p className="text-center mt-4 text-gray-600">
                                 Selamat datang di dashboard buyer Neo-Forest
                             </p>
+                            <p className="text-center mt-4 text-yellow-800 font-semibold">
+                                Halo saya adalah orang yang baru saja masuk
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </BuyerAuthenticatedLayout>
     );
 }
