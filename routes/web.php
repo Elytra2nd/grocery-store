@@ -14,6 +14,12 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\{CartController, OrderController, ProductController};
 
+use App\Http\Controllers\Admin\AdminCategoryController;
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('categories', AdminCategoryController::class);
+});
+
 // Public Routes
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
@@ -182,6 +188,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/{category}', [AdminProductController::class, 'updateCategory'])->name('update');
             Route::delete('/{category}', [AdminProductController::class, 'destroyCategory'])->name('destroy');
         });
+
+
 
         // Additional Admin Routes - DITAMBAHKAN
         Route::prefix('system')->name('system.')->group(function () {
