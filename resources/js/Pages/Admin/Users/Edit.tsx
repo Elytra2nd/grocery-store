@@ -17,7 +17,7 @@ interface User {
 }
 
 // Define UserFormData interface
-interface UserFormData {
+type UserFormData = {
     name: string;
     email: string;
     password?: string;
@@ -52,12 +52,9 @@ export default function Edit({ user }: Props): JSX.Element {
         }
 
         put(`/admin/users/${user.id}`, {
-            data: submitData,
+            method: 'put',
             onSuccess: () => {
-                console.log('User updated successfully');
-            },
-            onError: (errors) => {
-                console.error('Update failed:', errors);
+                // Handle success
             }
         });
     };
@@ -279,11 +276,10 @@ export default function Edit({ user }: Props): JSX.Element {
                                         </div>
                                         <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                             <span className="text-sm font-medium text-slate-600">Status Email:</span>
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                                                user.email_verified_at
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${user.email_verified_at
                                                     ? 'bg-emerald-100 text-emerald-800'
                                                     : 'bg-amber-100 text-amber-800'
-                                            }`}>
+                                                }`}>
                                                 {user.email_verified_at ? 'Terverifikasi' : 'Belum Verifikasi'}
                                             </span>
                                         </div>
