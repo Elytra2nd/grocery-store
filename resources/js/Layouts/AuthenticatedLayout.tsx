@@ -1,6 +1,7 @@
 // resources/js/Layouts/AuthenticatedLayout.tsx
 import React, { useState, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
+
 import { PageProps } from '@/types';
 import {
     Bars3Icon,
@@ -19,8 +20,22 @@ import {
     CurrencyDollarIcon,
     UserGroupIcon,
     ClipboardDocumentListIcon,
-    ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+
+// Autumn Modern Minimalist Palette
+const autumn = {
+    burnt: 'bg-[#a14e3e]',     // burnt orange
+    amber: 'bg-[#f9d282]',     // cozy amber
+    olive: 'bg-[#7d835a]',     // muted olive
+    brown: 'bg-[#5d4035]',     // bark brown
+    cream: 'bg-[#e9e4db]',     // soft cream
+    black: 'bg-[#18181b]',     // rich black
+    accent: 'bg-[#c19a5b]',    // warm gold
+    text: 'text-[#5d4035]',    // brown text
+    textDark: 'text-[#18181b]',
+    textLight: 'text-[#e9e4db]',
+    border: 'border-[#c19a5b]',
+};
 
 interface NavigationItem {
     name: string;
@@ -40,8 +55,12 @@ interface AuthenticatedLayoutProps {
     header?: ReactNode;
 }
 
-// Navigation items untuk admin - DIPERBARUI DENGAN MENU LAPORAN LENGKAP
-const adminNavigation: NavigationItem[] = [
+// Get order_count from pageProps if available
+function getPesananBadge(pageProps: PageProps): number {
+    const count = (pageProps as any)?.order_count ?? (pageProps as any)?.orders_count;
+    return typeof count === 'number' ? count : 0;
+}
+const adminNavigation = (pesananBadge: number): NavigationItem[] => [
     {
         name: 'Dashboard',
         href: '/admin/dashboard',
@@ -62,13 +81,10 @@ const adminNavigation: NavigationItem[] = [
         name: 'Pesanan',
         href: '/admin/orders',
         icon: ShoppingCartIcon,
-        badge: 5,
+        badge: pesananBadge,
         children: [
             { name: 'Semua Pesanan', href: '/admin/orders' },
             { name: 'Pesanan Baru', href: '/admin/orders/pending' },
-            { name: 'Sedang Diproses', href: '/admin/orders/processing' },
-            { name: 'Dikirim', href: '/admin/orders/shipped' },
-            { name: 'Selesai', href: '/admin/orders/completed' },
         ]
     },
     {
@@ -78,11 +94,8 @@ const adminNavigation: NavigationItem[] = [
         children: [
             { name: 'Semua Pelanggan', href: '/admin/users' },
             { name: 'Pelanggan Aktif', href: '/admin/users/active' },
-            { name: 'Pelanggan Baru', href: '/admin/users/new' },
-            { name: 'Tambah Pelanggan', href: '/admin/users/create' },
         ]
     },
-    // MENU LAPORAN YANG DIPERBARUI DAN LENGKAP
     {
         name: 'Laporan',
         href: '/admin/reports',
@@ -92,8 +105,6 @@ const adminNavigation: NavigationItem[] = [
             { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
             { name: 'Laporan Produk', href: '/admin/reports/products' },
             { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },
-            { name: 'Laporan Keuangan', href: '/admin/reports/financial' },
-            { name: 'Laporan Inventori', href: '/admin/reports/inventory' },
         ]
     },
     {
@@ -109,28 +120,27 @@ const adminNavigation: NavigationItem[] = [
     },
 ];
 
-const userNavigation: NavigationItem[] = [
-];
-
 export default function AuthenticatedLayout({ children, header }: AuthenticatedLayoutProps): JSX.Element {
     const pageProps = usePage<PageProps>().props;
-    const { auth, flash } = pageProps;
-    const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-    const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
-
     // Check if user is admin dengan null safety
-    const isAdmin = auth?.user?.roles?.some(role => role.name === 'admin') || false;
+    const isAdmin = pageProps.auth?.user?.roles?.some((role: { name: string }) => role.name === 'admin') || false;
+    const pesananBadge = getPesananBadge(pageProps);
+    const navigation = isAdmin ? adminNavigation(pesananBadge) : [];
 
-    const navigation = isAdmin ? adminNavigation : userNavigation;
+    // Add sidebarOpen and userMenuOpen state
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     const handleLogout = (): void => {
         router.post('/logout');
     };
 
     // Admin layout
+    const flash = pageProps.flash;
+
     if (isAdmin) {
         return (
-            <div className="h-screen flex overflow-hidden bg-gray-100">
+            <div className="h-screen flex overflow-hidden bg-[#e9e4db] font-sans">
                 {/* Mobile sidebar */}
                 <MobileSidebar
                     sidebarOpen={sidebarOpen}
@@ -150,14 +160,14 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
                     {/* Top navigation */}
                     <AdminTopNavigation
                         setSidebarOpen={setSidebarOpen}
-                        user={auth?.user}
+                        user={pageProps.auth?.user}
                         userMenuOpen={userMenuOpen}
                         setUserMenuOpen={setUserMenuOpen}
                         onLogout={handleLogout}
                     />
 
                     {/* Main content area */}
-                    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
+                    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none bg-[#e9e4db]">
                         <FlashMessages flash={flash} />
                         {children}
                     </main>
@@ -168,81 +178,29 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
 
     // User layout (original Breeze layout)
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="bg-white border-b border-gray-100">
+        <div className="min-h-screen bg-[#e9e4db]">
+            <nav className="bg-[#e9e4db] border-b border-[#c19a5b]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex">
                             <div className="shrink-0 flex items-center">
                                 <Link href="/">
-                                    <div className="h-8 w-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                        <ShoppingBagIcon className="h-5 w-5 text-white" />
+                                    <div className="h-8 w-8 bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] rounded-lg flex items-center justify-center">
+                                        <ShoppingBagIcon className="h-5 w-5 text-[#e9e4db]" />
                                     </div>
                                 </Link>
                             </div>
-
-                            <div className="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                {userNavigation.map((item) => (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
-                                    >
-                                        {item.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:flex sm:items-center sm:ml-6">
-                            <div className="ml-3 relative">
-                                <div>
-                                    <button
-                                        onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                        className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    >
-                                        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                                            <span className="text-sm font-medium text-white">
-                                                {auth?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                                            </span>
-                                        </div>
-                                        <span className="ml-2 text-gray-700 text-sm font-medium">
-                                            {auth?.user?.name || 'User'}
-                                        </span>
-                                    </button>
-                                </div>
-
-                                {userMenuOpen && (
-                                    <UserDropdownMenu
-                                        user={auth?.user}
-                                        onLogout={handleLogout}
-                                        onClose={() => setUserMenuOpen(false)}
-                                        isAdmin={false}
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="-mr-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() => setSidebarOpen(true)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
-                            >
-                                <Bars3Icon className="h-6 w-6" />
-                            </button>
                         </div>
                     </div>
                 </div>
             </nav>
-
             {header && (
-                <header className="bg-white shadow">
+                <header className="bg-[#e9e4db] shadow">
                     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {header}
                     </div>
                 </header>
             )}
-
             <main>
                 <FlashMessages flash={flash} />
                 {children}
@@ -251,30 +209,32 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
     );
 }
 
-// Admin Components
-interface MobileSidebarProps {
+// === ADMIN COMPONENTS ===
+
+function MobileSidebar({
+    sidebarOpen,
+    setSidebarOpen,
+    navigation,
+}: {
     sidebarOpen: boolean;
-    setSidebarOpen: (open: boolean) => void;
+    setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
     navigation: NavigationItem[];
-}
-
-function MobileSidebar({ sidebarOpen, setSidebarOpen, navigation }: MobileSidebarProps): JSX.Element {
+}): JSX.Element {
     if (!sidebarOpen) return <></>;
-
     return (
         <div className="fixed inset-0 flex z-40 md:hidden">
             <div
-                className="fixed inset-0 bg-gray-600 bg-opacity-75"
+                className="fixed inset-0 bg-[#a14e3e] bg-opacity-70 transition-opacity duration-300"
                 onClick={() => setSidebarOpen(false)}
             />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#e9e4db] shadow-xl transition-transform duration-300 animate-slide-in-left">
                 <div className="absolute top-0 right-0 -mr-12 pt-2">
                     <button
-                        onClick={() => setSidebarOpen(false)}
-                        className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                        aria-label="Close sidebar"
+                        onClick={() => setSidebarOpen((v: boolean) => !v)}
+                        className="p-2 rounded focus:outline-none hover:bg-gray-200"
+                        aria-label="Toggle sidebar"
                     >
-                        <XMarkIcon className="h-6 w-6 text-white" />
+                        <Bars3Icon className="h-6 w-6 text-gray-600" />
                     </button>
                 </div>
                 <AdminSidebar navigation={navigation} />
@@ -283,14 +243,9 @@ function MobileSidebar({ sidebarOpen, setSidebarOpen, navigation }: MobileSideba
     );
 }
 
-interface AdminSidebarProps {
-    navigation: NavigationItem[];
-}
-
-function AdminSidebar({ navigation }: AdminSidebarProps): JSX.Element {
+function AdminSidebar({ navigation }: { navigation: NavigationItem[] }): JSX.Element {
     const { url } = usePage();
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Laporan']); // DEFAULT EXPAND LAPORAN
-
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Laporan']);
     const toggleExpanded = (itemName: string): void => {
         setExpandedItems(prev =>
             prev.includes(itemName)
@@ -298,27 +253,23 @@ function AdminSidebar({ navigation }: AdminSidebarProps): JSX.Element {
                 : [...prev, itemName]
         );
     };
-
     return (
-        <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white">
+        <div className="flex-1 flex flex-col min-h-0 border-r border-[#c19a5b] bg-[#e9e4db]">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-                {/* Logo */}
                 <div className="flex items-center flex-shrink-0 px-4 mb-5">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <ShoppingBagIcon className="h-6 w-6 text-white" />
+                            <div className="h-10 w-10 bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] rounded-xl flex items-center justify-center shadow-lg">
+                                <ShoppingBagIcon className="h-6 w-6 text-[#e9e4db]" />
                             </div>
                         </div>
                         <div className="ml-3">
-                            <h1 className="text-xl font-bold text-gray-900">Grocery Admin</h1>
-                            <p className="text-xs text-gray-500">Management System</p>
+                            <h1 className="text-xl font-bold text-[#5d4035]">Grocery Admin</h1>
+                            <p className="text-xs text-[#a14e3e]">Management System</p>
                         </div>
                     </div>
                 </div>
-
-                {/* Navigation */}
-                <nav className="flex-1 px-2 bg-white space-y-1">
+                <nav className="flex-1 px-2 space-y-1">
                     {navigation.map((item) => (
                         <NavigationItem
                             key={item.name}
@@ -329,20 +280,16 @@ function AdminSidebar({ navigation }: AdminSidebarProps): JSX.Element {
                         />
                     ))}
                 </nav>
-
-                {/* Footer */}
-                <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
+                <div className="flex-shrink-0 flex border-t border-[#c19a5b] p-4">
                     <div className="flex-shrink-0 w-full group block">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-medium text-gray-500">
-                                    Grocery Store Admin
-                                </p>
-                                <p className="text-xs text-gray-400">v1.0.0</p>
+                                <p className="text-xs font-medium text-[#a14e3e]">Grocery Store Admin</p>
+                                <p className="text-xs text-[#c19a5b]">v1.0.0</p>
                             </div>
                             <div className="flex items-center space-x-1">
-                                <div className="h-2 w-2 bg-green-400 rounded-full"></div>
-                                <span className="text-xs text-gray-500">Online</span>
+                                <div className="h-2 w-2 bg-[#f9d282] rounded-full animate-pulse"></div>
+                                <span className="text-xs text-[#a14e3e]">Online</span>
                             </div>
                         </div>
                     </div>
@@ -352,75 +299,66 @@ function AdminSidebar({ navigation }: AdminSidebarProps): JSX.Element {
     );
 }
 
-interface NavigationItemProps {
-    item: NavigationItem;
-    currentUrl: string;
-    isExpanded: boolean;
-    onToggleExpanded: (itemName: string) => void;
-}
-
-function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: NavigationItemProps): JSX.Element {
+function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: { item: NavigationItem; currentUrl: string; isExpanded: boolean; onToggleExpanded: (itemName: string) => void }): JSX.Element {
     const isActive = currentUrl.startsWith(item.href);
     const hasChildren = item.children && item.children.length > 0;
-
+    // Badge autumn style + animasi bounce jika badge > 0
+    const badgeColor = "bg-[#f9d282] text-[#a14e3e] ring-2 ring-[#a14e3e] animate-bounce";
     if (!hasChildren) {
         return (
             <Link
                 href={item.href}
                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out ${
                     isActive
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] text-[#e9e4db] shadow-md'
+                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
                 }`}
             >
                 <item.icon
                     className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200 ${
-                        isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
+                        isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e] group-hover:text-[#7d835a]'
                     }`}
                 />
                 <span className="flex-1">{item.name}</span>
-                {item.badge && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        isActive
-                            ? 'bg-white bg-opacity-20 text-white'
-                            : 'bg-red-100 text-red-800'
-                    }`}>
+                {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${badgeColor}`}
+                        style={{
+                            fontFamily: 'Inter, ui-sans-serif, system-ui',
+                            letterSpacing: '0.02em'
+                        }}
+                    >
                         {item.badge}
                     </span>
                 )}
             </Link>
         );
     }
-
     return (
         <div>
             <button
                 onClick={() => onToggleExpanded(item.name)}
                 className={`group flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out ${
                     isActive
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] text-[#e9e4db] shadow-md'
+                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
                 }`}
             >
                 <item.icon
                     className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200 ${
-                        isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
+                        isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e] group-hover:text-[#7d835a]'
                     }`}
                 />
                 <span className="flex-1 text-left">{item.name}</span>
-                {item.badge && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mr-2 ${
-                        isActive
-                            ? 'bg-white bg-opacity-20 text-white'
-                            : 'bg-red-100 text-red-800'
-                    }`}>
+                {item.badge !== undefined && item.badge > 0 && (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold mr-2 ${badgeColor}`}>
                         {item.badge}
                     </span>
                 )}
                 <svg
                     className={`h-4 w-4 transition-transform duration-200 ${
                         isExpanded ? 'transform rotate-90' : ''
-                    } ${isActive ? 'text-white' : 'text-gray-400'}`}
+                    } ${isActive ? 'text-[#e9e4db]' : 'text-[#a14e3e]'}`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                 >
@@ -431,9 +369,8 @@ function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: Navi
                     />
                 </svg>
             </button>
-
             {isExpanded && (
-                <div className="mt-1 ml-8 space-y-1">
+                <div className="mt-1 ml-8 space-y-1 animate-fade-in">
                     {item.children?.map((subItem) => {
                         const isSubActive = currentUrl.startsWith(subItem.href);
                         return (
@@ -442,12 +379,12 @@ function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: Navi
                                 href={subItem.href}
                                 className={`group flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-150 ease-in-out ${
                                     isSubActive
-                                        ? 'bg-indigo-50 text-indigo-700 border-r-2 border-indigo-500'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                        ? 'bg-[#f9d282] text-[#a14e3e] border-r-2 border-[#a14e3e]'
+                                        : 'text-[#5d4035] hover:bg-[#f9d282] hover:text-[#a14e3e]'
                                 }`}
                             >
                                 <span className={`mr-3 h-1.5 w-1.5 rounded-full ${
-                                    isSubActive ? 'bg-indigo-500' : 'bg-gray-300'
+                                    isSubActive ? 'bg-[#a14e3e]' : 'bg-[#c19a5b]'
                                 }`}></span>
                                 {subItem.name}
                             </Link>
@@ -459,68 +396,58 @@ function NavigationItem({ item, currentUrl, isExpanded, onToggleExpanded }: Navi
     );
 }
 
-interface AdminTopNavigationProps {
-    setSidebarOpen: (open: boolean) => void;
-    user?: PageProps['auth']['user'];
-    userMenuOpen: boolean;
-    setUserMenuOpen: (open: boolean) => void;
-    onLogout: () => void;
-}
-
 function AdminTopNavigation({
     setSidebarOpen,
     user,
     userMenuOpen,
     setUserMenuOpen,
     onLogout
-}: AdminTopNavigationProps): JSX.Element {
+}: {
+    setSidebarOpen: (open: boolean) => void;
+    user?: PageProps['auth']['user'];
+    userMenuOpen: boolean;
+    setUserMenuOpen: (open: boolean) => void;
+    onLogout: () => void;
+}): JSX.Element {
     return (
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow-sm border-b border-gray-200">
+        <div className="relative z-10 flex-shrink-0 flex h-16 bg-[#e9e4db] border-b border-[#c19a5b]">
             <button
                 onClick={() => setSidebarOpen(true)}
-                className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
+                className="px-4 border-r border-[#c19a5b] text-[#a14e3e] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#a14e3e] md:hidden"
                 aria-label="Open sidebar"
             >
                 <Bars3Icon className="h-6 w-6" />
             </button>
-
             <div className="flex-1 px-4 flex justify-between items-center">
-                <div className="flex-1 flex">
-                    <div className="w-full flex md:ml-0">
-                        {/* Search bar dapat ditambahkan di sini */}
-                    </div>
-                </div>
-
+                <div className="flex-1 flex" />
                 <div className="ml-4 flex items-center md:ml-6 space-x-4">
                     <button
                         type="button"
-                        className="relative bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="relative bg-[#e9e4db] p-1 rounded-full text-[#a14e3e] hover:text-[#c19a5b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a14e3e]"
                         aria-label="View notifications"
                     >
                         <BellIcon className="h-6 w-6" />
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
+                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-[#f9d282] ring-2 ring-[#a14e3e] animate-ping"></span>
                     </button>
-
                     <div className="ml-3 relative">
                         <div>
                             <button
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="max-w-xs bg-[#e9e4db] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a14e3e]"
                                 aria-expanded={userMenuOpen}
                                 aria-haspopup="true"
                             >
                                 <span className="sr-only">Open user menu</span>
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                                    <span className="text-sm font-medium text-white">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#a14e3e] to-[#c19a5b] flex items-center justify-center">
+                                    <span className="text-sm font-medium text-[#e9e4db]">
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </span>
                                 </div>
-                                <span className="ml-2 text-gray-700 text-sm font-medium">
+                                <span className="ml-2 text-[#a14e3e] text-sm font-medium">
                                     {user?.name || 'User'}
                                 </span>
                             </button>
                         </div>
-
                         {userMenuOpen && (
                             <UserDropdownMenu
                                 user={user}
@@ -536,54 +463,40 @@ function AdminTopNavigation({
     );
 }
 
-interface UserDropdownMenuProps {
-    user?: PageProps['auth']['user'];
-    onLogout: () => void;
-    onClose: () => void;
-    isAdmin: boolean;
-}
-
-function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: UserDropdownMenuProps): JSX.Element {
+function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: { user?: PageProps['auth']['user']; onLogout: () => void; onClose: () => void; isAdmin: boolean }): JSX.Element {
     return (
         <>
-            <div
-                className="fixed inset-0 z-10"
-                onClick={onClose}
-            />
-
-            <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-                <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                    <p className="text-sm text-gray-500">{user?.email || 'user@example.com'}</p>
+            <div className="fixed inset-0 z-10" onClick={onClose} />
+            <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-[#f9d282] ring-1 ring-[#a14e3e] ring-opacity-60 focus:outline-none z-20 animate-fade-in">
+                <div className="px-4 py-3 border-b border-[#a14e3e]">
+                    <p className="text-sm font-medium text-[#a14e3e]">{user?.name || 'User'}</p>
+                    <p className="text-sm text-[#7d835a]">{user?.email || 'user@example.com'}</p>
                 </div>
-
                 <Link
                     href="/profile"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-4 py-2 text-sm text-[#a14e3e] hover:bg-[#e9e4db]"
                     onClick={onClose}
                 >
                     <UserCircleIcon className="h-4 w-4 mr-3" />
                     Profile Settings
                 </Link>
-
                 {isAdmin && (
                     <Link
                         href="/admin/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center px-4 py-2 text-sm text-[#a14e3e] hover:bg-[#e9e4db]"
                         onClick={onClose}
                     >
                         <CogIcon className="h-4 w-4 mr-3" />
                         Admin Settings
                     </Link>
                 )}
-
-                <div className="border-t border-gray-200">
+                <div className="border-t border-[#a14e3e]">
                     <button
                         onClick={() => {
                             onClose();
                             onLogout();
                         }}
-                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-[#a14e3e] hover:bg-[#e9e4db]"
                     >
                         <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" />
                         Sign out
@@ -594,22 +507,17 @@ function UserDropdownMenu({ user, onLogout, onClose, isAdmin }: UserDropdownMenu
     );
 }
 
-interface FlashMessagesProps {
-    flash?: PageProps['flash'];
-}
-
-function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
+function FlashMessages({ flash }: { flash?: PageProps['flash'] }): JSX.Element {
     if (!flash || (!flash.success && !flash.error)) {
         return <></>;
     }
-
     return (
         <div className="p-4">
             {flash.success && (
-                <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg relative">
+                <div className="mb-4 bg-[#f9d282] border border-[#a14e3e] text-[#a14e3e] px-4 py-3 rounded-lg relative animate-fade-in">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg className="h-5 w-5 text-[#a14e3e]" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                         </div>
@@ -619,12 +527,11 @@ function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
                     </div>
                 </div>
             )}
-
             {flash.error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg relative">
+                <div className="mb-4 bg-[#a14e3e] border border-[#c19a5b] text-[#e9e4db] px-4 py-3 rounded-lg relative animate-fade-in">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg className="h-5 w-5 text-[#e9e4db]" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                             </svg>
                         </div>
@@ -637,3 +544,8 @@ function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
         </div>
     );
 }
+
+/* Tambahkan animasi tailwind di tailwind.config.js:
+
+*/
+
