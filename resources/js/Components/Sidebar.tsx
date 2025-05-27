@@ -82,6 +82,7 @@ const adminNavigation: NavigationItem[] = [
         href: '/admin/reports',
         icon: ChartBarIcon,
         children: [
+            { name: 'Laporan Umum', href: '/admin/reports/index' },
             { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
             { name: 'Laporan Produk', href: '/admin/reports/products' },
             { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },

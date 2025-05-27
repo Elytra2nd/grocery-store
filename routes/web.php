@@ -114,7 +114,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
         });
 
-        // Users Management - DIPERBAIKI DAN DILENGKAPI
+        // Users Management
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
@@ -137,16 +137,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
         });
 
-
-        // Group route khusus admin (opsional, jika kamu pakai middleware admin)
-        Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
-            Route::get('/report/export/sales', [AdminReportController::class, 'exportSales'])->name('report.export.sales');
-            Route::get('/report/export/products', [AdminReportController::class, 'exportProducts'])->name('report.export.products');
-            Route::get('/report/export/customers', [AdminReportController::class, 'exportCustomers'])->name('report.export.customers');
-            Route::get('/report/export/financial', [AdminReportController::class, 'exportFinancial'])->name('report.export.financial');
-        });
-
-        // Settings - DITAMBAHKAN
+        // Settings
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [AdminSettingController::class, 'index'])->name('index');
 
@@ -175,7 +166,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/notifications', [AdminSettingController::class, 'updateNotifications'])->name('notifications.update');
         });
 
-        // Categories - DITAMBAHKAN
+        // Categories
         Route::prefix('categories')->name('categories.')->group(function () {
             Route::get('/', [AdminProductController::class, 'categories'])->name('index');
             Route::get('/create', [AdminProductController::class, 'createCategory'])->name('create');
@@ -186,7 +177,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('/{category}', [AdminProductController::class, 'destroyCategory'])->name('destroy');
         });
 
-        // Additional Admin Routes - DITAMBAHKAN
+        // Additional Admin Routes
         Route::prefix('system')->name('system.')->group(function () {
             Route::get('/info', [AdminDashboardController::class, 'systemInfo'])->name('info');
             Route::post('/cache/clear', [AdminDashboardController::class, 'clearCache'])->name('cache.clear');
@@ -198,7 +189,7 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
-// Buyer Routes - DITAMBAHKAN
+// Buyer Routes
 Route::middleware(['auth', 'role:buyer'])
     ->prefix('buyer')
     ->name('buyer.')
@@ -209,7 +200,7 @@ Route::middleware(['auth', 'role:buyer'])
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     });
 
-// API Routes (untuk AJAX requests) - DITAMBAHKAN
+// API Routes (untuk AJAX requests)
 Route::middleware(['auth', 'role:admin'])
     ->prefix('api/admin')
     ->name('api.admin.')
@@ -222,7 +213,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/notifications/{id}/read', [AdminDashboardController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
-// Test Routes (hanya untuk development) - DITAMBAHKAN
+// Test Routes (hanya untuk development)
 if (app()->environment('local')) {
     Route::get('/test', function () {
         return Inertia::render('Test');
