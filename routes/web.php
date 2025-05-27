@@ -69,6 +69,9 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
             Route::post('/', [AdminProductController::class, 'store'])->name('store');
+            Route::get('/admin/products/low-stock', [ProductController::class, 'lowStock'])
+                ->name('admin.products.low-stock');
+
 
             // Specific routes harus di atas dynamic routes
             Route::get('/low-stock', [AdminProductController::class, 'lowStock'])->name('low-stock');
@@ -134,7 +137,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::patch('/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
         });
 
-        
+
         // Group route khusus admin (opsional, jika kamu pakai middleware admin)
         Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
             Route::get('/report/export/sales', [AdminReportController::class, 'exportSales'])->name('report.export.sales');
