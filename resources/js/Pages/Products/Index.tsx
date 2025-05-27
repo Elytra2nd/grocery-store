@@ -305,8 +305,7 @@ export default function ProductIndex({
               {products.data.map((product: Product) => (
                 <Link
                   key={product.id}
-                  href={route('products.show', { product: product.id })}
-
+                  href={`/products/${product.id}`}
                   className="group relative bg-gray-800/60 backdrop-blur-md rounded-xl overflow-hidden border border-gray-700/50 hover:border-amber-400/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 block"
                 >
                   {/* Product image container */}
