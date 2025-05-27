@@ -69,6 +69,9 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
             Route::post('/', [AdminProductController::class, 'store'])->name('store');
+            Route::get('/admin/products/low-stock', [ProductController::class, 'lowStock'])
+                ->name('admin.products.low-stock');
+
 
             // Specific routes harus di atas dynamic routes
             Route::get('/low-stock', [AdminProductController::class, 'lowStock'])->name('low-stock');
@@ -132,32 +135,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
             Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
             Route::patch('/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
-        });
-
-        // Reports - ROUTE LENGKAP BERDASARKAN INDEX
-        Route::prefix('reports')->name('reports.')->group(function () {
-            // Main reports dashboard
-            Route::get('/', [AdminReportController::class, 'index'])->name('index');
-
-            // Sales reports
-            Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
-            Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
-
-            // Products reports
-            Route::get('/products', [AdminReportController::class, 'products'])->name('products');
-            Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
-
-            // Customers reports
-            Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
-            Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');
-
-            // Financial reports
-            Route::get('/financial', [AdminReportController::class, 'financial'])->name('financial');
-            Route::get('/financial/export', [AdminReportController::class, 'exportFinancial'])->name('financial.export');
-
-            // Inventory reports
-            Route::get('/inventory', [AdminReportController::class, 'inventory'])->name('inventory');
-            Route::get('/inventory/export', [AdminReportController::class, 'exportInventory'])->name('inventory.export');
         });
 
         // Settings
