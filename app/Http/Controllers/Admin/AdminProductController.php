@@ -65,7 +65,7 @@ class AdminProductController extends Controller
             }
 
             $products = $query->orderBy('created_at', 'desc')
-                ->paginate(15)
+                ->paginate(10)
                 ->withQueryString();
 
             // Get categories for filter - dengan null safety
@@ -104,7 +104,7 @@ class AdminProductController extends Controller
                     'data' => [],
                     'current_page' => 1,
                     'last_page' => 1,
-                    'per_page' => 15,
+                    'per_page' => 10,
                     'total' => 0,
                 ],
                 'categories' => [],
@@ -503,7 +503,7 @@ class AdminProductController extends Controller
             $products = Product::where('stock', '<=', 10)
                 ->where('is_active', true)
                 ->orderBy('stock', 'asc')
-                ->paginate(15);
+                ->paginate(10);
 
             return Inertia::render('Admin/Products/LowStock', [
                 'products' => $products,

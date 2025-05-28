@@ -39,18 +39,18 @@ export default function Products() {
             <Head title="Laporan Produk" />
 
             <div className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Laporan Produk</h1>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <h1 className="text-2xl font-extrabold text-amber-900 drop-shadow-sm">Laporan Produk</h1>
                     <button
                         onClick={handleExport}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition"
+                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl shadow transition-all duration-150 text-sm font-semibold"
                     >
                         Export Laporan Produk
                     </button>
                 </div>
 
                 {error && (
-                    <div className="bg-red-100 text-red-700 p-3 rounded">
+                    <div className="bg-red-100 text-red-700 p-3 rounded animate-fade-in-up">
                         {error}
                     </div>
                 )}
@@ -74,11 +74,11 @@ export default function Products() {
 
                 {/* Tabel Produk */}
                 <div>
-                    <h2 className="text-xl font-semibold mb-2">Analisis Produk</h2>
-                    <div className="rounded-xl border bg-white p-4 shadow overflow-auto">
+                    <h2 className="text-xl font-semibold mb-2 text-amber-900">Analisis Produk</h2>
+                    <div className="rounded-xl border border-amber-100 bg-white p-4 shadow overflow-auto">
                         <table className="min-w-full table-auto">
                             <thead>
-                                <tr className="text-left text-sm text-gray-500 border-b">
+                                <tr className="text-left text-sm text-amber-700 border-b">
                                     <th className="py-2">ID</th>
                                     <th className="py-2">Nama Produk</th>
                                     <th className="py-2">Jumlah Terjual</th>
@@ -94,9 +94,9 @@ export default function Products() {
                                     </tr>
                                 ) : (
                                     products.map((product) => (
-                                        <tr key={product.id} className="border-b">
+                                        <tr key={product.id} className="border-b hover:bg-amber-50 transition-colors duration-150">
                                             <td className="py-2">{product.id}</td>
-                                            <td className="py-2">{product.name}</td>
+                                            <td className="py-2 text-amber-900 font-medium">{product.name}</td>
                                             <td className="py-2">
                                                 {typeof product.total_sold === 'number'
                                                     ? product.total_sold.toLocaleString("id-ID")
@@ -117,7 +117,7 @@ export default function Products() {
     );
 }
 
-// Komponen kartu ringkasan
+// Komponen kartu ringkasan autumn enchant
 function SummaryCard({
     label,
     value,
@@ -131,11 +131,29 @@ function SummaryCard({
         typeof val === "number"
             ? "Rp " + val.toLocaleString("id-ID")
             : "-";
+
+    // Pilih warna autumn berdasarkan label
+    const colorMap: Record<string, string> = {
+        "Total Produk": "from-amber-400/70 to-orange-100/50",
+        "Total Terjual": "from-orange-400/70 to-yellow-100/50",
+        "Total Pendapatan": "from-green-400/70 to-amber-100/50",
+    };
+    const gradient = colorMap[label] || "from-amber-400/70 to-orange-100/50";
+
     return (
-        <div className="rounded-xl border bg-white p-4 shadow">
-            <div className="text-sm text-gray-500">{label}</div>
-            <div className="text-xl font-bold">
-                {isCurrency ? formatRupiah(value) : (typeof value === "number" ? value.toLocaleString("id-ID") : "-")}
+        <div
+            className={`relative overflow-hidden rounded-2xl border border-amber-100 shadow bg-white/70 backdrop-blur group hover:scale-[1.03] hover:shadow-2xl transition-all duration-200`}
+        >
+            <div className={`absolute inset-0 z-0 bg-gradient-to-br ${gradient} opacity-60 group-hover:opacity-80 transition-all duration-300`} />
+            <div className="relative z-10 p-4 flex flex-col items-start">
+                <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">{label}</div>
+                <div className="text-2xl font-extrabold text-amber-900 drop-shadow">
+                    {isCurrency
+                        ? formatRupiah(value)
+                        : typeof value === "number"
+                        ? value.toLocaleString("id-ID")
+                        : "-"}
+                </div>
             </div>
         </div>
     );

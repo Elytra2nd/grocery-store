@@ -10,8 +10,6 @@ import {
     UsersIcon,
     CubeIcon,
     DocumentChartBarIcon,
-    ArrowTrendingUpIcon,
-    ArrowTrendingDownIcon,
     TrophyIcon
 } from '@heroicons/react/24/outline';
 
@@ -55,7 +53,6 @@ export default function ReportsIndex({
     topProducts = [],
     error
 }: Props): JSX.Element {
-    // Safe fallbacks
     const safeStatistics = statistics || {
         total_sales: 0,
         monthly_sales: 0,
@@ -65,125 +62,109 @@ export default function ReportsIndex({
         active_products: 0,
     };
 
-    const formatCurrency = (amount: number): string => {
-        return `Rp ${amount.toLocaleString('id-ID')}`;
-    };
-
-    const formatNumber = (value: number): string => {
-        return value.toLocaleString('id-ID');
-    };
-
-    const calculateGrowth = (current: number, previous: number): number => {
-        if (previous === 0) return 0;
-        return ((current - previous) / previous) * 100;
-    };
+    const formatCurrency = (amount: number): string => `Rp ${amount.toLocaleString('id-ID')}`;
+    const formatNumber = (value: number): string => value.toLocaleString('id-ID');
 
     return (
         <AuthenticatedLayout>
-            <Head title="Laporan Dashboard" />
+            <Head title="Dashboard Laporan" />
 
-            <div className="py-6">
+            <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-3xl font-extrabold text-amber-900 drop-shadow-sm">
                             Dashboard Laporan
                         </h1>
-                        <p className="mt-2 text-gray-600">
+                        <p className="mt-2 text-amber-700">
                             Overview performa bisnis dan analisis penjualan
                         </p>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                        <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg animate-fade-in-up">
                             {error}
                         </div>
                     )}
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         <StatCard
                             title="Total Penjualan"
                             value={formatCurrency(safeStatistics.total_sales)}
                             icon={CurrencyDollarIcon}
-                            color="green"
-                            trend={12.5}
+                            gradient="from-green-400/70 via-amber-200/60 to-amber-100/80"
                         />
                         <StatCard
                             title="Penjualan Bulan Ini"
                             value={formatCurrency(safeStatistics.monthly_sales)}
                             icon={ChartBarIcon}
-                            color="blue"
-                            trend={8.2}
+                            gradient="from-blue-400/70 via-amber-200/60 to-amber-100/80"
                         />
                         <StatCard
                             title="Total Pesanan"
                             value={formatNumber(safeStatistics.total_orders)}
                             icon={ShoppingCartIcon}
-                            color="purple"
-                            trend={-2.1}
+                            gradient="from-purple-400/70 via-amber-200/60 to-amber-100/80"
                         />
                         <StatCard
                             title="Pesanan Bulan Ini"
                             value={formatNumber(safeStatistics.monthly_orders)}
                             icon={DocumentChartBarIcon}
-                            color="indigo"
-                            trend={15.3}
+                            gradient="from-indigo-400/70 via-amber-200/60 to-amber-100/80"
                         />
                         <StatCard
                             title="Total Pelanggan"
                             value={formatNumber(safeStatistics.total_customers)}
                             icon={UsersIcon}
-                            color="yellow"
-                            trend={5.7}
+                            gradient="from-yellow-400/70 via-amber-200/60 to-amber-100/80"
                         />
                         <StatCard
                             title="Produk Aktif"
                             value={formatNumber(safeStatistics.active_products)}
                             icon={CubeIcon}
-                            color="emerald"
-                            trend={3.2}
+                            gradient="from-emerald-400/70 via-amber-200/60 to-amber-100/80"
                         />
                     </div>
 
                     {/* Report Navigation */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <ReportCard
                             title="Laporan Penjualan"
                             description="Analisis penjualan harian, mingguan, dan bulanan"
                             icon={ChartBarIcon}
                             href="/admin/reports/sales"
-                            color="blue"
+                            gradient="from-blue-500/90 to-blue-300/60"
                         />
                         <ReportCard
                             title="Laporan Produk"
                             description="Performa produk dan analisis inventori"
                             icon={CubeIcon}
                             href="/admin/reports/products"
-                            color="green"
+                            gradient="from-green-500/90 to-green-300/60"
                         />
                         <ReportCard
                             title="Laporan Pelanggan"
                             description="Analisis perilaku dan segmentasi pelanggan"
                             icon={UsersIcon}
                             href="/admin/reports/customers"
-                            color="purple"
+                            gradient="from-purple-500/90 to-purple-300/60"
                         />
                         <ReportCard
                             title="Laporan Keuangan"
                             description="Analisis pendapatan dan profitabilitas"
                             icon={CurrencyDollarIcon}
                             href="/admin/reports/financial"
-                            color="yellow"
+                            gradient="from-yellow-500/90 to-yellow-300/60"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Sales Trend Chart */}
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-6 py-4 border-b border-gray-200">
-                                <h3 className="text-lg font-medium text-gray-900">
+                        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-amber-100 animate-fade-in-up">
+                            <div className="px-6 py-4 border-b border-amber-100">
+                                <h3 className="text-lg font-bold text-amber-900">
                                     Tren Penjualan (12 Bulan Terakhir)
                                 </h3>
                             </div>
@@ -191,7 +172,7 @@ export default function ReportsIndex({
                                 {salesTrend.length > 0 ? (
                                     <SalesTrendChart data={salesTrend} />
                                 ) : (
-                                    <div className="text-center py-8 text-gray-500">
+                                    <div className="text-center py-8 text-amber-400">
                                         Data tren penjualan tidak tersedia
                                     </div>
                                 )}
@@ -199,9 +180,9 @@ export default function ReportsIndex({
                         </div>
 
                         {/* Top Products */}
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-6 py-4 border-b border-gray-200">
-                                <h3 className="text-lg font-medium text-gray-900">
+                        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-amber-100 animate-fade-in-up">
+                            <div className="px-6 py-4 border-b border-amber-100">
+                                <h3 className="text-lg font-bold text-amber-900">
                                     Produk Terlaris
                                 </h3>
                             </div>
@@ -209,7 +190,7 @@ export default function ReportsIndex({
                                 {topProducts.length > 0 ? (
                                     <TopProductsList products={topProducts} />
                                 ) : (
-                                    <div className="text-center py-8 text-gray-500">
+                                    <div className="text-center py-8 text-amber-400">
                                         Data produk terlaris tidak tersedia
                                     </div>
                                 )}
@@ -222,124 +203,83 @@ export default function ReportsIndex({
     );
 }
 
-// StatCard Component
-interface StatCardProps {
+// StatCard dengan glassmorphism, gradient, dan animasi hover
+function StatCard({
+    title,
+    value,
+    icon: Icon,
+    gradient
+}: {
     title: string;
     value: string;
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    color: 'green' | 'blue' | 'purple' | 'indigo' | 'yellow' | 'emerald';
-    trend?: number;
-}
-
-function StatCard({ title, value, icon: Icon, color, trend }: StatCardProps): JSX.Element {
-    const colorClasses = {
-        green: 'bg-green-500',
-        blue: 'bg-blue-500',
-        purple: 'bg-purple-500',
-        indigo: 'bg-indigo-500',
-        yellow: 'bg-yellow-500',
-        emerald: 'bg-emerald-500',
-    };
-
-    const trendColor = trend && trend > 0 ? 'text-green-600' : 'text-red-600';
-    const TrendIcon = trend && trend > 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon;
-
+    gradient: string;
+}) {
     return (
-        <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="p-5">
-                <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                        <div className={`w-10 h-10 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
-                            <Icon className="h-6 w-6 text-white" />
-                        </div>
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                {title}
-                            </dt>
-                            <dd className="flex items-baseline">
-                                <div className="text-2xl font-semibold text-gray-900">
-                                    {value}
-                                </div>
-                                {trend !== undefined && (
-                                    <div className={`ml-2 flex items-baseline text-sm font-semibold ${trendColor}`}>
-                                        <TrendIcon className="self-center flex-shrink-0 h-4 w-4" />
-                                        <span className="ml-1">
-                                            {Math.abs(trend).toFixed(1)}%
-                                        </span>
-                                    </div>
-                                )}
-                            </dd>
-                        </dl>
-                    </div>
+        <div className={`relative overflow-hidden rounded-2xl shadow-xl border border-amber-100 bg-white/70 backdrop-blur hover:scale-[1.025] hover:shadow-2xl transition-all duration-200 group`}>
+            <div className={`absolute inset-0 z-0 bg-gradient-to-br ${gradient} opacity-70 group-hover:opacity-90 transition-all duration-300`} />
+            <div className="relative z-10 p-6 flex items-center space-x-4">
+                <div className="w-14 h-14 rounded-xl bg-white/50 flex items-center justify-center shadow group-hover:bg-white/80 transition-all duration-200">
+                    <Icon className="h-7 w-7 text-amber-700" />
+                </div>
+                <div>
+                    <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide">{title}</div>
+                    <div className="text-2xl font-extrabold text-amber-900 drop-shadow">{value}</div>
                 </div>
             </div>
         </div>
     );
 }
 
-// ReportCard Component
-interface ReportCardProps {
+// ReportCard dengan gradient, glass, dan animasi
+function ReportCard({
+    title,
+    description,
+    icon: Icon,
+    href,
+    gradient
+}: {
     title: string;
     description: string;
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     href: string;
-    color: 'blue' | 'green' | 'purple' | 'yellow';
-}
-
-function ReportCard({ title, description, icon: Icon, href, color }: ReportCardProps): JSX.Element {
-    const colorClasses = {
-        blue: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
-        green: 'bg-green-50 text-green-600 hover:bg-green-100',
-        purple: 'bg-purple-50 text-purple-600 hover:bg-purple-100',
-        yellow: 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100',
-    };
-
+    gradient: string;
+}) {
     return (
         <Link
             href={href}
-            className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-200"
+            className="relative block rounded-2xl shadow-lg border border-amber-100 bg-white/70 backdrop-blur hover:scale-[1.025] hover:shadow-2xl transition-all duration-200 group overflow-hidden"
         >
-            <div className="p-6">
-                <div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center mb-4 transition-colors duration-200`}>
-                    <Icon className="h-6 w-6" />
+            <div className={`absolute inset-0 z-0 bg-gradient-to-br ${gradient} opacity-60 group-hover:opacity-90 transition-all duration-300`} />
+            <div className="relative z-10 p-6 flex flex-col items-start">
+                <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center shadow mb-4 group-hover:bg-white/80 transition-all duration-200">
+                    <Icon className="h-6 w-6 text-amber-700" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                    {description}
-                </p>
+                <h3 className="text-lg font-bold text-amber-900 mb-1 drop-shadow">{title}</h3>
+                <p className="text-sm text-amber-700">{description}</p>
             </div>
         </Link>
     );
 }
 
-// SalesTrendChart Component (Simple Bar Chart)
-interface SalesTrendChartProps {
-    data: SalesTrend[];
-}
-
-function SalesTrendChart({ data }: SalesTrendChartProps): JSX.Element {
-    const maxSales = Math.max(...data.map(item => item.sales));
+// SalesTrendChart autumn bar chart
+function SalesTrendChart({ data }: { data: SalesTrend[] }) {
+    const maxSales = Math.max(...data.map(item => item.sales), 1);
 
     return (
         <div className="space-y-4">
             {data.slice(-6).map((item, index) => (
                 <div key={index} className="flex items-center space-x-4">
-                    <div className="w-16 text-sm text-gray-600 font-medium">
-                        {item.month}
-                    </div>
+                    <div className="w-16 text-xs text-amber-700 font-bold">{item.month}</div>
                     <div className="flex-1">
-                        <div className="bg-gray-200 rounded-full h-4 relative">
+                        <div className="bg-amber-100 rounded-full h-4 relative">
                             <div
-                                className="bg-blue-500 h-4 rounded-full transition-all duration-300"
+                                className="bg-gradient-to-r from-amber-400 to-orange-400 h-4 rounded-full transition-all duration-300"
                                 style={{ width: `${(item.sales / maxSales) * 100}%` }}
                             />
                         </div>
                     </div>
-                    <div className="w-24 text-sm text-gray-900 font-medium text-right">
+                    <div className="w-24 text-xs font-bold text-amber-900 text-right">
                         Rp {item.sales.toLocaleString('id-ID')}
                     </div>
                 </div>
@@ -348,35 +288,30 @@ function SalesTrendChart({ data }: SalesTrendChartProps): JSX.Element {
     );
 }
 
-// TopProductsList Component
-interface TopProductsListProps {
-    products: TopProduct[];
-}
-
-function TopProductsList({ products }: TopProductsListProps): JSX.Element {
+// TopProductsList autumn
+function TopProductsList({ products }: { products: TopProduct[] }) {
     return (
         <div className="space-y-4">
             {products.slice(0, 5).map((item, index) => (
                 <div key={item.product_id} className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                            {index === 0 && <TrophyIcon className="h-5 w-5 text-yellow-600" />}
-                            {index !== 0 && (
-                                <span className="text-sm font-medium text-yellow-600">
-                                    {index + 1}
-                                </span>
+                        <div className="w-8 h-8 bg-gradient-to-br from-yellow-300 to-orange-200 rounded-full flex items-center justify-center shadow">
+                            {index === 0 ? (
+                                <TrophyIcon className="h-5 w-5 text-yellow-700" />
+                            ) : (
+                                <span className="text-xs font-bold text-yellow-700">{index + 1}</span>
                             )}
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-semibold text-amber-900 truncate">
                             {item.product?.name || 'Produk Tidak Ditemukan'}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-amber-700">
                             {item.total_sold} terjual
                         </p>
                     </div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-xs font-bold text-amber-900">
                         Rp {item.total_revenue.toLocaleString('id-ID')}
                     </div>
                 </div>
