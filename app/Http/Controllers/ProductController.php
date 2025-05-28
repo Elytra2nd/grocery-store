@@ -19,13 +19,13 @@ class ProductController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                  ->orWhere('category_id', 'like', "%{$search}%");
             });
         }
 
         // Category filter
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
 
         // Price range filter
@@ -54,11 +54,11 @@ class ProductController extends Controller
         $products = $query->paginate(12)->withQueryString();
 
         // Get categories for filter dropdown
-        $categories = Product::select('category')
+        $categories = Product::select('category_id')
             ->where('is_active', true)
             ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+            ->orderBy('category_id')
+            ->pluck('category_id');
 
         // Get price range for filter
         $priceRange = Product::where('is_active', true)
@@ -70,7 +70,7 @@ class ProductController extends Controller
             'categories' => $categories,
             'priceRange' => $priceRange,
             'filters' => $request->only([
-                'search', 'category', 'min_price', 'max_price',
+                'search', 'category_id', 'min_price', 'max_price',
                 'sort_by', 'sort_order', 'in_stock'
             ]),
         ]);
@@ -84,7 +84,7 @@ class ProductController extends Controller
         }
 
         // Get related products from same category
-        $relatedProducts = Product::where('category', $product->category)
+        $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
             ->limit(4)
@@ -107,7 +107,7 @@ class ProductController extends Controller
                 $searchTerm = $request->q;
                 $query->where('name', 'like', "%{$searchTerm}%")
                       ->orWhere('description', 'like', "%{$searchTerm}%")
-                      ->orWhere('category', 'like', "%{$searchTerm}%");
+                      ->orWhere('category_id', 'like', "%{$searchTerm}%");
             })
             ->select('id', 'name', 'price', 'image', 'stock')
             ->limit(10)
@@ -118,11 +118,11 @@ class ProductController extends Controller
 
     public function categories()
     {
-        $categories = Product::select('category')
+        $categories = Product::select('category_id')
             ->where('is_active', true)
             ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+            ->orderBy('category_id')
+            ->pluck('category_id');
 
         return response()->json($categories);
     }
