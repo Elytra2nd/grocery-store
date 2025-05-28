@@ -92,7 +92,6 @@ const adminNavigation = (pesananBadge: number) => [
         icon: CubeIcon,
         children: [
             { name: 'Semua Kategori', href: '/admin/categories' },
-            { name: 'Tambah Kategori', href: '/admin/categories/create' },
         ]
     },
     {

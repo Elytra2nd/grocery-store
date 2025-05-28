@@ -58,9 +58,8 @@ const adminNavigation: NavigationItem[] = [
         href: '/admin/categories',
         icon: CubeIcon,
         children: [
-            { name: 'Semua Kategori', href: '/admin/categori' },
+            { name: 'Semua Kategori', href: '/admin/categories' },
             { name: 'Tambah Produk', href: '/admin/categories/create' },
-            { name: 'Kategori', href: '/admin/categories/{id}' },
         ]
     },
     {
