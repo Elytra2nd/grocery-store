@@ -39,7 +39,6 @@ const buyerNavigation: NavigationItem[] = [
         href: '/products',
         icon: ShoppingCartIcon,
     },
-
     {
         name: 'Pesanan Saya',
         href: '/orders',

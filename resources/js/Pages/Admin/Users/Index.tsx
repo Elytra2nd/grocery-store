@@ -11,6 +11,7 @@ interface User {
     email_verified_at: string | null;
     created_at: string;
     active: boolean;
+    roles: { name: string }[];
 }
 
 interface Props extends PageProps {
@@ -26,6 +27,22 @@ interface Props extends PageProps {
             active: boolean;
         }>;
     };
+    auth: any;
+}
+
+function getInitials(name: string): string {
+    const words = name.trim().split(' ').filter(word => word.length > 0);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return words[0].charAt(0).toUpperCase() + words[words.length - 1].charAt(0).toUpperCase();
+}
+
+function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 }
 
 export default function Index({ auth, users }: Props): JSX.Element {
@@ -37,61 +54,37 @@ export default function Index({ auth, users }: Props): JSX.Element {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    const getInitials = (name: string) => {
-        const words = name.trim().split(' ').filter(word => word.length > 0);
-
-        if (words.length === 0) {
-            return '';
-        } else if (words.length === 1) {
-            // Jika hanya ada satu kata, ambil huruf pertama saja
-            return words[0].charAt(0).toUpperCase();
-        } else {
-            // Ambil huruf pertama dari kata pertama dan kata terakhir
-            const firstInitial = words[0].charAt(0).toUpperCase();
-            const lastInitial = words[words.length - 1].charAt(0).toUpperCase();
-            return firstInitial + lastInitial;
-        }
-    };
-
     return (
         <AuthenticatedLayout>
             <Head title="Manajemen User" />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
                 <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                     {/* Header Section */}
                     <div className="mb-8">
-                        <div className="bg-white rounded-2xl shadow-xl border border-white/20 p-8 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-xl border border-amber-100 p-8 backdrop-blur-sm">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                                    <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-800 to-orange-600 bg-clip-text text-transparent">
                                         Manajemen User
                                     </h1>
-                                    <p className="text-slate-600 mt-2">
+                                    <p className="text-amber-700 mt-2">
                                         Kelola semua pengguna sistem dengan mudah
                                     </p>
-                                    <div className="flex items-center gap-4 mt-4 text-sm text-slate-500">
+                                    <div className="flex items-center gap-4 mt-4 text-sm text-amber-800">
                                         <span className="flex items-center gap-2">
                                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                             {users.data.filter(u => u.active).length} Aktif
                                         </span>
                                         <span className="flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                                            <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
                                             {users.total} Total User
                                         </span>
                                     </div>
                                 </div>
                                 <Link
                                     href='/admin/users/create'
-                                    className="group relative inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                    className="group relative inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                                 >
                                     <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -103,68 +96,65 @@ export default function Index({ auth, users }: Props): JSX.Element {
                     </div>
 
                     {/* Table Section */}
-                    <div className="bg-white rounded-2xl shadow-xl border border-white/20 overflow-hidden backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden backdrop-blur-sm">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200">
+                            <table className="min-w-full divide-y divide-amber-100">
                                 <thead>
-                                    <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                    <tr className="bg-gradient-to-r from-amber-50 to-orange-50">
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">
                                             User
                                         </th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">
                                             Status
                                         </th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">
                                             Email Status
                                         </th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">
                                             Terdaftar
                                         </th>
-                                        <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-amber-700 uppercase tracking-wider">
                                             Aksi
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-amber-50">
                                     {users.data.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-6 py-16 text-center">
                                                 <div className="flex flex-col items-center gap-4">
-                                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                                                        <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                                                         </svg>
                                                     </div>
                                                     <div>
-                                                        <p className="text-slate-600 font-medium">Belum ada user</p>
-                                                        <p className="text-slate-400 text-sm mt-1">Tambahkan user pertama untuk memulai</p>
+                                                        <p className="text-amber-700 font-medium">Belum ada user</p>
+                                                        <p className="text-amber-400 text-sm mt-1">Tambahkan user pertama untuk memulai</p>
                                                     </div>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : (
-                                        users.data.map((user, index) => (
-                                            <tr key={user.id} className="hover:bg-slate-50/50 transition-colors duration-150">
+                                        users.data.map((user) => (
+                                            <tr key={user.id} className="hover:bg-amber-50/60 transition-colors duration-150">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative">
-                                                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-lg">
                                                                 <span className="text-white font-bold text-sm">
                                                                     {getInitials(user.name)}
                                                                 </span>
                                                             </div>
-                                                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${user.active ? 'bg-green-500' : 'bg-slate-400'
-                                                                }`}></div>
+                                                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${user.active ? 'bg-green-500' : 'bg-amber-400'}`}></div>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2">
-                                                                <p className="text-sm font-semibold text-slate-900 truncate">
+                                                                <p className="text-sm font-semibold text-amber-900 truncate">
                                                                     {user.name}
                                                                 </p>
-                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                                                </span>
                                                             </div>
-                                                            <p className="text-sm text-slate-500 truncate">
+                                                            <p className="text-sm text-amber-700 truncate">
                                                                 {user.email}
                                                             </p>
                                                         </div>
@@ -175,8 +165,7 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                             ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20'
                                                             : 'bg-red-100 text-red-800 ring-1 ring-red-600/20'
                                                         }`}>
-                                                        <div className={`w-1.5 h-1.5 rounded-full ${user.active ? 'bg-green-600' : 'bg-red-600'
-                                                            }`}></div>
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${user.active ? 'bg-green-600' : 'bg-red-600'}`}></div>
                                                         {user.active ? 'Aktif' : 'Nonaktif'}
                                                     </span>
                                                 </td>
@@ -198,7 +187,7 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="text-sm text-slate-900 font-medium">
+                                                    <div className="text-sm text-amber-900 font-medium">
                                                         {formatDate(user.created_at)}
                                                     </div>
                                                 </td>
@@ -235,9 +224,9 @@ export default function Index({ auth, users }: Props): JSX.Element {
 
                         {/* Enhanced Pagination */}
                         {users.last_page > 1 && (
-                            <div className="bg-slate-50 border-t border-slate-200 px-6 py-4">
+                            <div className="bg-amber-50 border-t border-amber-200 px-6 py-4">
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                                    <div className="text-sm text-slate-600">
+                                    <div className="text-sm text-amber-700">
                                         <span className="font-medium">
                                             {((users.current_page - 1) * users.per_page) + 1}
                                         </span>
@@ -255,10 +244,10 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                 key={index}
                                                 href={link.url || '#'}
                                                 className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${link.active
-                                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
+                                                        ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-lg transform scale-105'
                                                         : link.url
-                                                            ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:scale-105'
-                                                            : 'text-slate-400 cursor-not-allowed'
+                                                            ? 'text-amber-700 hover:bg-amber-100 hover:text-amber-900 hover:scale-105'
+                                                            : 'text-amber-300 cursor-not-allowed'
                                                     }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />

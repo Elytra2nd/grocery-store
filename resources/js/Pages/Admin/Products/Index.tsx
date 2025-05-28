@@ -12,7 +12,128 @@ interface Props extends PageProps {
     filters: ProductFilters;
 }
 
-// PASTIKAN menggunakan default export yang benar
+// Pagination Component
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginationProps {
+    links: PaginationLink[];
+    meta: PaginatedData<any>;
+}
+
+function Pagination({ links, meta }: PaginationProps): JSX.Element {
+    if (!links || links.length === 0) return <></>;
+    return (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
+            <div className="flex-1 flex justify-between sm:hidden">
+                {meta.prev_page_url && (
+                    <Link
+                        href={meta.prev_page_url}
+                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        Sebelumnya
+                    </Link>
+                )}
+                {meta.next_page_url && (
+                    <Link
+                        href={meta.next_page_url}
+                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        Selanjutnya
+                    </Link>
+                )}
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm text-gray-700">
+                        Menampilkan{' '}
+                        <span className="font-medium">{meta.from || 0}</span>
+                        {' '}sampai{' '}
+                        <span className="font-medium">{meta.to || 0}</span>
+                        {' '}dari{' '}
+                        <span className="font-medium">{meta.total || 0}</span>
+                        {' '}produk
+                    </p>
+                </div>
+                <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {links.map((link, index) => (
+                            <Link
+                                key={index}
+                                href={link.url || '#'}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                    link.active
+                                        ? 'z-10 bg-amber-50 border-amber-500 text-amber-700'
+                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                } ${
+                                    index === 0 ? 'rounded-l-md' : ''
+                                } ${
+                                    index === links.length - 1 ? 'rounded-r-md' : ''
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// BulkActionModal Component
+interface BulkActionModalProps {
+    action: string;
+    selectedCount: number;
+    onConfirm: () => void;
+    onCancel: () => void;
+}
+
+function BulkActionModal({ action, selectedCount, onConfirm, onCancel }: BulkActionModalProps): JSX.Element {
+    const getActionText = (action: string): string => {
+        switch (action) {
+            case 'activate': return 'mengaktifkan';
+            case 'deactivate': return 'menonaktifkan';
+            case 'delete': return 'menghapus';
+            default: return action;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+            <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div className="mt-3 text-center">
+                    <h3 className="text-lg font-medium text-gray-900">
+                        Konfirmasi Aksi
+                    </h3>
+                    <div className="mt-2 px-7 py-3">
+                        <p className="text-sm text-gray-500">
+                            Apakah Anda yakin ingin {getActionText(action)} {selectedCount} produk yang dipilih?
+                        </p>
+                    </div>
+                    <div className="flex justify-center space-x-4 px-4 py-3">
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        >
+                            Ya, Lanjutkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+
 export default function ProductsIndex({
     products,
     categories,
@@ -25,7 +146,6 @@ export default function ProductsIndex({
     const [bulkAction, setBulkAction] = useState<string>('');
     const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
 
-    // Safe fallbacks untuk data yang mungkin undefined
     const safeProducts = products?.data || [];
     const safeCategories = categories || [];
     const safeStatistics = statistics || {
@@ -92,14 +212,14 @@ export default function ProductsIndex({
                     {/* Header */}
                     <div className="md:flex md:items-center md:justify-between mb-6">
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                            <h2 className="text-2xl font-bold leading-7 text-amber-900 sm:text-3xl sm:truncate">
                                 Kelola Produk
                             </h2>
                         </div>
                         <div className="mt-4 flex md:mt-0 md:ml-4">
                             <Link
                                 href="/admin/products/create"
-                                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                             >
                                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
                                 Tambah Produk
@@ -113,38 +233,21 @@ export default function ProductsIndex({
                             {flash.success}
                         </div>
                     )}
-
                     {flash.error && (
                         <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                             {flash.error}
                         </div>
                     )}
 
-                    {/* Statistics Cards */}
+                    {/* Statistik Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <StatCard
-                            title="Total Produk"
-                            value={safeStatistics.total_products}
-                            color="blue"
-                        />
-                        <StatCard
-                            title="Produk Aktif"
-                            value={safeStatistics.active_products}
-                            color="green"
-                        />
-                        <StatCard
-                            title="Stok Rendah"
-                            value={safeStatistics.low_stock_products}
-                            color="yellow"
-                        />
-                        <StatCard
-                            title="Stok Habis"
-                            value={safeStatistics.out_of_stock_products}
-                            color="red"
-                        />
+                        <StatCard title="Total Produk" value={safeStatistics.total_products} color="amber" />
+                        <StatCard title="Produk Aktif" value={safeStatistics.active_products} color="green" />
+                        <StatCard title="Stok Rendah" value={safeStatistics.low_stock_products} color="yellow" />
+                        <StatCard title="Stok Habis" value={safeStatistics.out_of_stock_products} color="red" />
                     </div>
 
-                    {/* Filters */}
+                    {/* Filter */}
                     <FilterForm
                         onSubmit={handleSearch}
                         categories={safeCategories}
@@ -196,55 +299,43 @@ export default function ProductsIndex({
     );
 }
 
-// Sub-components dengan perbaikan
-interface StatCardProps {
-    title: string;
-    value: number;
-    color: 'blue' | 'green' | 'yellow' | 'red';
-}
-
-function StatCard({ title, value, color }: StatCardProps): JSX.Element {
-    const colorClasses = {
-        blue: 'bg-blue-500',
+// StatCard autumn
+function StatCard({ title, value, color }: { title: string; value: number; color: string }) {
+    const colorClasses: Record<string, string> = {
+        amber: 'bg-amber-600',
         green: 'bg-green-500',
-        yellow: 'bg-yellow-500',
+        yellow: 'bg-yellow-400',
         red: 'bg-red-500',
     };
-
     return (
         <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-                <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                        <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
-                            <span className="text-white text-sm font-medium">
-                                {title.charAt(0)}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">
-                                {title}
-                            </dt>
-                            <dd className="text-lg font-medium text-gray-900">
-                                {value.toLocaleString('id-ID')}
-                            </dd>
-                        </dl>
-                    </div>
+            <div className="p-5 flex items-center">
+                <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
+                    <span className="text-white text-sm font-medium">
+                        {title.charAt(0)}
+                    </span>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                            {title}
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                            {value.toLocaleString('id-ID')}
+                        </dd>
+                    </dl>
                 </div>
             </div>
         </div>
     );
 }
 
-interface FilterFormProps {
+// FilterForm
+function FilterForm({ onSubmit, categories, filters }: {
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
     categories: string[];
     filters: ProductFilters;
-}
-
-function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Element {
+}) {
     return (
         <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-5 sm:p-6">
@@ -259,10 +350,9 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                                 name="search"
                                 defaultValue={filters.search || ''}
                                 placeholder="Cari produk..."
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                             />
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Kategori
@@ -270,7 +360,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             <select
                                 name="category"
                                 defaultValue={filters.category || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                             >
                                 <option value="">Semua Kategori</option>
                                 {categories.map((category) => (
@@ -280,7 +370,6 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                                 ))}
                             </select>
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Status
@@ -288,14 +377,13 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             <select
                                 name="status"
                                 defaultValue={filters.status || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                             >
                                 <option value="">Semua Status</option>
                                 <option value="active">Aktif</option>
                                 <option value="inactive">Tidak Aktif</option>
                             </select>
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Stok
@@ -303,7 +391,7 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             <select
                                 name="stock_status"
                                 defaultValue={filters.stock_status || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                             >
                                 <option value="">Semua Stok</option>
                                 <option value="available">Tersedia</option>
@@ -312,18 +400,16 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
                             </select>
                         </div>
                     </div>
-
                     <div className="flex justify-between">
                         <button
                             type="submit"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                         >
                             Filter
                         </button>
-
                         <Link
                             href="/admin/products"
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                         >
                             Reset
                         </Link>
@@ -334,14 +420,13 @@ function FilterForm({ onSubmit, categories, filters }: FilterFormProps): JSX.Ele
     );
 }
 
-interface BulkActionsProps {
+// BulkActions
+function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: {
     selectedCount: number;
     bulkAction: string;
     setBulkAction: (action: string) => void;
     onExecute: () => void;
-}
-
-function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: BulkActionsProps): JSX.Element {
+}) {
     return (
         <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-3 sm:px-6">
@@ -355,7 +440,7 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: Bu
                         <select
                             value={bulkAction}
                             onChange={(e) => setBulkAction(e.target.value)}
-                            className="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className="border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                         >
                             <option value="">Pilih Aksi</option>
                             <option value="activate">Aktifkan</option>
@@ -365,7 +450,7 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: Bu
                         <button
                             onClick={onExecute}
                             disabled={!bulkAction}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:bg-gray-400"
                         >
                             Jalankan
                         </button>
@@ -376,22 +461,20 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: Bu
     );
 }
 
-interface ProductsTableProps {
-    products: Product[];
-    selectedProducts: number[];
-    onToggleSelection: (id: number) => void;
-    onToggleSelectAll: () => void;
-    onDelete: (product: Product) => void;
-}
-
+// ProductsTable & ProductRow: tombol aksi dengan warna & animasi sentuhan
 function ProductsTable({
     products,
     selectedProducts,
     onToggleSelection,
     onToggleSelectAll,
     onDelete
-}: ProductsTableProps): JSX.Element {
-    // Handle empty products
+}: {
+    products: Product[];
+    selectedProducts: number[];
+    onToggleSelection: (id: number) => void;
+    onToggleSelectAll: () => void;
+    onDelete: (product: Product) => void;
+}): JSX.Element {
     if (!products || products.length === 0) {
         return (
             <div className="bg-white shadow rounded-lg">
@@ -408,7 +491,7 @@ function ProductsTable({
                     <div className="mt-6">
                         <Link
                             href="/admin/products/create"
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700"
                         >
                             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
                             Tambah Produk
@@ -423,32 +506,32 @@ function ProductsTable({
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-amber-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 <input
                                     type="checkbox"
                                     checked={selectedProducts.length === products.length && products.length > 0}
                                     onChange={onToggleSelectAll}
-                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                                 />
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Produk
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Kategori
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Harga
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Stok
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Aksi
                             </th>
                         </tr>
@@ -470,22 +553,20 @@ function ProductsTable({
     );
 }
 
-// ProductRow component (sama seperti kode sebelumnya)
-interface ProductRowProps {
+function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
     product: Product;
     isSelected: boolean;
     onToggleSelection: (id: number) => void;
     onDelete: (product: Product) => void;
-}
-
-function ProductRow({ product, isSelected, onToggleSelection, onDelete }: ProductRowProps): JSX.Element {
+}) {
     const [imageError, setImageError] = useState<boolean>(false);
     const [imageLoading, setImageLoading] = useState<boolean>(true);
 
+    // Untuk animasi klik/tap pada tombol aksi
+    const [activeBtn, setActiveBtn] = useState<string | null>(null);
+
     const getImageSrc = (product: Product): string => {
-        if (!product.image) {
-            return '';
-        }
+        if (!product.image) return '';
         return `/storage/products/${product.image}`;
     };
 
@@ -512,14 +593,18 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
         </div>
     );
 
+    // Tombol aksi: warna berbeda dan animasi tap/klik
+    const btnBase =
+        "p-1 rounded transition-all duration-150 touch-manipulation focus:outline-none focus:ring-2 focus:ring-offset-2";
+
     return (
-        <tr className="hover:bg-gray-50 transition-colors duration-150">
+        <tr className="hover:bg-amber-50 transition-colors duration-150">
             <td className="px-6 py-4 whitespace-nowrap">
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onToggleSelection(product.id)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                 />
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -559,7 +644,7 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
                 </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                     {product.category || 'Tidak ada kategori'}
                 </span>
             </td>
@@ -582,26 +667,56 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center justify-end space-x-2">
+                    {/* Lihat */}
                     <Link
                         href={`/admin/products/${product.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
+                        className={`${btnBase} ${
+                            activeBtn === 'view'
+                                ? 'scale-90 bg-indigo-100'
+                                : 'bg-indigo-50 hover:bg-indigo-100'
+                        }`}
                         title="Lihat Detail"
+                        onTouchStart={() => setActiveBtn('view')}
+                        onTouchEnd={() => setActiveBtn(null)}
+                        onMouseDown={() => setActiveBtn('view')}
+                        onMouseUp={() => setActiveBtn(null)}
+                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <EyeIcon className="h-5 w-5" />
+                        <EyeIcon className="h-5 w-5 text-indigo-600" />
                     </Link>
+                    {/* Edit */}
                     <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
+                        className={`${btnBase} ${
+                            activeBtn === 'edit'
+                                ? 'scale-90 bg-amber-100'
+                                : 'bg-amber-50 hover:bg-amber-100'
+                        }`}
                         title="Edit Produk"
+                        onTouchStart={() => setActiveBtn('edit')}
+                        onTouchEnd={() => setActiveBtn(null)}
+                        onMouseDown={() => setActiveBtn('edit')}
+                        onMouseUp={() => setActiveBtn(null)}
+                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <PencilIcon className="h-5 w-5" />
+                        <PencilIcon className="h-5 w-5 text-amber-600" />
                     </Link>
+                    {/* Hapus */}
                     <button
                         onClick={() => onDelete(product)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded transition-colors duration-150"
+                        className={`${btnBase} ${
+                            activeBtn === 'delete'
+                                ? 'scale-90 bg-red-100'
+                                : 'bg-red-50 hover:bg-red-100'
+                        }`}
                         title="Hapus Produk"
+                        onTouchStart={() => setActiveBtn('delete')}
+                        onTouchEnd={() => setActiveBtn(null)}
+                        onMouseDown={() => setActiveBtn('delete')}
+                        onMouseUp={() => setActiveBtn(null)}
+                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <TrashIcon className="h-5 w-5" />
+                        <TrashIcon className="h-5 w-5 text-red-600" />
                     </button>
                 </div>
             </td>
@@ -609,121 +724,5 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: Produc
     );
 }
 
-// Pagination dan BulkActionModal components (sama seperti sebelumnya)
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-interface PaginationProps {
-    links: PaginationLink[];
-    meta: PaginatedData<any>;
-}
-
-function Pagination({ links, meta }: PaginationProps): JSX.Element {
-    return (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
-            <div className="flex-1 flex justify-between sm:hidden">
-                {meta.prev_page_url && (
-                    <Link
-                        href={meta.prev_page_url}
-                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Previous
-                    </Link>
-                )}
-                {meta.next_page_url && (
-                    <Link
-                        href={meta.next_page_url}
-                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Next
-                    </Link>
-                )}
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p className="text-sm text-gray-700">
-                        Showing{' '}
-                        <span className="font-medium">{meta.from || 0}</span>
-                        {' '}to{' '}
-                        <span className="font-medium">{meta.to || 0}</span>
-                        {' '}of{' '}
-                        <span className="font-medium">{meta.total || 0}</span>
-                        {' '}results
-                    </p>
-                </div>
-                <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        {links.map((link, index) => (
-                            <Link
-                                key={index}
-                                href={link.url || '#'}
-                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                    link.active
-                                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                } ${
-                                    index === 0 ? 'rounded-l-md' : ''
-                                } ${
-                                    index === links.length - 1 ? 'rounded-r-md' : ''
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </nav>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-interface BulkActionModalProps {
-    action: string;
-    selectedCount: number;
-    onConfirm: () => void;
-    onCancel: () => void;
-}
-
-function BulkActionModal({ action, selectedCount, onConfirm, onCancel }: BulkActionModalProps): JSX.Element {
-    const getActionText = (action: string): string => {
-        switch (action) {
-            case 'activate': return 'mengaktifkan';
-            case 'deactivate': return 'menonaktifkan';
-            case 'delete': return 'menghapus';
-            default: return action;
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div className="mt-3 text-center">
-                    <h3 className="text-lg font-medium text-gray-900">
-                        Konfirmasi Aksi
-                    </h3>
-                    <div className="mt-2 px-7 py-3">
-                        <p className="text-sm text-gray-500">
-                            Apakah Anda yakin ingin {getActionText(action)} {selectedCount} produk yang dipilih?
-                        </p>
-                    </div>
-                    <div className="flex justify-center space-x-4 px-4 py-3">
-                        <button
-                            onClick={onCancel}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            onClick={onConfirm}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                        >
-                            Ya, Lanjutkan
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+// Pagination dan BulkActionModal tetap seperti sebelumnya
+// ... (bisa copy dari file Anda, tidak ada perubahan khusus pada animasi/warna)
