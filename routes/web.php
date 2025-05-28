@@ -15,47 +15,37 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\{CartController, OrderController, ProductController};
 
+// ===================
 // Public Routes
+// ===================
 Route::get('/', function () {
     return redirect()->route('products.index');
 })->name('home');
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-Route::prefix('cart')->name('cart.')->group(function () {
-    Route::post('/', [CartController::class, 'add'])->name('add'); // <-- cart.add
 
-    // routes/web.php
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-
-
-});
-
-
-
-// Newsletter subscription (jika ada form di homepage)
+// Newsletter subscription (optional)
 Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     $request->validate(['email' => 'required|email']);
-    // Handle newsletter subscription
     return redirect()->route('home')->with('success', 'Thank you for subscribing!');
 })->name('newsletter.subscribe');
 
+// ===================
+// Cart & Order (User)
+// ===================
+// Cart (tanpa duplikasi, gunakan ini saja!)
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
+
+// Order (User/Bayer)
+Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
+
+// ===================
 // Auth Routes
+// ===================
 Route::middleware('auth')->group(function () {
     // Dashboard (user dashboard, bukan admin)
     Route::get('/dashboard', function () {
@@ -67,10 +57,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Cart
+    // Cart (opsional, jika ingin akses cart hanya untuk user login)
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/', [CartController::class, 'add'])->name('add');
+        Route::post('/add', [CartController::class, 'add'])->name('add');
         Route::put('/{id}', [CartController::class, 'update'])->name('update');
         Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
@@ -85,7 +75,9 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// ===================
 // Admin Routes
+// ===================
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
@@ -155,7 +147,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [AdminReportController::class, 'index'])->name('index');
             Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
             Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
-            Route::get('/products', [AdminReportController::class, 'products'])->name('products'); // INI YANG DIPAKAI VIEW LAPORAN PRODUK
+            Route::get('/products', [AdminReportController::class, 'products'])->name('products');
             Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
             Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
             Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');
@@ -204,7 +196,9 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
-// Buyer Routes
+// ===================
+// Buyer Routes (opsional, jika ada dashboard khusus buyer)
+// ===================
 Route::middleware(['auth', 'role:buyer'])
     ->prefix('buyer')
     ->name('buyer.')
@@ -214,7 +208,9 @@ Route::middleware(['auth', 'role:buyer'])
         })->name('dashboard');
     });
 
-// API Routes (untuk AJAX requests)
+// ===================
+// API Routes (untuk AJAX requests, admin)
+// ===================
 Route::middleware(['auth', 'role:admin'])
     ->prefix('api/admin')
     ->name('api.admin.')
@@ -227,7 +223,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/notifications/{id}/read', [AdminDashboardController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
+// ===================
 // Test Routes (hanya untuk development)
+// ===================
 if (app()->environment('local')) {
     Route::get('/test', function () {
         return Inertia::render('Test');

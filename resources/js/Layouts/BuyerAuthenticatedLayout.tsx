@@ -142,7 +142,7 @@ function MainNavigationBar({
 
                         {/* Cart */}
                         <Link
-                            href="/cart/index"
+                            href="/cart"
 
                             className="relative p-2 text-gray-700 hover:text-emerald-600 transition-colors"
                         >
