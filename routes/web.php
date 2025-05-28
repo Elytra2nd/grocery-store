@@ -188,7 +188,6 @@ Route::middleware(['auth', 'role:buyer'])
         Route::get('/dashboard', function () {
             return Inertia::render('Buyer/Dashboard');
         })->name('dashboard');
-        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     });
 
 // ===================
@@ -219,5 +218,5 @@ if (app()->environment('local')) {
     })->name('test.email');
 }
 
-require __DIR__.'/auth.php';
 
+require __DIR__ . '/auth.php';

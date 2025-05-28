@@ -24,7 +24,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'email_verified_at' => $request->user()->email_verified_at,
-                    'roles' => $request->user()->roles()->get(['id', 'name']),
+                    'roles' => $request->user()->roles->pluck('name')->toArray(), // Simplified
                     'permissions' => $request->user()->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
+                'info' => fn() => $request->session()->get('info'),
             ],
         ]);
     }
