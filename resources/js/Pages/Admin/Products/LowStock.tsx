@@ -13,81 +13,90 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
         <AuthenticatedLayout>
             <Head title="Produk Stok Rendah" />
 
-            <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">Produk Stok Rendah</h1>
+            <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 className="text-2xl font-extrabold text-amber-900 mb-6 animate-fade-in-down">
+                        Produk Stok Rendah
+                    </h1>
 
-                {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        {error}
-                    </div>
-                )}
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 animate-fade-in-up">
+                            {error}
+                        </div>
+                    )}
 
-                <div className="overflow-x-auto bg-white shadow rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Produk</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {products.data.length > 0 ? (
-                                products.data.map((product) => (
-                                    <tr key={product.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.category}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">{product.stock}</td>
-                                    </tr>
-                                ))
-                            ) : (
+                    <div className="overflow-x-auto bg-white shadow rounded-lg animate-fade-in-up">
+                        <table className="min-w-full divide-y divide-amber-100">
+                            <thead className="bg-amber-50">
                                 <tr>
-                                    <td colSpan={3} className="text-center px-6 py-4 text-sm text-gray-500">Tidak ada produk dengan stok rendah.</td>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Nama Produk</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Kategori</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Stok</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination */}
-                {products.links.length > 1 && (
-                    <div className="mt-4 flex justify-center gap-2">
-                        {products.links.map((link, i) => {
-                            let label = link.label;
-
-                            // Ganti label Previous dan Next dengan bahasa Indonesia
-                            if (label === '&laquo; Previous') label = 'Sebelumnya';
-                            else if (label === 'Next &raquo;') label = 'Selanjutnya';
-
-                            // Jika label adalah angka, tampilkan angka saja
-                            // Kalau bukan angka (Previous/Next), tampilkan label seperti biasa
-                            const isPageNumber = !isNaN(Number(label));
-
-                            return (
-                                <button
-                                    key={i}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    disabled={!link.url}
-                                    className={`px-3 py-1 rounded border text-sm font-medium ${
-                                        link.active
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    {label}
-                                </button>
-                            );
-                        })}
+                            </thead>
+                            <tbody className="bg-white divide-y divide-amber-100">
+                                {products.data.length > 0 ? (
+                                    products.data.map((product) => (
+                                        <tr key={product.id} className="hover:bg-amber-50 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-900">{product.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700">{product.category}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow ${
+                                                    product.stock === 0
+                                                        ? 'bg-red-100 text-red-800 animate-pulse'
+                                                        : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {product.stock}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={3} className="text-center px-6 py-4 text-sm text-gray-500">Tidak ada produk dengan stok rendah.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                )}
 
-                <div className="mt-6 text-center">
-                    <Link
-                        href="/admin/products"
-                        className="text-indigo-600 hover:underline text-sm"
-                    >
-                        ← Kembali ke Daftar Produk
-                    </Link>
+                    {/* Pagination */}
+                    {products.links.length > 1 && (
+                        <div className="mt-4 flex justify-center gap-2">
+                            {products.links.map((link, i) => {
+                                let label = link.label;
+                                if (label === '&laquo; Previous') label = 'Sebelumnya';
+                                else if (label === 'Next &raquo;') label = 'Selanjutnya';
+                                const isPageNumber = !isNaN(Number(label));
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        disabled={!link.url}
+                                        className={`px-3 py-1 rounded border text-sm font-medium transition-all duration-150 ${
+                                            link.active
+                                                ? 'bg-amber-600 text-white border-amber-600 shadow'
+                                                : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <div className="mt-8 text-center">
+                        <Link
+                            href="/admin/products"
+                            className="inline-flex items-center text-amber-700 hover:text-amber-900 text-sm font-medium transition-colors duration-150"
+                        >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Kembali ke Daftar Produk
+                        </Link>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

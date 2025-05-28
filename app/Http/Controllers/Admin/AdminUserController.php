@@ -12,21 +12,82 @@ use Illuminate\Support\Facades\Log;
 
 class AdminUserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(10);
+        // Pencarian dan filter (opsional)
+        $query = User::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%");
+            });
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
         ]);
     }
 
-    public function active()
+    public function active(Request $request)
     {
-        $users = User::where('is_active', true)->latest()->paginate(10);
+        // Filter user aktif + filter tambahan (search, activity_level, date range)
+        $query = User::where('is_active', true);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%");
+            });
+        }
+
+        if ($level = $request->input('activity_level')) {
+            if ($level === 'high') {
+                $query->where('orders_count', '>=', 10);
+            } elseif ($level === 'medium') {
+                $query->where('orders_count', '>=', 5)->where('orders_count', '<', 10);
+            } elseif ($level === 'low') {
+                $query->where('orders_count', '>=', 1)->where('orders_count', '<', 5);
+            } elseif ($level === 'inactive') {
+                $query->where('orders_count', 0);
+            }
+        }
+
+        if ($date_from = $request->input('date_from')) {
+            $query->whereDate('created_at', '>=', $date_from);
+        }
+        if ($date_to = $request->input('date_to')) {
+            $query->whereDate('created_at', '<=', $date_to);
+        }
+
+        // Eager load statistik belanja
+        $users = $query->withCount('orders')
+            ->withSum('orders as total_spent', 'total_amount')
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        // Statistik summary
+        $statQuery = User::where('is_active', true);
+        $statistics = [
+            'total_active'    => $statQuery->count(),
+            'new_this_month'  => $statQuery->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'with_orders'     => $statQuery->whereHas('orders')->count(),
+            'total_spent'     => $statQuery->withSum('orders as total_spent', 'total_amount')->get()->sum('total_spent'),
+            'average_orders'  => round($statQuery->withCount('orders')->get()->avg('orders_count')),
+            'last_30_days'    => $statQuery->where('last_login_at', '>=', now()->subDays(30))->count(),
+        ];
+
+        // Tambahkan last_page_url agar frontend tidak error
+        $usersArray = $users->toArray();
+        $usersArray['last_page_url'] = $users->url($users->lastPage());
 
         return Inertia::render('Admin/Users/Active', [
-            'users' => $users,
+            'users'      => $usersArray,
+            'statistics' => $statistics,
+            'filters'    => $request->all(),
         ]);
     }
 
@@ -47,7 +108,7 @@ class AdminUserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'active' => true,
+            'is_active' => true,
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
@@ -77,7 +138,6 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
         ];
 
-        // Only update password if provided
         if (!empty($validated['password'])) {
             $updateData['password'] = Hash::make($validated['password']);
         }
@@ -90,12 +150,10 @@ class AdminUserController extends Controller
     public function destroy(User $user)
     {
         try {
-            // Prevent deleting currently authenticated user
             if ($user->id === auth()->id()) {
                 return back()->withErrors(['delete' => 'Anda tidak dapat menghapus akun Anda sendiri']);
             }
 
-            // Check if user has related data (adjust based on your relationships)
             if (method_exists($user, 'orders') && $user->orders()->exists()) {
                 return back()->withErrors(['delete' => 'User tidak dapat dihapus karena memiliki data terkait']);
             }

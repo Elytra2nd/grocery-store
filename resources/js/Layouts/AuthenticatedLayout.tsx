@@ -83,6 +83,8 @@ const adminNavigation = (pesananBadge: number) => [
         children: [
             { name: 'Semua Produk', href: '/admin/products' },
             { name: 'Tambah Produk', href: '/admin/products/create' },
+            { name: 'Stok Rendah', href: '/admin/products/low-stock' },
+            { name: 'Kategori', href: '/admin/products/categories' },
         ]
     },
     {
@@ -100,6 +102,7 @@ const adminNavigation = (pesananBadge: number) => [
         href: '/admin/users',
         icon: UsersIcon,
         children: [
+            { name: 'Semua Pelanggan', href: '/admin/users' },
             { name: 'pelanggan aktif', href: '/admin/users/active' },
 
         ]
