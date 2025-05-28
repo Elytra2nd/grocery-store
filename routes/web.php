@@ -20,7 +20,6 @@ use App\Http\Controllers\{CartController, OrderController, ProductController};
 // ===================
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/', [CartController::class, 'add'])->name('add'); // <-- cart.add
