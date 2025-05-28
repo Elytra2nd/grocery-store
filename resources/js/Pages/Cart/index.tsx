@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 
 interface CartItem {
@@ -37,7 +37,7 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Filter cart items based on search
+  // Filter cart items berdasarkan search term
   const filteredCartItems = cartItems.filter(item =>
     item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.product.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -59,7 +59,6 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
       await router.put(`/cart/${cartId}`, { quantity: newQuantity }, {
         preserveScroll: true,
         onSuccess: () => {
-          // Refresh data
           router.reload({ only: ['cartItems', 'totalAmount'] });
         },
         onError: (errors) => {
@@ -115,6 +114,15 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
   const selectedTotal = filteredCartItems
     .filter(item => selectedItems.includes(item.id))
     .reduce((total, item) => total + (item.quantity * item.product.price), 0);
+
+  // Handler checkout, kirim selected item atau all
+  const handleCheckout = () => {
+    if (selectedItems.length > 0) {
+      router.post('/checkout', { items: selectedItems });
+    } else {
+      router.post('/checkout', { all: true });
+    }
+  };
 
   return (
     <BuyerAuthenticatedLayout
@@ -200,6 +208,7 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
                       checked={selectedItems.includes(item.id)}
                       onChange={() => handleSelectItem(item.id)}
                       className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 focus:ring-2"
+                      disabled={isLoading}
                     />
 
                     {/* Product Image */}
@@ -241,113 +250,79 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
                         onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                         disabled={item.quantity <= 1 || isLoading}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Kurangi jumlah"
                       >
-                        -
+                        {isLoading ? (
+                          <svg className="animate-spin w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                          </svg>
+                        ) : (
+                          '-'
+                        )}
                       </button>
-                      <span className="text-lg font-medium min-w-[3rem] text-center">
+                      <span className="text-lg font-medium w-6 text-center">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                         disabled={item.quantity >= item.product.stock || isLoading}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Tambah jumlah"
                       >
-                        +
+                        {isLoading ? (
+                          <svg className="animate-spin w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                          </svg>
+                        ) : (
+                          '+'
+                        )}
                       </button>
                     </div>
 
                     {/* Subtotal */}
-                    <div className="text-right min-w-[8rem]">
-                      <p className="text-lg font-bold text-gray-900">
-                        {formatCurrency(item.quantity * item.product.price)}
-                      </p>
+                    <div className="text-lg font-semibold text-yellow-700 min-w-[120px] text-right">
+                      {formatCurrency(item.quantity * item.product.price)}
                     </div>
 
                     {/* Delete Button */}
                     <button
                       onClick={() => handleDeleteItem(item.id)}
                       disabled={isLoading}
-                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                      className="text-red-600 hover:text-red-800 focus:outline-none"
                       title="Hapus dari keranjang"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      &times;
                     </button>
                   </div>
                 </div>
               </div>
             ))}
 
-            {/* Empty State */}
+            {/* Jika tidak ada item sama sekali */}
             {filteredCartItems.length === 0 && (
-              <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-12 text-center">
-                  <div className="text-4xl sm:text-6xl mb-4">🛒</div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {cartItems.length === 0 ? 'Keranjang Kosong' : 'Produk Tidak Ditemukan'}
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    {cartItems.length === 0
-                      ? "Mulai berbelanja untuk menambah produk ke keranjang Anda."
-                      : searchTerm
-                      ? `Tidak ada produk yang sesuai dengan pencarian "${searchTerm}".`
-                      : 'Keranjang belanja Anda kosong.'}
-                  </p>
-                  {cartItems.length === 0 && (
-                    <Link
-                      href="/products"
-                      className="inline-block bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Jelajahi Produk
-                    </Link>
-                  )}
-                  {cartItems.length > 0 && searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Reset Pencarian
-                    </button>
-                  )}
-                </div>
+              <div className="text-center text-gray-500 mt-8">
+                Keranjang kosong atau produk tidak ditemukan.
               </div>
             )}
           </div>
 
-          {/* Checkout Section */}
-          {filteredCartItems.length > 0 && (
-            <div className="mt-8 overflow-hidden bg-white shadow-sm sm:rounded-lg">
-              <div className="p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                  <div className="text-left">
-                    <p className="text-sm text-gray-600">
-                      {selectedItems.length > 0
-                        ? `${selectedItems.length} item dipilih`
-                        : `Total ${cartItems.length} item`}
-                    </p>
-                    <p className="text-2xl font-bold text-yellow-800">
-                      {formatCurrency(selectedItems.length > 0 ? selectedTotal : totalAmount)}
-                    </p>
-                  </div>
-                  <div className="flex space-x-3">
-                    <Link
-                      href="/products"
-                      className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200"
-                    >
-                      Lanjut Belanja
-                    </Link>
-                    <button
-                      disabled={selectedItems.length === 0 && cartItems.length > 0}
-                      className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200"
-                    >
-                      {selectedItems.length > 0
-                        ? `Checkout (${selectedItems.length})`
-                        : 'Checkout Semua'}
-                    </button>
-                  </div>
-                </div>
+          {/* Summary dan Checkout */}
+          {cartItems.length > 0 && (
+            <div className="mt-10 bg-white shadow-sm sm:rounded-lg p-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+              <div className="text-lg font-semibold text-yellow-800">
+                Total Bayar: {selectedItems.length > 0 ? formatCurrency(selectedTotal) : formatCurrency(totalAmount)}
               </div>
+              <button
+                onClick={handleCheckout}
+                disabled={isLoading || (cartItems.length > 0 && selectedItems.length === 0 && false)}
+                className={`px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200`}
+              >
+                {isLoading ? 'Memproses...' : (selectedItems.length > 0
+                  ? `Checkout (${selectedItems.length})`
+                  : 'Checkout Semua')}
+              </button>
             </div>
           )}
         </div>

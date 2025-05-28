@@ -20,6 +20,31 @@ use App\Http\Controllers\{CartController, OrderController, ProductController};
 // ===================
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::post('/', [CartController::class, 'add'])->name('add'); // <-- cart.add
+
+    // routes/web.php
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+
+
+});
+
+
 
 Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     $request->validate(['email' => 'required|email']);

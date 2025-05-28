@@ -13,36 +13,36 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
     const { auth } = usePage<PageProps>().props;
 
     // Function untuk handle add to cart dengan auth check
-    const handleAddToCart = () => {
-        if (!auth?.user) {
-            const currentUrl = window.location.href;
-            sessionStorage.setItem('redirect_after_login', currentUrl);
+   const handleAddToCart = () => {
+    if (!auth?.user) {
+        const currentUrl = window.location.href;
+        sessionStorage.setItem('redirect_after_login', currentUrl);
 
-            router.visit(route('login'), {
-                data: {
-                    message: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang'
-                }
-            });
-            return;
-        }
-
-        router.post(route('buyer.cart.add'), {
-            product_id: product.id,
-            quantity: 1
-        }, {
-            onSuccess: () => {
-                // Redirect ke products dengan success message
-                router.visit(route('products.index'), {
-                    onSuccess: () => {
-                        // Flash message akan ditangani oleh HandleInertiaRequests middleware
-                    }
-                });
-            },
-            onError: (errors) => {
-                console.error('Error adding to cart:', errors);
+        router.visit('/login', {
+            data: {
+                message: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang'
             }
         });
-    };
+        return;
+    }
+
+    // PERBAIKI: Gunakan /cart/add bukan /cart/index
+    router.post("/cart/add", {
+        product_id: product.id,
+        quantity: 1
+    }, {
+        onSuccess: () => {
+            console.log('Produk berhasil ditambahkan ke keranjang');
+        },
+        onError: (errors) => {
+            console.error('Error adding to cart:', errors);
+        }
+    });
+};
+
+
+
+
 
     // Function untuk handle buy now dengan auth check dan redirect
     const handleBuyNow = () => {
@@ -50,7 +50,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             const currentUrl = window.location.href;
             sessionStorage.setItem('redirect_after_login', currentUrl);
 
-            router.visit(route('login'), {
+            router.visit('/login', {
                 data: {
                     message: 'Silakan login terlebih dahulu untuk melakukan pembelian'
                 }
@@ -59,14 +59,14 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         }
 
         // Langsung buat order dan redirect ke products dengan notifikasi
-        router.post(route('buyer.orders.create'), {
+        router.post('/buyer/orders/create', {
             product_id: product.id,
             quantity: 1,
             total_price: product.price
         }, {
             onSuccess: () => {
                 // Redirect ke products dengan success message
-                router.visit(route('products.index'));
+                router.visit('/products');
             },
             onError: (errors) => {
                 console.error('Error processing purchase:', errors);
@@ -95,13 +95,13 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             ) : (
                                 <>
                                     <Link
-                                        href={route('login')}
+                                        href="/login"
                                         className="text-gray-300 hover:text-amber-400 transition-colors font-medium"
                                     >
                                         Login
                                     </Link>
                                     <Link
-                                        href={route('register')}
+                                        href="/register"
                                         className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
                                     >
                                         Register
@@ -230,7 +230,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
                         </div>
 
-                        {/* Related Products Section - tetap sama */}
+                        {/* Related Products Section */}
                         {relatedProducts && relatedProducts.length > 0 && (
                             <section className="w-full py-12">
                                 <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-12 bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent tracking-wide drop-shadow">
@@ -240,7 +240,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                     {relatedProducts.map((relatedProduct) => (
                                         <Link
                                             key={relatedProduct.id}
-                                            href={route('products.show', { product: relatedProduct.id })}
+                                            href={`/products/${relatedProduct.id}`}
                                             className="group bg-gray-800/60 backdrop-blur-md rounded-xl overflow-hidden border border-gray-700/50 hover:border-amber-400/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col"
                                         >
                                             {/* Related Product Image */}

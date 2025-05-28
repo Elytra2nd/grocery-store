@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 
-
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 // Route helper function
@@ -27,7 +26,10 @@ function route(name: string, params?: Record<string, any>, absolute?: boolean): 
             'logout': '/logout',
             'password.request': '/forgot-password',
             'login': '/login',
-
+            'cart': '/add',
+            // Tambahkan route yang hilang
+            'products.show': '/products/:id',
+            'products.index': '/products',
         };
 
         let url = routes[name];
@@ -42,6 +44,7 @@ function route(name: string, params?: Record<string, any>, absolute?: boolean): 
                     url = url.replace(`:${key}`, String(value));
                 });
             } else {
+                // Jika params adalah nilai tunggal, anggap sebagai id
                 url = url.replace(/:id/, String(params));
             }
         }
@@ -56,7 +59,7 @@ function route(name: string, params?: Record<string, any>, absolute?: boolean): 
 
 // Make route function globally available
 if (typeof window !== 'undefined') {
-    window.route = route;
+    (window as any).route = route;
 }
 
 createInertiaApp({
