@@ -74,11 +74,8 @@ function Customers() {
                     </button>
                 </div>
 
-                {error && (
-                    <div className="bg-red-100 text-red-700 p-3 rounded animate-fade-in-up">
-                        {error}
-                    </div>
-                )}
+                
+
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <SummaryCard label="Total Pelanggan" value={summary.total_customers} />
