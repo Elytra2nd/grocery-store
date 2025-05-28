@@ -104,7 +104,6 @@ const adminNavigation = (pesananBadge: number) => [
         children: [
             { name: 'Semua Pelanggan', href: '/admin/users' },
             { name: 'pelanggan aktif', href: '/admin/users/active' },
-
         ]
     },
     {
@@ -138,7 +137,6 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
     const { url } = usePage();
     const [expanded, setExpanded] = useState<string | null>(null);
 
-    // Handler: navigate to main menu, open/close submenu if ada children
     const handleMainClick = (item: any) => {
         if (item.children) {
             setExpanded(expanded === item.name ? null : item.name);
@@ -148,7 +146,6 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
         }
     };
 
-    // Handler: click chevron only toggles submenu, not link
     const handleChevronClick = (e: React.MouseEvent<HTMLButtonElement>, item: any) => {
         e.preventDefault();
         setExpanded(expanded === item.name ? null : item.name);
@@ -187,7 +184,6 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
                                 } ${collapsed ? 'justify-center' : ''}`}
                                 onClick={e => {
                                     handleMainClick(item);
-                                    // Only navigate for main menu if no children
                                     if (hasChildren) e.preventDefault();
                                 }}
                             >
@@ -209,7 +205,6 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
                                     </button>
                                 )}
                             </Link>
-                            {/* Submenu */}
                             {item.children && expanded === item.name && !collapsed && (
                                 <div className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out overflow-hidden animate-fadeIn">
                                     {item.children.map((sub: { name: string; href: string }) => (
@@ -244,18 +239,15 @@ type MobileSidebarProps = {
 };
 
 function MobileSidebar({ open, onClose, navigation }: MobileSidebarProps) {
-    // Handler: close sidebar on any menu/submenu click
     const handleAnyNavigate = () => {
         onClose();
     };
     return (
         <div className="fixed inset-0 z-40 md:hidden">
-            {/* Overlay */}
             <div
                 className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={onClose}
             />
-            {/* Sidebar */}
             <div
                 className={`
                     fixed left-0 top-0 bottom-0 w-64 bg-[#fffbea] shadow-xl
@@ -279,7 +271,7 @@ function MobileSidebar({ open, onClose, navigation }: MobileSidebarProps) {
     );
 }
 
-// --- User Dropdown Menu & FlashMessages (tidak berubah, tetap autumn) ---
+// --- User Dropdown & Flash Messages ---
 type UserType = {
     name?: string;
     email?: string;
@@ -382,7 +374,7 @@ function FlashMessages({ flash }: { flash?: { success?: string; error?: string }
 type AuthenticatedUser = {
     name?: string;
     email?: string;
-    roles?: { name: string }[];
+    roles?: string[]; // FIXED: Changed from { name: string }[] to string[]
     [key: string]: any;
 };
 
@@ -399,7 +391,10 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
     const pageProps = usePage<PageProps>().props;
     const pesananBadge = pageProps?.order_count ?? 0;
     const navigation = adminNavigation(pesananBadge);
-    const isAdmin = pageProps.auth?.user?.roles?.some((role: { name: string }) => role.name === 'admin') || false;
+
+    // FIXED: Updated admin check to handle string array
+    const isAdmin = pageProps.auth?.user?.roles?.includes('admin') || false;
+
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -418,6 +413,7 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                 <div className={`hidden md:flex transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
                     <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} navigation={navigation} />
                 </div>
+
                 {/* Main content */}
                 <div className="flex-1 flex flex-col">
                     {/* Topbar */}
@@ -437,6 +433,7 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                             {sidebarCollapsed ? <Bars3Icon className="h-6 w-6 text-amber-700" /> : <XMarkIcon className="h-6 w-6 text-amber-700" />}
                         </button>
                         {header && <div className="ml-4 flex-1">{header}</div>}
+
                         {/* User Dropdown */}
                         <div className="relative">
                             <button
@@ -462,10 +459,12 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                             )}
                         </div>
                     </div>
+
                     {/* Breadcrumb */}
                     <div className="px-6 pt-4">
                         <Breadcrumb />
                     </div>
+
                     <main className="flex-1 p-6">
                         <FlashMessages flash={pageProps.flash as { success?: string; error?: string }} />
                         {children}
