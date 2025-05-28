@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/', [CartController::class, 'add'])->name('add');
+        Route::post('/', [CartController::class, 'add'])->name('buyer.cart.add');
         Route::put('/{id}', [CartController::class, 'update'])->name('update');
         Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
@@ -51,6 +51,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [OrderController::class, 'store'])->name('store');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        // Untuk buy now/order
+        Route::post('/buyer/orders/create', [OrderController::class, 'buyNow'])->name('buyer.orders.create');
+
     });
 });
 
