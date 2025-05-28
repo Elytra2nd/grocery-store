@@ -116,6 +116,7 @@ const adminNavigation = (pesananBadge: number) => [
             { name: 'Penjualan', href: '/admin/reports/sales' },
             { name: 'pelanggan', href: '/admin/reports/customers' },
             { name: 'produk', href: '/admin/reports/products' },
+            { name: 'Keuangan', href: '/admin/reports/financial' },
         ]
     },
     {
