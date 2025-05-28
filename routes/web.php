@@ -16,7 +16,11 @@ use App\Http\Controllers\Admin\{
 use App\Http\Controllers\{CartController, OrderController, ProductController};
 
 // Public Routes
-Route::get('/', [ProductController::class, 'index'])->name('home');
+Route::get('/', function () {
+    return redirect()->route('products.index');
+})->name('home');
+
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
 // Newsletter subscription (jika ada form di homepage)
@@ -183,7 +187,6 @@ Route::middleware(['auth', 'role:buyer'])
         Route::get('/dashboard', function () {
             return Inertia::render('Buyer/Dashboard');
         })->name('dashboard');
-        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     });
 
 // API Routes (untuk AJAX requests)
@@ -210,4 +213,4 @@ if (app()->environment('local')) {
     })->name('test.email');
 }
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

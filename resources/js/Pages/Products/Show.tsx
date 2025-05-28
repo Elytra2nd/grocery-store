@@ -1,8 +1,8 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Product } from '@/types';
 import { router } from '@inertiajs/react';
-
+import { PageProps } from '@/types';
 
 interface ProductShowProps {
     product: Product;
@@ -10,41 +10,118 @@ interface ProductShowProps {
 }
 
 export default function ProductShow({ product, relatedProducts }: ProductShowProps): JSX.Element {
-    // Tambahkan fungsi handleAddToCart agar tidak error
+    const { auth } = usePage<PageProps>().props;
+
+    // Function untuk handle add to cart dengan auth check
     const handleAddToCart = () => {
-        router.post('/cart', { product_id: product.id }, {
+        if (!auth?.user) {
+            const currentUrl = window.location.href;
+            sessionStorage.setItem('redirect_after_login', currentUrl);
+
+            router.visit(route('login'), {
+                data: {
+                    message: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang'
+                }
+            });
+            return;
+        }
+
+        router.post(route('buyer.cart.add'), {
+            product_id: product.id,
+            quantity: 1
+        }, {
             onSuccess: () => {
-                alert(`Produk "${product.name}" ditambahkan ke keranjang!`);
+                // Redirect ke products dengan success message
+                router.visit(route('products.index'), {
+                    onSuccess: () => {
+                        // Flash message akan ditangani oleh HandleInertiaRequests middleware
+                    }
+                });
             },
+            onError: (errors) => {
+                console.error('Error adding to cart:', errors);
+            }
         });
     };
+
+    // Function untuk handle buy now dengan auth check dan redirect
+    const handleBuyNow = () => {
+        if (!auth?.user) {
+            const currentUrl = window.location.href;
+            sessionStorage.setItem('redirect_after_login', currentUrl);
+
+            router.visit(route('login'), {
+                data: {
+                    message: 'Silakan login terlebih dahulu untuk melakukan pembelian'
+                }
+            });
+            return;
+        }
+
+        // Langsung buat order dan redirect ke products dengan notifikasi
+        router.post(route('buyer.orders.create'), {
+            product_id: product.id,
+            quantity: 1,
+            total_price: product.price
+        }, {
+            onSuccess: () => {
+                // Redirect ke products dengan success message
+                router.visit(route('products.index'));
+            },
+            onError: (errors) => {
+                console.error('Error processing purchase:', errors);
+            }
+        });
+    };
+
     return (
         <>
             <Head title={product.name} />
 
-            {/* Full Screen Container - No Layout Wrapper */}
             <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-x-hidden flex flex-col">
-
                 {/* Header / Navigation */}
                 <nav className="w-full py-4 px-6 bg-transparent">
                     <div className="flex justify-between items-center max-w-7xl mx-auto">
                         <Link href="/" className="text-amber-400 text-2xl font-extrabold tracking-widest drop-shadow-lg">
                             NEO-Forest
                         </Link>
-                        <Link
-                            href="/"
-                            className="text-gray-300 hover:text-amber-400 transition-colors font-medium flex items-center gap-2"
-                        >
-                            <span className="text-xl">←</span>
-                            <span>Kembali ke Produk</span>
-                        </Link>
+                        <div className="flex items-center gap-4">
+                            {auth?.user ? (
+                                <>
+                                    <span className="items-center text-emerald-400 text-sm">
+                                        Halo, {auth.user.name}!
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        href={route('login')}
+                                        className="text-gray-300 hover:text-amber-400 transition-colors font-medium"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        href={route('register')}
+                                        className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                                    >
+                                        Register
+                                    </Link>
+                                </>
+                            )}
+                            <Link
+                                href="/products"
+                                className="text-gray-300 hover:text-amber-400 transition-colors font-medium flex items-center gap-2"
+                            >
+                                <span className="text-xl">←</span>
+                                <span>Kembali ke Produk</span>
+                            </Link>
+                        </div>
                     </div>
                 </nav>
 
                 {/* Main Content */}
                 <main className="flex-1 w-full py-8 px-4 md:px-8">
                     <div className="max-w-7xl mx-auto">
-
                         {/* Product Detail Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
                             {/* Product Image */}
@@ -95,31 +172,65 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                     {product.description}
                                 </p>
 
+                                {/* Login Warning untuk Guest */}
+                                {!auth?.user && (
+                                    <div className="bg-amber-500/20 border border-amber-400/30 rounded-xl p-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">🔐</span>
+                                            <div>
+                                                <p className="text-amber-300 font-medium">Login Diperlukan</p>
+                                                <p className="text-amber-200 text-sm">
+                                                    Silakan login terlebih dahulu untuk menambahkan ke keranjang atau melakukan pembelian
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Action Buttons */}
                                 <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                                    {/* Button untuk menambah ke keranjang - tidak perlu routing */}
                                     <button
                                         type="button"
                                         onClick={handleAddToCart}
-                                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                        disabled={product.stock === 0}
+                                        className={`flex-1 font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 ${product.stock === 0
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : auth?.user
+                                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white hover:shadow-amber-500/30'
+                                                : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:shadow-blue-500/30'
+                                            }`}
                                     >
-                                        Tambah ke Keranjang
+                                        {product.stock === 0
+                                            ? 'Stok Habis'
+                                            : auth?.user
+                                                ? 'Tambah ke Keranjang'
+                                                : 'Login untuk Beli'
+                                        }
                                     </button>
 
-                                    {/* Button untuk beli sekarang - dengan routing ke halaman order */}
-                                    <Link href='/orders'>
-                                        <button
-                                            type="button"
-                                            className="flex-1 bg-gray-800/60 backdrop-blur-md border border-gray-700/50 text-gray-300 hover:text-white hover:border-amber-400/40 font-semibold px-8 py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                        >
-                                            Beli Sekarang
-                                        </button>
-                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={handleBuyNow}
+                                        disabled={product.stock === 0}
+                                        className={`flex-1 font-semibold px-8 py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 ${product.stock === 0
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : auth?.user
+                                                ? 'bg-gray-800/60 backdrop-blur-md border border-gray-700/50 text-gray-300 hover:text-white hover:border-amber-400/40'
+                                                : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white hover:shadow-emerald-500/30'
+                                            }`}
+                                    >
+                                        {product.stock === 0
+                                            ? 'Tidak Tersedia'
+                                            : auth?.user
+                                                ? 'Beli Sekarang'
+                                                : 'Login untuk Beli'
+                                        }
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Related Products Section */}
+                        {/* Related Products Section - tetap sama */}
                         {relatedProducts && relatedProducts.length > 0 && (
                             <section className="w-full py-12">
                                 <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-12 bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent tracking-wide drop-shadow">
