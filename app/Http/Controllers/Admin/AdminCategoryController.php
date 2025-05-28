@@ -13,14 +13,14 @@ class AdminCategoryController extends Controller
     public function index()
     {
         $categories = Category::latest()->get();
-        return Inertia::render('Admin/Products/Categories/Index', [
+        return Inertia::render('Admin/Categories/Index', [
             'categories' => $categories
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Admin/Products/Categories/Create');
+        return Inertia::render('Admin/Categories/Create');
     }
 
     public function store(Request $request)
@@ -31,13 +31,13 @@ class AdminCategoryController extends Controller
 
         Category::create($request->only('name'));
 
-        return redirect()->route('admin.products.categories.index')
+        return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil ditambahkan');
     }
 
     public function edit(Category $category)
     {
-        return Inertia::render('Admin/Products/Categories/Edit', [
+        return Inertia::render('Admin/Categories/Edit', [
             'category' => $category,
         ]);
     }
@@ -50,14 +50,14 @@ class AdminCategoryController extends Controller
 
         $category->update($request->only('name'));
 
-        return redirect()->route('admin.products.categories.index')
+        return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil diperbarui');
     }
 
     public function destroy(Category $category)
     {
         $category->delete();
-        return redirect()->route('admin.products.categories.index')
+        return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil dihapus');
     }
 }
