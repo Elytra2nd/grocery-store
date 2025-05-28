@@ -281,15 +281,18 @@ class AdminReportController extends Controller
             }
 
             return Inertia::render('Admin/Reports/Customers', [
-                'customers' => $customers,
-                'summary' => $summary,
-                'acquisitionTrend' => $acquisitionTrend,
-                'filters' => [
-                    'sort_by' => $sortBy,
-                    'sort_order' => $sortOrder,
-                    'date_range' => $dateRange,
-                ],
-            ]);
+            'customers' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
+            'summary' => [
+                    'total_customers' => 0,
+                    'active_customers' => 0,
+                     'new_customers' => 0,
+                    'repeat_customers' => 0,
+            ],
+            'acquisitionTrend' => [],
+            'filters' => [],
+            'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
+        ]);
+
 
         } catch (\Exception $e) {
             Log::error('AdminReportController@customers error: ' . $e->getMessage());
