@@ -50,8 +50,17 @@ const adminNavigation: NavigationItem[] = [
         children: [
             { name: 'Semua Produk', href: '/admin/products' },
             { name: 'Tambah Produk', href: '/admin/products/create' },
-            { name: 'Kategori', href: '/admin/products/categories' },
             { name: 'Stok Rendah', href: '/admin/products/low-stock' },
+        ]
+    },
+    {
+        name: 'Kategori',
+        href: '/admin/categories',
+        icon: CubeIcon,
+        children: [
+            { name: 'Semua Kategori', href: '/admin/categori' },
+            { name: 'Tambah Produk', href: '/admin/categories/create' },
+            { name: 'Kategori', href: '/admin/categories/{id}' },
         ]
     },
     {
