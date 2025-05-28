@@ -2,6 +2,7 @@ import React from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { PageProps } from "@/types";
+import { DocumentTextIcon } from "@heroicons/react/24/solid";
 
 // Data types
 type Customer = {
@@ -28,7 +29,6 @@ interface CustomersProps extends Record<string, unknown> {
 }
 
 function Customers() {
-    // Ambil props dari backend
     const {
         customers = [],
         summary = {
@@ -41,13 +41,11 @@ function Customers() {
         error,
     } = usePage<PageProps<CustomersProps>>().props;
 
-    // Helper format rupiah
     const formatRupiah = (value: number | null | undefined) =>
         typeof value === "number"
             ? "Rp " + value.toLocaleString("id-ID")
             : "-";
 
-    // Segmentasi perilaku pelanggan
     const segments = { baru: 0, repeat: 0, nonAktif: 0 };
     customers.forEach((c) => {
         if (c.total_orders > 1) segments.repeat++;
@@ -69,8 +67,9 @@ function Customers() {
                     <h1 className="text-2xl font-extrabold text-amber-900 drop-shadow-sm">Laporan Pelanggan</h1>
                     <button
                         onClick={handleExport}
-                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl shadow transition-all duration-150 text-sm font-semibold"
+                        className="flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
                     >
+                        <DocumentTextIcon className="w-5 h-5 mr-2" />
                         Export Laporan Pelanggan
                     </button>
                 </div>
@@ -81,7 +80,6 @@ function Customers() {
                     </div>
                 )}
 
-                {/* Ringkasan Pelanggan */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <SummaryCard label="Total Pelanggan" value={summary.total_customers} />
                     <SummaryCard label="Pelanggan Aktif" value={summary.active_customers} />
@@ -89,7 +87,6 @@ function Customers() {
                     <SummaryCard label="Repeat Order" value={summary.repeat_customers} />
                 </div>
 
-                {/* Segmentasi Pelanggan */}
                 <div>
                     <h2 className="text-xl font-semibold mb-2 text-amber-900">Analisis Perilaku & Segmentasi Pelanggan</h2>
                     <div className="rounded-xl border border-amber-100 bg-white p-4 shadow">
@@ -125,7 +122,6 @@ function Customers() {
                     </div>
                 </div>
 
-                {/* Tren Akuisisi Pelanggan */}
                 <div>
                     <h2 className="text-xl font-semibold mb-2 text-amber-900">Tren Akuisisi Pelanggan Baru (30 Hari Terakhir)</h2>
                     <div className="rounded-xl border border-amber-100 bg-white p-4 shadow overflow-auto">
@@ -156,7 +152,6 @@ function Customers() {
                     </div>
                 </div>
 
-                {/* Tabel Daftar Pelanggan */}
                 <div>
                     <h2 className="text-xl font-semibold mb-2 text-amber-900">Daftar Pelanggan</h2>
                     <div className="rounded-xl border border-amber-100 bg-white p-4 shadow overflow-auto">
@@ -186,6 +181,7 @@ function Customers() {
                                         if (customer.total_orders > 1) segment = "Repeat Order";
                                         else if (customer.total_orders === 1) segment = "Pelanggan Baru";
                                         else segment = "Non-aktif";
+
                                         return (
                                             <tr key={customer.id} className="border-b hover:bg-amber-50 transition-colors duration-150">
                                                 <td className="py-2 text-amber-900 font-medium">{customer.name}</td>
@@ -209,7 +205,6 @@ function Customers() {
     );
 }
 
-// Komponen kartu ringkasan autumn enchant
 function SummaryCard({
     label,
     value,
@@ -217,7 +212,6 @@ function SummaryCard({
     label: string;
     value: number | null | undefined;
 }) {
-    // Pilih warna autumn berdasarkan label
     const colorMap: Record<string, string> = {
         "Total Pelanggan": "from-amber-400/70 to-orange-100/50",
         "Pelanggan Aktif": "from-orange-400/70 to-yellow-100/50",
@@ -243,7 +237,6 @@ function SummaryCard({
     );
 }
 
-// Deklarasi layout AGAR sidebar tidak double
 Customers.layout = (page: React.ReactNode) => <AuthenticatedLayout>{page}</AuthenticatedLayout>;
 
 export default Customers;
