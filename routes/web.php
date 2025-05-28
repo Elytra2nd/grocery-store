@@ -84,7 +84,13 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('/{product}', [AdminProductController::class, 'destroy'])->name('destroy');
             Route::patch('/{product}/stock', [AdminProductController::class, 'updateStock'])->name('update-stock');
             Route::patch('/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('toggle-status');
+            });
+
+            Route::prefix('categories')->name('categories.')->group(function () {
+            Route::resource('/', AdminCategoryController::class)->parameters(['' => 'category']);
         });
+
+        
 
         // Orders
         Route::prefix('orders')->name('orders.')->group(function () {
@@ -157,15 +163,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/notifications', [AdminSettingController::class, 'updateNotifications'])->name('notifications.update');
         });
 
-        // Categories
-        Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
-            Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
-            Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
-            Route::get('/{category}/edit', [AdminCategoryController::class, 'edit'])->name('edit');
-            Route::put('/{category}', [AdminCategoryController::class, 'update'])->name('update');
-            Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
-        });
 
         // Additional Admin Routes
         Route::prefix('system')->name('system.')->group(function () {
