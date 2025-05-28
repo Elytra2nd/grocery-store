@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Category;
 use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -35,13 +36,13 @@ class AdminProductController extends Controller
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('category', 'like', "%{$search}%");
+                      ->orWhere('category_id', 'like', "%{$search}%");
                 });
             }
 
             // Category filter
-            if ($request->filled('category')) {
-                $query->where('category', $request->category);
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
             }
 
             // Status filter
@@ -69,14 +70,8 @@ class AdminProductController extends Controller
                 ->withQueryString();
 
             // Get categories for filter - dengan null safety
-            $categories = Product::select('category')
-                ->distinct()
-                ->whereNotNull('category')
-                ->where('category', '!=', '')
-                ->orderBy('category')
-                ->pluck('category')
-                ->filter()
-                ->values();
+            $categories = Category::orderBy('name')
+                ->pluck('name');
 
             // Get statistics dengan null safety
             $statistics = [
@@ -91,7 +86,7 @@ class AdminProductController extends Controller
                 'categories' => $categories,
                 'statistics' => $statistics,
                 'filters' => $request->only([
-                    'search', 'category', 'status', 'stock_status'
+                    'search', 'category_id', 'status', 'stock_status'
                 ]) ?? [],
             ]);
 
@@ -124,30 +119,24 @@ class AdminProductController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        try {
-            $categories = Product::select('category')
-                ->distinct()
-                ->whereNotNull('category')
-                ->where('category', '!=', '')
-                ->orderBy('category')
-                ->pluck('category')
-                ->filter()
-                ->values();
+{
+    try {
+        $categories = Category::orderBy('name')
+            ->pluck('name', 'id'); // <-- Ambil id dan name
 
-            return Inertia::render('Admin/Products/Create', [
-                'categories' => $categories,
-            ]);
+        return Inertia::render('Admin/Products/Create', [
+            'categories' => $categories,
+        ]);
 
-        } catch (\Exception $e) {
-            Log::error('AdminProductController@create error: ' . $e->getMessage());
+    } catch (\Exception $e) {
+        Log::error('AdminProductController@create error: ' . $e->getMessage());
 
-            return Inertia::render('Admin/Products/Create', [
-                'categories' => [],
-                'error' => 'Terjadi kesalahan saat memuat halaman.'
-            ]);
-        }
+        return Inertia::render('Admin/Products/Create', [
+            'categories' => [],
+            'error' => 'Terjadi kesalahan saat memuat halaman.'
+        ]);
     }
+}
 
     /**
      * Store a newly created resource in storage.
@@ -159,7 +148,7 @@ class AdminProductController extends Controller
             'description' => 'required|string|max:1000',
             'price' => 'required|numeric|min:0|max:99999999.99',
             'stock' => 'required|integer|min:0|max:999999',
-            'category' => 'required|string|max:100',
+            'category_id' => 'required|string|max:100',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'boolean',
         ], [
@@ -173,7 +162,7 @@ class AdminProductController extends Controller
             'stock.required' => 'Stok wajib diisi',
             'stock.integer' => 'Stok harus berupa angka bulat',
             'stock.min' => 'Stok tidak boleh negatif',
-            'category.required' => 'Kategori wajib diisi',
+            'category_id.required' => 'Kategori wajib diisi',
             'image.image' => 'File harus berupa gambar',
             'image.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, webp',
             'image.max' => 'Ukuran gambar maksimal 2MB',
@@ -181,7 +170,7 @@ class AdminProductController extends Controller
 
         try {
             $data = $request->only([
-                'name', 'description', 'price', 'stock', 'category'
+                'name', 'description', 'price', 'stock', 'category_id'
             ]);
 
             // Set default is_active to true if not provided
@@ -241,28 +230,23 @@ class AdminProductController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Product $product)
-    {
-        try {
-            $categories = Product::select('category')
-                ->distinct()
-                ->whereNotNull('category')
-                ->where('category', '!=', '')
-                ->orderBy('category')
-                ->pluck('category')
-                ->filter()
-                ->values();
+{
+    try {
+        // Ambil kategori dalam bentuk id => name supaya mudah dipakai di <select>
+        $categories = Category::orderBy('name')->pluck('name', 'id');
 
-            return Inertia::render('Admin/Products/Edit', [
-                'product' => $product,
-                'categories' => $categories,
-            ]);
+        return Inertia::render('Admin/Products/Edit', [
+            'product' => $product,
+            'categories' => $categories,
+        ]);
 
-        } catch (\Exception $e) {
-            Log::error('AdminProductController@edit error: ' . $e->getMessage());
-            return redirect()->route('admin.products.index')
-                ->with('error', 'Produk tidak ditemukan');
-        }
+    } catch (\Exception $e) {
+        Log::error('AdminProductController@edit error: ' . $e->getMessage());
+        return redirect()->route('admin.products.index')
+            ->with('error', 'Produk tidak ditemukan');
     }
+}
+
 
     /**
      * Update the specified resource in storage.
@@ -274,7 +258,7 @@ class AdminProductController extends Controller
             'description' => 'required|string|max:1000',
             'price' => 'required|numeric|min:0|max:99999999.99',
             'stock' => 'required|integer|min:0|max:999999',
-            'category' => 'required|string|max:100',
+            'category_id' => 'required|string|max:100',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'boolean',
         ], [
@@ -288,7 +272,7 @@ class AdminProductController extends Controller
             'stock.required' => 'Stok wajib diisi',
             'stock.integer' => 'Stok harus berupa angka bulat',
             'stock.min' => 'Stok tidak boleh negatif',
-            'category.required' => 'Kategori wajib diisi',
+            'category_id.required' => 'Kategori wajib diisi',
             'image.image' => 'File harus berupa gambar',
             'image.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, webp',
             'image.max' => 'Ukuran gambar maksimal 2MB',
@@ -296,7 +280,7 @@ class AdminProductController extends Controller
 
         try {
             $data = $request->only([
-                'name', 'description', 'price', 'stock', 'category'
+                'name', 'description', 'price', 'stock', 'category_id'
             ]);
 
             $data['is_active'] = $request->boolean('is_active');
@@ -482,7 +466,7 @@ class AdminProductController extends Controller
         try {
             $lowStockProducts = Product::where('stock', '<=', 10)
                 ->where('is_active', true)
-                ->select('id', 'name', 'stock', 'category')
+                ->select('id', 'name', 'stock', 'category_id')
                 ->orderBy('stock', 'asc')
                 ->get();
 
@@ -524,33 +508,31 @@ class AdminProductController extends Controller
     public function categories()
     {
         try {
-            $categories = Product::select('category')
-                ->distinct()
-                ->whereNotNull('category')
-                ->where('category', '!=', '')
-                ->get()
-                ->pluck('category')
-                ->map(function ($category) {
-                    return [
-                        'name' => $category,
-                        'products_count' => Product::where('category', $category)->count() ?? 0,
-                        'active_products_count' => Product::where('category', $category)
-                                                         ->where('is_active', true)
-                                                         ->count() ?? 0,
-                    ];
-                });
-
-            return Inertia::render('Admin/Categories/Index', [
-                'categories' => $categories,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('AdminProductController@categories error: ' . $e->getMessage());
-            return Inertia::render('Admin/Categories/Index', [
-                'categories' => [],
-                'error' => 'Terjadi kesalahan saat memuat data.'
-            ]);
+    // Ambil semua kategori dengan nama dan hitung produk terkait lewat relasi
+    $categories = Category::withCount([
+        'products', // hitung total produk per kategori
+        'products as active_products_count' => function ($query) {
+            $query->where('is_active', true); // hitung produk aktif per kategori
         }
+    ])->orderBy('name')->get()->map(function ($category) {
+        return [
+            'name' => $category->name,
+            'products_count' => $category->products_count,
+            'active_products_count' => $category->active_products_count,
+        ];
+    });
+
+    return Inertia::render('Admin/Categories/Index', [
+        'categories' => $categories,
+    ]);
+} catch (\Exception $e) {
+    Log::error('AdminProductController@categories error: ' . $e->getMessage());
+    return Inertia::render('Admin/Categories/Index', [
+        'categories' => [],
+        'error' => 'Terjadi kesalahan saat memuat data.'
+    ]);
+}
+
     }
 
     /**
@@ -567,12 +549,12 @@ class AdminProductController extends Controller
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('category', 'like', "%{$search}%");
+                      ->orWhere('category_id', 'like', "%{$search}%");
                 });
             }
 
-            if ($request->filled('category')) {
-                $query->where('category', $request->category);
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
             }
 
             if ($request->filled('status')) {
@@ -608,7 +590,7 @@ class AdminProductController extends Controller
                         $product->description ?? '',
                         $product->price ?? 0,
                         $product->stock ?? 0,
-                        $product->category ?? '',
+                        $product->category_id ?? '',
                         ($product->is_active ?? false) ? 'Aktif' : 'Tidak Aktif',
                         $product->created_at ? $product->created_at->format('Y-m-d H:i:s') : '',
                     ]);
