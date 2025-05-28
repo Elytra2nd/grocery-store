@@ -47,7 +47,7 @@ const adminNavigation: NavigationItem[] = [
         children: [
             { name: 'Semua Produk', href: '/admin/products' },
             { name: 'Tambah Produk', href: '/admin/products/create' },
-            { name: 'Kategori', href: '/admin/categories' },
+            { name: 'Kategori', href: '/admin/products/categories' },
             { name: 'Stok Rendah', href: '/admin/products/low-stock' },
         ]
     },

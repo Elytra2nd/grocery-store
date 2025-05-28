@@ -15,34 +15,29 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\{CartController, OrderController, ProductController};
 
+// ===================
 // Public Routes
-Route::get('/', function () {
-    return redirect()->route('products.index');
-})->name('home');
-
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+// ===================
+Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
-// Newsletter subscription (jika ada form di homepage)
 Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     $request->validate(['email' => 'required|email']);
-    // Handle newsletter subscription
     return redirect()->route('home')->with('success', 'Thank you for subscribing!');
 })->name('newsletter.subscribe');
 
-// Auth Routes
+// ===================
+// Auth & User Routes
+// ===================
 Route::middleware('auth')->group(function () {
-    // Dashboard (user dashboard, bukan admin)
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Cart
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
         Route::post('/', [CartController::class, 'add'])->name('add');
@@ -51,7 +46,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
 
-    // Orders (User)
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
         Route::post('/', [OrderController::class, 'store'])->name('store');
@@ -60,7 +54,9 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// ===================
 // Admin Routes
+// ===================
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
@@ -78,6 +74,19 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/out-of-stock', [AdminProductController::class, 'outOfStock'])->name('out-of-stock');
             Route::get('/export', [AdminProductController::class, 'export'])->name('export');
             Route::post('/bulk-action', [AdminProductController::class, 'bulkAction'])->name('bulk-action');
+
+            // ========== CATEGORIES GROUP DULU ==========
+            Route::prefix('categories')->name('categories.')->group(function () {
+                Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
+                Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
+                Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
+                Route::get('/{category}/edit', [AdminCategoryController::class, 'edit'])->name('edit');
+                Route::put('/{category}', [AdminCategoryController::class, 'update'])->name('update');
+                Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
+            });
+            // ========== END CATEGORIES GROUP ==========
+
+            // Route parameter HARUS DI BAWAH group kategori!
             Route::get('/{product}', [AdminProductController::class, 'show'])->name('show');
             Route::get('/{product}/edit', [AdminProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [AdminProductController::class, 'update'])->name('update');
@@ -130,7 +139,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [AdminReportController::class, 'index'])->name('index');
             Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
             Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
-            Route::get('/products', [AdminReportController::class, 'products'])->name('products'); // INI YANG DIPAKAI VIEW LAPORAN PRODUK
+            Route::get('/products', [AdminReportController::class, 'products'])->name('products');
             Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
             Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
             Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');
@@ -157,16 +166,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/notifications', [AdminSettingController::class, 'updateNotifications'])->name('notifications.update');
         });
 
-        // Categories
-        Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
-            Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
-            Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
-            Route::get('/{category}/edit', [AdminCategoryController::class, 'edit'])->name('edit');
-            Route::put('/{category}', [AdminCategoryController::class, 'update'])->name('update');
-            Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
-        });
-
         // Additional Admin Routes
         Route::prefix('system')->name('system.')->group(function () {
             Route::get('/info', [AdminDashboardController::class, 'systemInfo'])->name('info');
@@ -179,7 +178,9 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
+// ===================
 // Buyer Routes
+// ===================
 Route::middleware(['auth', 'role:buyer'])
     ->prefix('buyer')
     ->name('buyer.')
@@ -189,7 +190,9 @@ Route::middleware(['auth', 'role:buyer'])
         })->name('dashboard');
     });
 
+// ===================
 // API Routes (untuk AJAX requests)
+// ===================
 Route::middleware(['auth', 'role:admin'])
     ->prefix('api/admin')
     ->name('api.admin.')
@@ -202,7 +205,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/notifications/{id}/read', [AdminDashboardController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
+// ===================
 // Test Routes (hanya untuk development)
+// ===================
 if (app()->environment('local')) {
     Route::get('/test', function () {
         return Inertia::render('Test');
@@ -212,5 +217,6 @@ if (app()->environment('local')) {
         return 'Email test route';
     })->name('test.email');
 }
+
 
 require __DIR__ . '/auth.php';
