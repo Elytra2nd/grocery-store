@@ -142,7 +142,8 @@ function MainNavigationBar({
 
                         {/* Cart */}
                         <Link
-                            href="/buyer/cart"
+                            href="/cart/index"
+
                             className="relative p-2 text-gray-700 hover:text-emerald-600 transition-colors"
                         >
                             <ShoppingCartIcon className="h-6 w-6" />

@@ -10,7 +10,6 @@ use Inertia\Inertia;
 
 class CartController extends Controller
 {
-
     public function index()
     {
         $cartItems = Cart::with(['product'])
@@ -26,6 +25,7 @@ class CartController extends Controller
             'totalAmount' => $totalAmount,
         ]);
     }
+
     // Tambah item ke keranjang
     public function add(Request $request)
     {
@@ -44,10 +44,8 @@ class CartController extends Controller
             ]
         );
 
-        return response()->json([
-            'message' => 'Produk berhasil ditambahkan ke keranjang',
-            'data'    => $cart
-        ]);
+        // PERBAIKI: Redirect ke cart index dengan flash message
+        return redirect()->route('cart.index')->with('message', 'Produk berhasil ditambahkan ke keranjang');
     }
 
     // Update kuantitas item di keranjang
@@ -63,14 +61,11 @@ class CartController extends Controller
 
         $cart->update(['quantity' => $request->quantity]);
 
-        return response()->json([
-            'message' => 'Kuantitas keranjang diperbarui',
-            'data'    => $cart
-        ]);
+        return back()->with('message', 'Kuantitas keranjang diperbarui');
     }
 
     // Hapus item dari keranjang
-    public function delete($id)
+    public function remove($id)
     {
         $cart = Cart::where('id', $id)
             ->where('user_id', Auth::id())
@@ -78,8 +73,6 @@ class CartController extends Controller
 
         $cart->delete();
 
-        return response()->json([
-            'message' => 'Item berhasil dihapus dari keranjang'
-        ]);
+        return back()->with('message', 'Item berhasil dihapus dari keranjang');
     }
 }
