@@ -164,15 +164,51 @@ Route::middleware(['auth', 'role:admin'])
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [AdminReportController::class, 'index'])->name('index');
             Route::get('/sales', [AdminReportController::class, 'sales'])->name('sales');
-            Route::get('/sales/export', [AdminReportController::class, 'exportSales'])->name('sales.export');
             Route::get('/products', [AdminReportController::class, 'products'])->name('products');
-            Route::get('/products/export', [AdminReportController::class, 'exportProducts'])->name('products.export');
             Route::get('/customers', [AdminReportController::class, 'customers'])->name('customers');
-            Route::get('/customers/export', [AdminReportController::class, 'exportCustomers'])->name('customers.export');
             Route::get('/financial', [AdminReportController::class, 'financial'])->name('financial');
-            Route::get('/financial/export', [AdminReportController::class, 'exportFinancial'])->name('financial.export');
             Route::get('/inventory', [AdminReportController::class, 'inventory'])->name('inventory');
-            Route::get('/inventory/export', [AdminReportController::class, 'exportInventory'])->name('inventory.export');
+
+            Route::prefix('export')->name('export.')->group(function () {
+                // Export Sales Report
+                Route::get('/sales', [AdminReportController::class, 'exportSales'])->name('sales');
+
+                // Export Products Report
+                Route::get('/products', [AdminReportController::class, 'exportProducts'])->name('products');
+
+                // Export Customers Report
+                Route::get('/customers', [AdminReportController::class, 'exportCustomers'])->name('customers');
+
+                // Export Financial Report dengan berbagai tipe
+                Route::get('/financial', [AdminReportController::class, 'exportFinancial'])->name('financial');
+                Route::get('/financial/summary', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'summary')
+                    ->name('financial.summary');
+                Route::get('/financial/detailed', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'detailed')
+                    ->name('financial.detailed');
+                Route::get('/financial/products', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'products')
+                    ->name('financial.products');
+                Route::get('/financial/daily', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'daily')
+                    ->name('financial.daily');
+                Route::get('/financial/multiple-sheets', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'multiple')
+                    ->name('financial.multiple');
+                Route::get('/financial/styled', [AdminReportController::class, 'exportFinancial'])
+                    ->defaults('report_type', 'styled')
+                    ->name('financial.styled');
+
+                // Export Inventory Report
+                Route::get('/inventory', [AdminReportController::class, 'exportInventory'])->name('inventory');
+
+                // Export Large Dataset
+                Route::get('/large-dataset', [AdminReportController::class, 'exportLargeDataset'])->name('large.dataset');
+
+                // Export Daily Report
+                Route::get('/daily', [AdminReportController::class, 'exportDaily'])->name('daily');
+            });
         });
 
         // Settings
