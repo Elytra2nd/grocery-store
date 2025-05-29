@@ -23,6 +23,7 @@ interface OrderEditProps extends PageProps {
       email: string;
       phone?: string;
     };
+    payment_method?: string;
   };
 }
 
@@ -31,7 +32,6 @@ type OrderFormData = {
   tracking_number: string;
   notes: string;
   shipping_address: string;
-  [key: string]: any;
 };
 
 export default function OrderEdit({ order }: OrderEditProps): JSX.Element {
@@ -298,10 +298,10 @@ export default function OrderEdit({ order }: OrderEditProps): JSX.Element {
                     {order.order_items.map((item) => (
                       <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-300">
-                          {item.product.image ? (
+                          {item.product?.image ? (
                             <img
-                              src={`/storage/products/${item.product.image}`}
-                              alt={item.product.name}
+                              src={`/storage/products/${item.product?.image}`}
+                              alt={item.product?.name || 'Product'}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -311,8 +311,8 @@ export default function OrderEdit({ order }: OrderEditProps): JSX.Element {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">{item.product.name}</h4>
-                          <p className="text-sm text-amber-600">{item.product.category?.name}</p>
+                          <h4 className="text-sm font-medium text-gray-900 truncate">{item.product?.name}</h4>
+                          <p className="text-sm text-amber-600">{item.product?.category?.name}</p>
                           <p className="text-sm text-gray-600">Qty: {item.quantity} × {formatCurrency(item.price)}</p>
                         </div>
                         <div className="text-sm font-semibold text-gray-900">

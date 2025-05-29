@@ -5,6 +5,7 @@ import { Order, OrderItem, PageProps } from '@/types';
 
 interface OrderShowProps extends PageProps {
   order: Order & {
+    payment_method?: string;
     order_items: (OrderItem & {
       product: {
         id: number;
@@ -229,10 +230,10 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
                     {order.order_items.map((item) => (
                       <div key={item.id} className="flex items-center space-x-4 p-4 bg-amber-25 rounded-lg border border-amber-100">
                         <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200">
-                          {item.product.image ? (
+                          {item.product?.image ? (
                             <img
-                              src={`/storage/products/${item.product.image}`}
-                              alt={item.product.name}
+                              src={`/storage/products/${item.product?.image}`}
+                              alt={item.product?.name || 'Product'}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -242,8 +243,8 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 truncate">{item.product.name}</h3>
-                          <p className="text-sm text-amber-600">{item.product.category?.name}</p>
+                          <h3 className="font-medium text-gray-900 truncate">{item.product?.name}</h3>
+                          <p className="text-sm text-amber-600">{item.product?.category?.name}</p>
                           <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                             <span>Qty: {item.quantity}</span>
                             <span>×</span>
