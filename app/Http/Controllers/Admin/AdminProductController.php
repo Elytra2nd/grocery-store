@@ -117,16 +117,12 @@ class AdminProductController extends Controller
     public function create()
     {
         try {
-            $categories = Category::orderBy('name')
-                ->pluck('name', 'id'); // <-- Ambil id dan name
-
+            $categories = Category::orderBy('name')->get(['id', 'name']);
             return Inertia::render('Admin/Products/Create', [
                 'categories' => $categories,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminProductController@create error: ' . $e->getMessage());
-
             return Inertia::render('Admin/Products/Create', [
                 'categories' => [],
                 'error' => 'Terjadi kesalahan saat memuat halaman.'
@@ -228,20 +224,20 @@ class AdminProductController extends Controller
     public function edit(Product $product)
     {
         try {
-            // Ambil kategori dalam bentuk id => name supaya mudah dipakai di <select>
-            $categories = Category::orderBy('name')->pluck('name', 'id');
+            // Ambil semua kategori sebagai array objek (id & name)
+            $categories = Category::orderBy('name')->get(['id', 'name']);
 
             return Inertia::render('Admin/Products/Edit', [
                 'product' => $product,
                 'categories' => $categories,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminProductController@edit error: ' . $e->getMessage());
             return redirect()->route('admin.products.index')
                 ->with('error', 'Produk tidak ditemukan');
         }
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -470,7 +466,9 @@ class AdminProductController extends Controller
     public function lowStock()
     {
         try {
-            $products = Product::where('stock', '<=', 10)
+            // Ambil produk stok <= 10, dengan relasi kategori
+            $products = Product::with('category')
+                ->where('stock', '<=', 10)
                 ->where('is_active', true)
                 ->orderBy('stock', 'asc')
                 ->paginate(10);
@@ -479,10 +477,17 @@ class AdminProductController extends Controller
                 'products' => $products,
             ]);
         } catch (\Exception $e) {
-            Log::error('AdminProductController@lowStock error: ' . $e->getMessage());
+            \Log::error('AdminProductController@lowStock error: ' . $e->getMessage());
             return Inertia::render('Admin/Products/LowStock', [
-                'products' => [],
-                'error' => 'Terjadi kesalahan saat memuat data.'
+                    'products' => [
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 10,
+                    'total' => 0,
+                    'links' => [],
+                ],
+                'error' => 'Terjadi kesalahan saat memuat data stok rendah.'
             ]);
         }
     }

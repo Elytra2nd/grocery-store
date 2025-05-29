@@ -3,8 +3,17 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, Product, PaginatedData } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
+interface Category {
+    id: number;
+    name: string;
+}
+
+interface ProductWithCategory extends Product {
+    category?: Category | null;
+}
+
 interface Props extends PageProps {
-    products: PaginatedData<Product>;
+    products: PaginatedData<ProductWithCategory>;
     error?: string;
 }
 
@@ -39,7 +48,9 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
                                     products.data.map((product) => (
                                         <tr key={product.id} className="hover:bg-amber-50 transition-colors duration-150">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-900">{product.name}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700">{product.category}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700">
+                                                {product.category?.name || 'Tidak ada kategori'}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow ${
                                                     product.stock === 0
@@ -67,7 +78,6 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
                                 let label = link.label;
                                 if (label === '&laquo; Previous') label = 'Sebelumnya';
                                 else if (label === 'Next &raquo;') label = 'Selanjutnya';
-                                const isPageNumber = !isNaN(Number(label));
                                 return (
                                     <button
                                         key={i}
