@@ -5,12 +5,18 @@ import { PageProps, Product } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ArrowLeftIcon from '@heroicons/react/24/solid/esm/ArrowLeftIcon';
 
+// Tambahkan interface Category jika belum ada
+interface Category {
+    id: number;
+    name: string;
+}
+
 type ProductFormData = {
     name: string;
     description: string;
     price: number;
     stock: number;
-    category: string;
+    category_id: string;
     is_active: boolean;
     image?: File | null;
 };
@@ -23,7 +29,7 @@ type StockUpdateData = {
 
 interface Props extends PageProps {
     product: Product;
-    categories: string[];
+    categories: Category[]; // <-- array objek kategori
 }
 
 export default function Edit({ product, categories }: Props): JSX.Element {
@@ -32,8 +38,8 @@ export default function Edit({ product, categories }: Props): JSX.Element {
         description: product.description || '',
         price: product.price || 0,
         stock: product.stock || 0,
-        category: product.category || '',
-        is_active: product.is_active || false,
+        category_id: product.category_id ? String(product.category_id) : '',
+        is_active: product.is_active ?? true,
     });
 
     const [stockData, setStockData] = useState<StockUpdateData>({
@@ -109,18 +115,13 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                             type="text"
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
-                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                errors.name
-                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'}`}
                                             required
                                         />
                                         {errors.name && (
                                             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                                         )}
                                     </div>
-
                                     <div className="col-span-6">
                                         <label className="block text-sm font-medium text-amber-900">
                                             Deskripsi <span className="text-red-500">*</span>
@@ -129,11 +130,7 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                             rows={4}
                                             value={data.description}
                                             onChange={(e) => setData('description', e.target.value)}
-                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                errors.description
-                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.description ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'}`}
                                             required
                                         />
                                         {errors.description && (
@@ -155,11 +152,7 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                                 step="0.01"
                                                 value={data.price}
                                                 onChange={(e) => setData('price', parseFloat(e.target.value) || 0)}
-                                                className={`block w-full pl-12 pr-12 sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                    errors.price
-                                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-amber-300'
-                                                }`}
+                                                className={`block w-full pl-12 pr-12 sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.price ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'}`}
                                                 required
                                             />
                                         </div>
@@ -178,11 +171,7 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                                 min="0"
                                                 value={data.stock}
                                                 onChange={(e) => setData('stock', parseInt(e.target.value) || 0)}
-                                                className={`flex-1 block w-full border rounded-l-md focus:ring-amber-500 focus:border-amber-500 sm:text-sm transition-all duration-200 ${
-                                                    errors.stock
-                                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-amber-300'
-                                                }`}
+                                                className={`flex-1 block w-full border rounded-l-md focus:ring-amber-500 focus:border-amber-500 sm:text-sm transition-all duration-200 ${errors.stock ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'}`}
                                                 required
                                             />
                                             <button
@@ -197,30 +186,25 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                             <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
                                         )}
                                     </div>
-
                                     <div className="col-span-6 sm:col-span-3">
                                         <label className="block text-sm font-medium text-amber-900">
                                             Kategori <span className="text-red-500">*</span>
                                         </label>
                                         <select
-                                            value={data.category}
-                                            onChange={(e) => setData('category', e.target.value)}
-                                            className={`mt-1 block w-full py-2 px-3 border bg-white rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm ${
-                                                errors.category
-                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-amber-300'
-                                            }`}
+                                            value={data.category_id}
+                                            onChange={(e) => setData('category_id', e.target.value)}
+                                            className={`mt-1 block w-full py-2 px-3 border bg-white rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm ${errors.category_id ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'}`}
                                             required
                                         >
                                             <option value="">Pilih Kategori</option>
-                                            {categories.map((category) => (
-                                                <option key={category} value={category}>
-                                                    {category}
+                                            {categories.map((cat) => (
+                                                <option key={cat.id} value={String(cat.id)}>
+                                                    {cat.name}
                                                 </option>
                                             ))}
                                         </select>
-                                        {errors.category && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                                        {errors.category_id && (
+                                            <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
                                         )}
                                     </div>
 
@@ -295,7 +279,6 @@ export default function Edit({ product, categories }: Props): JSX.Element {
                                     </div>
                                 </div>
                             </div>
-
                             {/* Submit Buttons */}
                             <div className="flex justify-end space-x-3 pt-6 border-t border-amber-200">
                                 <Link
