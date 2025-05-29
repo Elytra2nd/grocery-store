@@ -18,11 +18,11 @@ interface Product {
 interface ProductsProps extends PageProps {
     products: Product[];
     summary: {
-        total_products: number | null;
-        total_sold_items: number | null;
-        total_revenue: number | null;
-        active_products: number | null;
-        low_stock_products: number | null;
+        total_products: number;
+        total_sold_items: number;
+        total_revenue: number;
+        active_products: number;
+        low_stock_products: number;
     };
     categories: string[];
     filters: {
@@ -49,7 +49,7 @@ export default function Products({
     const [isLoading, setIsLoading] = useState(false);
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-    // DIPERBAIKI: Safe summary dengan fallback values
+    // DIPERBAIKI: Safe summary dengan fallback values sesuai backend
     const safeSummary = {
         total_products: summary?.total_products ?? 0,
         total_sold_items: summary?.total_sold_items ?? 0,
@@ -58,13 +58,28 @@ export default function Products({
         low_stock_products: summary?.low_stock_products ?? 0,
     };
 
+    // DIPERBAIKI: Format currency yang robust sesuai backend
     const formatRupiah = (value: number | null | undefined) => {
         if (typeof value !== "number" || isNaN(value)) {
             return "Rp 0";
         }
-        return "Rp " + value.toLocaleString("id-ID");
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value);
     };
 
+    // DIPERBAIKI: Format number yang robust
+    const formatNumber = (value: number | null | undefined) => {
+        if (typeof value !== "number" || isNaN(value)) {
+            return "0";
+        }
+        return new Intl.NumberFormat('id-ID').format(value);
+    };
+
+    // DIPERBAIKI: Handle filter sesuai backend endpoint
     const handleFilter = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
@@ -75,29 +90,43 @@ export default function Products({
             end_date: formData.get('end_date'),
             category: formData.get('category'),
         }, {
-            onFinish: () => setIsLoading(false)
+            onFinish: () => setIsLoading(false),
+            preserveScroll: true,
         });
     };
 
+    // DIPERBAIKI: Handle reset sesuai backend
     const handleReset = () => {
         setIsLoading(true);
         router.get('/admin/reports/products', {}, {
-            onFinish: () => setIsLoading(false)
+            onFinish: () => setIsLoading(false),
+            preserveScroll: true,
         });
     };
 
+    // DIPERBAIKI: Handle export sesuai backend route
     const handleExport = () => {
+        setIsLoading(true);
         const params = new URLSearchParams({
             start_date: filters.start_date || '',
             end_date: filters.end_date || '',
-            category: filters.category,
+            category: filters.category || 'all',
         });
-        window.location.href = `/admin/reports/export/products?${params.toString()}`;
+
+        // Create download link
+        const link = document.createElement('a');
+        link.href = `/admin/reports/export/products?${params.toString()}`;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => setIsLoading(false), 2000);
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Laporan Produk" />
+            <Head title ="Laporan Produk" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
                 {/* Floating Background Elements */}
@@ -109,7 +138,7 @@ export default function Products({
                 {/* Header */}
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-light text-amber-900 tracking-wide">
+                        <h1 className="text-3xl font-bold text-amber-900 tracking-wide">
                             Laporan Produk
                         </h1>
                         <div className="w-16 h-0.5 bg-amber-600 mt-2"></div>
@@ -119,10 +148,11 @@ export default function Products({
                     </div>
                     <button
                         onClick={handleExport}
-                        className="group flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-medium hover:scale-105"
+                        disabled={isLoading}
+                        className="group flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-medium hover:scale-105 disabled:opacity-50"
                     >
                         <DocumentTextIcon className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" />
-                        Export Laporan
+                        {isLoading ? 'Mengekspor...' : 'Export Laporan'}
                     </button>
                 </div>
 
@@ -137,7 +167,7 @@ export default function Products({
                     </div>
                 )}
 
-                {/* Filter Section */}
+                {/* DIPERBAIKI: Filter Section sesuai backend */}
                 <form onSubmit={handleFilter} className="relative z-10 mb-8 bg-white/90 backdrop-blur-md rounded-lg shadow-sm border border-amber-100 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <FunnelIcon className="w-5 h-5 text-amber-600" />
@@ -199,7 +229,7 @@ export default function Products({
                     </div>
                 </form>
 
-                {/* Enhanced Summary Cards */}
+                {/* DIPERBAIKI: Enhanced Summary Cards sesuai backend data */}
                 <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <SummaryCard
                         id="total-products"
@@ -249,7 +279,7 @@ export default function Products({
                     />
                 </div>
 
-                {/* Enhanced Products Table */}
+                {/* DIPERBAIKI: Enhanced Products Table sesuai backend structure */}
                 <div className="relative z-10 bg-white/90 backdrop-blur-md rounded-lg shadow-sm border border-amber-100 overflow-hidden">
                     <div className="p-6 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50">
                         <div className="flex items-center justify-between">
@@ -374,7 +404,7 @@ export default function Products({
                                                         ? 'bg-yellow-100 text-yellow-800'
                                                         : 'bg-green-100 text-green-800'
                                                 }`}>
-                                                    {product.stock}
+                                                    {formatNumber(product.stock)}
                                                     {product.stock <= 10 && (
                                                         <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -384,7 +414,7 @@ export default function Products({
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-bold group-hover:text-amber-800 transition-colors duration-300">
                                                 <div className="flex items-center justify-end space-x-2">
-                                                    <span>{product.total_sold.toLocaleString("id-ID")}</span>
+                                                    <span>{formatNumber(product.total_sold)}</span>
                                                     {product.total_sold > 0 && (
                                                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                                     )}
@@ -393,7 +423,7 @@ export default function Products({
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-bold group-hover:text-amber-800 transition-colors duration-300">
                                                 <div className="flex flex-col items-end">
                                                     <span>{formatRupiah(product.revenue)}</span>
-                                                    {product.revenue > 0 && (
+                                                    {product.revenue > 0 && products.length > 0 && (
                                                         <div className="w-full bg-gray-200 rounded-full h-1 mt-1 overflow-hidden">
                                                             <div
                                                                 className="bg-gradient-to-r from-amber-400 to-orange-500 h-1 rounded-full transition-all duration-1000 ease-out"
@@ -441,7 +471,7 @@ export default function Products({
                             <div className="flex items-center justify-between text-sm text-amber-700">
                                 <div className="flex items-center space-x-4">
                                     <span>📊 Total: {products.length} produk</span>
-                                    <span>💰 Total Pendapatan: {formatRupiah(products.reduce((sum, p) => sum + p.revenue, 0))}</span>
+                                    <span>💰 Total Pendapatan: {formatRupiah(products.reduce((sum, p) => sum + (p.revenue || 0), 0))}</span>
                                 </div>
                                 <div className="text-xs text-amber-600">
                                     Data diperbarui secara real-time
@@ -510,19 +540,24 @@ function SummaryCard({
     hoveredCard: string | null;
     setHoveredCard: (id: string | null) => void;
 }) {
-    // DIPERBAIKI: Safe formatting dengan null check
+    // DIPERBAIKI: Safe formatting dengan null check sesuai backend
     const formatRupiah = (val: number | null | undefined) => {
         if (typeof val !== "number" || isNaN(val)) {
             return "Rp 0";
         }
-        return "Rp " + val.toLocaleString("id-ID");
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(val);
     };
 
     const formatNumber = (val: number | null | undefined) => {
         if (typeof val !== "number" || isNaN(val)) {
             return "0";
         }
-        return val.toLocaleString("id-ID");
+        return new Intl.NumberFormat('id-ID').format(val);
     };
 
     const colorClasses = {
