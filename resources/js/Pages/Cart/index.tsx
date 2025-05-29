@@ -176,11 +176,11 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
     if (filteredCartItems.length === 0) return;
 
     if (selectedItems.length > 0) {
-      router.post('/checkout', { items: selectedItems }, {
+      router.get('/checkout', { items: selectedItems }, {
         onFinish: () => setIsLoading(false)
       });
     } else {
-      router.post('/checkout', { all: true }, {
+      router.get('/checkout', { all: true }, {
         onFinish: () => setIsLoading(false)
       });
     }
