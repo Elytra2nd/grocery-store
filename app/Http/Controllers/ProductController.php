@@ -25,11 +25,17 @@ class ProductController extends Controller
             });
         }
 
-        // Category filter
+        // Category filter - gunakan category_id untuk filter
         if ($request->filled('category')) {
+            // Jika frontend mengirim nama kategori
             $query->whereHas('category', function($categoryQuery) use ($request) {
                 $categoryQuery->where('name', $request->category);
             });
+        }
+
+        // Category filter by ID (jika frontend mengirim category_id)
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
 
         // Price range filter
@@ -57,10 +63,10 @@ class ProductController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
-        // Get categories for filter dropdown - gunakan model Category langsung
+        // Get categories sebagai array objek {id, name}
         $categories = Category::whereHas('products', function($query) {
             $query->where('is_active', true);
-        })->pluck('name');
+        })->orderBy('name')->get(['id', 'name']);
 
         // Get price range for filter
         $priceRange = Product::where('is_active', true)
@@ -69,10 +75,10 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => $products,
-            'categories' => $categories,
+            'categories' => $categories, // Array objek {id, name}
             'priceRange' => $priceRange,
             'filters' => $request->only([
-                'search', 'category', 'min_price', 'max_price',
+                'search', 'category', 'category_id', 'min_price', 'max_price',
                 'sort_by', 'sort_order', 'in_stock'
             ]),
         ]);
@@ -127,10 +133,10 @@ class ProductController extends Controller
 
     public function categories()
     {
-        // Gunakan model Category langsung
+        // Mengirim kategori sebagai array objek {id, name}
         $categories = Category::whereHas('products', function($query) {
             $query->where('is_active', true);
-        })->pluck('name');
+        })->orderBy('name')->get(['id', 'name']);
 
         return response()->json($categories);
     }
