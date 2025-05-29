@@ -10,15 +10,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
 
-// Tambahkan FastExcel untuk ekspor
+// Import FastExcel dan FinancialReportExport
 use Rap2hpoutre\FastExcel\FastExcel;
-
-// Import export classes jika diperlukan
-use App\Exports\{
-    SalesReportExport,
-    ProductsReportExport,
-    CustomersReportExport
-};
+use App\Exports\FinancialReportExport;
 
 class AdminReportController extends Controller
 {
@@ -184,7 +178,6 @@ class AdminReportController extends Controller
                 'products.name',
                 DB::raw('COALESCE(SUM(order_items.quantity),0) as total_sold'),
                 DB::raw('COALESCE(SUM(order_items.quantity * order_items.price),0) as revenue')
-
             ])
                 ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
                 ->groupBy('products.id', 'products.name')
@@ -195,7 +188,7 @@ class AdminReportController extends Controller
             $summary = [
                 'total_products' => Product::count(),
                 'total_sold_items' => $products->sum('total_sold'),
-                'total_revenue' => 0, // Akan diisi setelah perhitungan
+                'total_revenue' => 0,
             ];
 
             // Hitung total pendapatan
@@ -226,7 +219,6 @@ class AdminReportController extends Controller
             ]);
         }
     }
-
 
     /**
      * Laporan pelanggan
@@ -281,6 +273,20 @@ class AdminReportController extends Controller
             }
 
             return Inertia::render('Admin/Reports/Customers', [
+                'customers' => $customers,
+                'summary' => $summary,
+                'acquisitionTrend' => $acquisitionTrend,
+                'filters' => [
+                    'sort_by' => $sortBy,
+                    'sort_order' => $sortOrder,
+                    'date_range' => $dateRange,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('AdminReportController@customers error: ' . $e->getMessage());
+
+            return Inertia::render('Admin/Reports/Customers', [
                 'customers' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
                 'summary' => [
                     'total_customers' => 0,
@@ -288,18 +294,6 @@ class AdminReportController extends Controller
                     'new_customers' => 0,
                     'repeat_customers' => 0,
                 ],
-                'acquisitionTrend' => [],
-                'filters' => [],
-                'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
-            ]);
-
-
-        } catch (\Exception $e) {
-            Log::error('AdminReportController@customers error: ' . $e->getMessage());
-
-            return Inertia::render('Admin/Reports/Customers', [
-                'customers' => [],
-                'summary' => [],
                 'acquisitionTrend' => [],
                 'filters' => [],
                 'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
@@ -324,15 +318,15 @@ class AdminReportController extends Controller
                 throw new \Exception('Format tanggal tidak valid');
             }
 
-            // Perbaikan query revenue by category
+            // Revenue by category
             $revenueByCategory = OrderItem::select('categories.name as category')
                 ->selectRaw('SUM(order_items.quantity * order_items.price) as revenue')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
-                ->join('categories', 'products.category_id', '=', 'categories.id') // Tambahkan join ke categories
+                ->join('categories', 'products.category_id', '=', 'categories.id')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->where('orders.status', 'delivered')
                 ->whereBetween('orders.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-                ->groupBy('categories.name') // Group by category name dari tabel categories
+                ->groupBy('categories.name')
                 ->orderBy('revenue', 'desc')
                 ->get()
                 ->map(function ($item) {
@@ -342,14 +336,14 @@ class AdminReportController extends Controller
                     ];
                 });
 
-            // Hitung revenue summary
+            // Revenue summary
             $revenue = [
                 'gross_revenue' => (float) Order::where('status', 'delivered')
                     ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                     ->sum('total_amount'),
                 'net_revenue' => (float) Order::where('status', 'delivered')
                     ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-                    ->sum('total_amount') * 0.89, // contoh: net setelah pajak 11%
+                    ->sum('total_amount') * 0.89,
                 'total_orders' => Order::where('status', 'delivered')
                     ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                     ->count(),
@@ -359,10 +353,10 @@ class AdminReportController extends Controller
                 'refunds' => (float) Order::where('status', 'refunded')
                     ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                     ->sum('total_amount'),
-                'growth_rate' => 0, // Implementasi growth rate jika diperlukan
+                'growth_rate' => 0,
             ];
 
-            // Daily revenue (optional, implementasi sederhana)
+            // Daily revenue
             $dailyRevenue = Order::select(
                     DB::raw('DATE(created_at) as date'),
                     DB::raw('SUM(total_amount) as revenue')
@@ -482,6 +476,40 @@ class AdminReportController extends Controller
     }
 
     /**
+     * Export financial report menggunakan FinancialReportExport - DIPERBAIKI
+     */
+    public function exportFinancial(Request $request)
+    {
+        try {
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+            $reportType = $request->get('report_type', 'summary');
+
+            $export = new FinancialReportExport($startDate, $endDate, $reportType);
+
+            // Export berdasarkan tipe - DIPERBAIKI method names
+            switch ($reportType) {
+                case 'multiple':
+                    return $export->exportMultipleSheets();
+                case 'styled':
+                    return $export->exportWithStyling();
+                case 'detailed':
+                    return $export->export();
+                case 'products':
+                    return $export->export();
+                case 'daily':
+                    return $export->export();
+                default:
+                    return $export->export();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('AdminReportController@exportFinancial error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan keuangan: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Export sales report
      */
     public function exportSales(Request $request)
@@ -491,7 +519,8 @@ class AdminReportController extends Controller
             $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
             $status = $request->get('status', 'all');
 
-            $export = new SalesReportExport($startDate, $endDate, $status);
+            // Menggunakan FinancialReportExport untuk sales
+            $export = new FinancialReportExport($startDate, $endDate, 'detailed');
             return $export->export();
 
         } catch (\Exception $e) {
@@ -506,11 +535,11 @@ class AdminReportController extends Controller
     public function exportProducts(Request $request)
     {
         try {
-            $category = $request->get('category', 'all');
-            $sortBy = $request->get('sort_by', 'name');
-            $sortOrder = $request->get('sort_order', 'asc');
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-            $export = new ProductsReportExport($category, $sortBy, $sortOrder);
+            // Menggunakan FinancialReportExport untuk products
+            $export = new FinancialReportExport($startDate, $endDate, 'products');
             return $export->export();
 
         } catch (\Exception $e) {
@@ -529,67 +558,32 @@ class AdminReportController extends Controller
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
 
-            $export = new CustomersReportExport($dateRange, $sortBy, $sortOrder);
-            return $export->export();
+            $customers = User::role('buyer')
+                ->with(['orders' => function($query) {
+                    $query->where('status', 'delivered');
+                }])
+                ->get()
+                ->map(function ($customer) {
+                    return [
+                        'Nama' => $customer->name,
+                        'Email' => $customer->email,
+                        'Tanggal Daftar' => $customer->created_at->format('d/m/Y'),
+                        'Total Pesanan' => $customer->orders->count(),
+                        'Total Belanja (Rp)' => number_format($customer->orders->sum('total_amount'), 0, ',', '.'),
+                        'Rata-rata Pesanan (Rp)' => $customer->orders->count() > 0 ?
+                            number_format($customer->orders->avg('total_amount'), 0, ',', '.') : '0',
+                        'Pesanan Terakhir' => $customer->orders->max('created_at') ?
+                            Carbon::parse($customer->orders->max('created_at'))->format('d/m/Y') : 'Belum ada',
+                        'Status' => $customer->orders->count() > 1 ? 'Repeat Customer' : 'New Customer'
+                    ];
+                });
+
+            $filename = 'customers_report_' . date('Y-m-d') . '.xlsx';
+            return (new FastExcel($customers))->download($filename);
 
         } catch (\Exception $e) {
             Log::error('AdminReportController@exportCustomers error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengekspor laporan pelanggan: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Export financial report
-     */
-    public function exportFinancial(Request $request)
-    {
-        try {
-            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
-
-            $orders = Order::where('status', 'delivered')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->with(['user', 'orderItems.product'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            $data = $orders->map(function ($order) {
-                $grossRevenue = $order->total_amount;
-                $cogs = 0;
-                foreach ($order->orderItems as $item) {
-                    $productCost = $item->product->cost ?? 0;
-                    $cogs += $item->quantity * $productCost;
-                }
-                $grossProfit = $grossRevenue - $cogs;
-                $tax = $grossRevenue * 0.11;
-                $netRevenue = $grossRevenue - $tax;
-                $profitMargin = $grossRevenue > 0 ? ($grossProfit / $grossRevenue) * 100 : 0;
-                $mainCategory = $order->orderItems->first()->product->category ?? 'N/A';
-
-                return [
-                    'Tanggal' => $order->created_at->format('d/m/Y'),
-                    'No Pesanan' => $order->order_number,
-                    'Pelanggan' => $order->user->name ?? 'N/A',
-                    'Gross Revenue' => 'Rp ' . number_format($grossRevenue, 0, ',', '.'),
-                    'COGS' => 'Rp ' . number_format($cogs, 0, ',', '.'),
-                    'Gross Profit' => 'Rp ' . number_format($grossProfit, 0, ',', '.'),
-                    'Pajak PPN 11%' => 'Rp ' . number_format($tax, 0, ',', '.'),
-                    'Net Revenue' => 'Rp ' . number_format($netRevenue, 0, ',', '.'),
-                    'Profit Margin (%)' => number_format($profitMargin, 2, ',', '.') . '%',
-                    'Metode Pembayaran' => $order->payment_method ?? 'N/A',
-                    'Kategori Utama' => $mainCategory,
-                    'Jumlah Item' => $order->orderItems->count(),
-                    'Status' => ucfirst($order->status)
-                ];
-            });
-
-            $filename = 'financial_report_' . $startDate . '_to_' . $endDate . '.xlsx';
-
-            return (new FastExcel($data))->download($filename);
-
-        } catch (\Exception $e) {
-            Log::error('AdminReportController@exportFinancial error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal mengekspor laporan keuangan: ' . $e->getMessage());
         }
     }
 
@@ -647,12 +641,66 @@ class AdminReportController extends Controller
             });
 
             $filename = 'inventory_report_' . date('Y-m-d') . '.xlsx';
-
             return (new FastExcel($data))->download($filename);
 
         } catch (\Exception $e) {
             Log::error('AdminReportController@exportInventory error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengekspor laporan inventori: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export daily report menggunakan FinancialReportExport
+     */
+    public function exportDaily(Request $request)
+    {
+        try {
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+            $export = new FinancialReportExport($startDate, $endDate, 'daily');
+            return $export->export();
+
+        } catch (\Exception $e) {
+            Log::error('AdminReportController@exportDaily error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor laporan harian: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export large dataset menggunakan generator untuk performa optimal
+     */
+    public function exportLargeDataset(Request $request)
+    {
+        try {
+            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+            // Generator untuk dataset besar
+            $generator = function() use ($startDate, $endDate) {
+                $orders = Order::whereBetween('created_at', [$startDate, $endDate])
+                    ->with(['user', 'orderItems.product.category'])
+                    ->cursor(); // Menggunakan cursor untuk memory efficiency
+
+                foreach ($orders as $order) {
+                    yield [
+                        'No. Pesanan' => $order->order_number,
+                        'Tanggal' => Carbon::parse($order->created_at)->format('d/m/Y H:i'),
+                        'Pelanggan' => $order->user->name ?? 'N/A',
+                        'Email' => $order->user->email ?? 'N/A',
+                        'Status' => ucfirst($order->status),
+                        'Total (Rp)' => number_format($order->total_amount, 0, ',', '.'),
+                        'Jumlah Item' => $order->orderItems->count()
+                    ];
+                }
+            };
+
+            $filename = 'large_dataset_' . $startDate . '_to_' . $endDate . '.xlsx';
+            return (new FastExcel($generator()))->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('AdminReportController@exportLargeDataset error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengekspor dataset besar: ' . $e->getMessage());
         }
     }
 }
