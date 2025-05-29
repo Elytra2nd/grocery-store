@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Buyer\CheckoutController;
 use App\Http\Controllers\Admin\{
     AdminDashboardController,
     AdminProductController,
@@ -17,7 +18,6 @@ use App\Http\Controllers\{
     CartController,
     OrderController,
     ProductController,
-    CheckoutController,
     CategoryController
 };
 

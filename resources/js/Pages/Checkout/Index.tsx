@@ -32,13 +32,12 @@ interface CheckoutProps {
   };
 }
 
-// PERBAIKAN UTAMA: Gunakan type dengan index signature
+// PERBAIKAN UTAMA: Gunakan interface agar setData tidak error
 type CheckoutFormData = {
   shipping_address: string;
   payment_method: string;
   notes: string;
   cart_items: number[];
-  [key: string]: any; // SANGAT PENTING: index signature agar setData tidak error
 };
 
 export default function CheckoutIndex({
