@@ -13,7 +13,13 @@ use App\Http\Controllers\Admin\{
     AdminSettingController,
     AdminCategoryController
 };
-use App\Http\Controllers\{CartController, OrderController, ProductController, CategoryController};
+use App\Http\Controllers\{
+    CartController,
+    OrderController,
+    ProductController,
+    CheckoutController,
+    CategoryController
+};
 
 // ===================
 // Public Routes
@@ -36,6 +42,11 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::put('/{id}', [CartController::class, 'update'])->name('update');
     Route::delete('/{id}', [CartController::class, 'destroy'])->name('destroy');
     Route::delete('/', [CartController::class, 'clear'])->name('clear');
+});
+
+Route::middleware(['auth', 'role:buyer'])->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 });
 
 Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
