@@ -130,10 +130,10 @@ class AdminReportController extends Controller
 
             // Daily sales data
             $dailySales = Order::select(
-                    DB::raw('DATE(created_at) as date'),
-                    DB::raw('COUNT(*) as orders'),
-                    DB::raw('SUM(total_amount) as revenue')
-                )
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as orders'),
+                DB::raw('SUM(total_amount) as revenue')
+            )
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->groupBy('date')
                 ->orderBy('date')
@@ -180,12 +180,12 @@ class AdminReportController extends Controller
         try {
             // Ambil data produk beserta total terjual dan pendapatan per produk
             $products = Product::select([
-                    'products.id',
-                    'products.name',
-                    DB::raw('COALESCE(SUM(order_items.quantity),0) as total_sold'),
-                    DB::raw('COALESCE(SUM(order_items.quantity * order_items.price),0) as revenue')
+                'products.id',
+                'products.name',
+                DB::raw('COALESCE(SUM(order_items.quantity),0) as total_sold'),
+                DB::raw('COALESCE(SUM(order_items.quantity * order_items.price),0) as revenue')
 
-                ])
+            ])
                 ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
                 ->groupBy('products.id', 'products.name')
                 ->orderByDesc('total_sold')
@@ -193,9 +193,9 @@ class AdminReportController extends Controller
 
             // Ringkasan
             $summary = [
-                'total_products'    => Product::count(),
-                'total_sold_items'  => $products->sum('total_sold'),
-                'total_revenue'     => 0, // Akan diisi setelah perhitungan
+                'total_products' => Product::count(),
+                'total_sold_items' => $products->sum('total_sold'),
+                'total_revenue' => 0, // Akan diisi setelah perhitungan
             ];
 
             // Hitung total pendapatan
@@ -209,15 +209,15 @@ class AdminReportController extends Controller
             return Inertia::render('Admin/Reports/Products', [
                 'products' => $products,
                 'total_Revenue' => $summary['total_revenue'],
-                'summary'  => $summary,
-                'error'    => null,
+                'summary' => $summary,
+                'error' => null,
             ]);
         } catch (\Exception $e) {
             Log::error('AdminReportController@products error: ' . $e->getMessage());
 
             return Inertia::render('Admin/Reports/Products', [
                 'products' => [],
-                'summary'  => [
+                'summary' => [
                     'total_products' => 0,
                     'total_sold_items' => 0,
                     'total_revenue' => 0,
@@ -257,14 +257,14 @@ class AdminReportController extends Controller
             $summary = [
                 'total_customers' => User::role('buyer')->count(),
                 'active_customers' => User::role('buyer')
-                    ->whereHas('orders', function($query) use ($startDate) {
+                    ->whereHas('orders', function ($query) use ($startDate) {
                         $query->where('created_at', '>=', $startDate);
                     })->count(),
                 'new_customers' => User::role('buyer')
                     ->where('created_at', '>=', $startDate)
                     ->count(),
                 'repeat_customers' => User::role('buyer')
-                    ->whereHas('orders', function($query) {
+                    ->whereHas('orders', function ($query) {
                         $query->havingRaw('COUNT(*) > 1');
                     })->count(),
             ];
@@ -281,17 +281,17 @@ class AdminReportController extends Controller
             }
 
             return Inertia::render('Admin/Reports/Customers', [
-            'customers' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
-            'summary' => [
+                'customers' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
+                'summary' => [
                     'total_customers' => 0,
                     'active_customers' => 0,
-                     'new_customers' => 0,
+                    'new_customers' => 0,
                     'repeat_customers' => 0,
-            ],
-            'acquisitionTrend' => [],
-            'filters' => [],
-            'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
-        ]);
+                ],
+                'acquisitionTrend' => [],
+                'filters' => [],
+                'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
+            ]);
 
 
         } catch (\Exception $e) {
@@ -316,53 +316,59 @@ class AdminReportController extends Controller
             $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
             $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-            $revenue = [
-                'gross_revenue' => Order::where('status', 'delivered')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->sum('total_amount'),
-                'total_orders' => Order::where('status', 'delivered')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'average_order_value' => Order::where('status', 'delivered')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->avg('total_amount'),
-                'refunds' => Order::where('status', 'cancelled')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->sum('total_amount'),
-            ];
-            $revenue['net_revenue'] = $revenue['gross_revenue'] - $revenue['refunds'];
+            // Validasi tanggal
+            try {
+                $startDateCarbon = Carbon::parse($startDate);
+                $endDateCarbon = Carbon::parse($endDate);
+            } catch (\Exception $e) {
+                throw new \Exception('Format tanggal tidak valid');
+            }
 
-            $currentMonth = Carbon::parse($startDate);
-            $previousMonth = $currentMonth->copy()->subMonth();
-
-            $previousRevenue = Order::where('status', 'delivered')
-                ->whereBetween('created_at', [
-                    $previousMonth->startOfMonth(),
-                    $previousMonth->endOfMonth()
-                ])
-                ->sum('total_amount');
-
-            $revenue['growth_rate'] = $previousRevenue > 0
-                ? (($revenue['gross_revenue'] - $previousRevenue) / $previousRevenue) * 100
-                : 0;
-
-            $revenueByCategory = OrderItem::select('products.category')
+            // Perbaikan query revenue by category
+            $revenueByCategory = OrderItem::select('categories.name as category')
                 ->selectRaw('SUM(order_items.quantity * order_items.price) as revenue')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->join('categories', 'products.category_id', '=', 'categories.id') // Tambahkan join ke categories
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->where('orders.status', 'delivered')
-                ->whereBetween('orders.created_at', [$startDate, $endDate])
-                ->groupBy('products.category')
+                ->whereBetween('orders.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->groupBy('categories.name') // Group by category name dari tabel categories
                 ->orderBy('revenue', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'category' => $item->category ?? 'Tidak Berkategori',
+                        'revenue' => (float) ($item->revenue ?? 0)
+                    ];
+                });
 
+            // Hitung revenue summary
+            $revenue = [
+                'gross_revenue' => (float) Order::where('status', 'delivered')
+                    ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                    ->sum('total_amount'),
+                'net_revenue' => (float) Order::where('status', 'delivered')
+                    ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                    ->sum('total_amount') * 0.89, // contoh: net setelah pajak 11%
+                'total_orders' => Order::where('status', 'delivered')
+                    ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                    ->count(),
+                'average_order_value' => (float) Order::where('status', 'delivered')
+                    ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                    ->avg('total_amount'),
+                'refunds' => (float) Order::where('status', 'refunded')
+                    ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                    ->sum('total_amount'),
+                'growth_rate' => 0, // Implementasi growth rate jika diperlukan
+            ];
+
+            // Daily revenue (optional, implementasi sederhana)
             $dailyRevenue = Order::select(
                     DB::raw('DATE(created_at) as date'),
-                    DB::raw('SUM(total_amount) as revenue'),
-                    DB::raw('COUNT(*) as orders')
+                    DB::raw('SUM(total_amount) as revenue')
                 )
                 ->where('status', 'delivered')
-                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get();
@@ -378,14 +384,27 @@ class AdminReportController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('AdminReportController@financial error: ' . $e->getMessage());
+            Log::error('AdminReportController@financial error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
 
             return Inertia::render('Admin/Reports/Financial', [
-                'revenue' => [],
+                'revenue' => [
+                    'gross_revenue' => 0,
+                    'net_revenue' => 0,
+                    'total_orders' => 0,
+                    'average_order_value' => 0,
+                    'refunds' => 0,
+                    'growth_rate' => 0,
+                ],
                 'revenueByCategory' => [],
                 'dailyRevenue' => [],
-                'filters' => [],
-                'error' => 'Terjadi kesalahan saat memuat laporan keuangan.'
+                'filters' => [
+                    'start_date' => $request->get('start_date', Carbon::now()->startOfMonth()->toDateString()),
+                    'end_date' => $request->get('end_date', Carbon::now()->endOfMonth()->toDateString()),
+                ],
+                'error' => 'Terjadi kesalahan saat memuat laporan keuangan: ' . $e->getMessage()
             ]);
         }
     }
