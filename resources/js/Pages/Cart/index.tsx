@@ -171,20 +171,19 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
     .filter(item => selectedItems.includes(item.id))
     .reduce((total, item) => total + (item.quantity * item.product.price), 0);
 
-  const handleCheckout = () => {
+    const handleCheckout = () => {
     setIsLoading(true);
     if (filteredCartItems.length === 0) return;
 
+    // Jika ingin checkout item terpilih saja:
     if (selectedItems.length > 0) {
-      router.get('/checkout', { items: selectedItems }, {
-        onFinish: () => setIsLoading(false)
-      });
+        router.visit(`/checkout?items[]=${selectedItems.join('&items[]=')}`);
     } else {
-      router.get('/checkout', { all: true }, {
-        onFinish: () => setIsLoading(false)
-      });
+        // Jika ingin checkout semua item
+        router.visit('/checkout');
     }
-  };
+    setIsLoading(false);
+    };
 
   return (
     <BuyerAuthenticatedLayout>
