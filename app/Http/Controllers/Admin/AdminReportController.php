@@ -176,34 +176,38 @@ class AdminReportController extends Controller
             $endDate = $request->get('end_date');
             $category = $request->get('category', 'all');
 
-            // Query builder untuk produk dengan data penjualan
+            // Query builder untuk produk dengan data penjualan yang terintegrasi
             $query = Product::select([
                 'products.id',
                 'products.name',
-                'products.price',
+                'products.price', // DIPERBAIKI: Pastikan price dari products table
                 'products.stock',
                 'products.is_active',
+                'products.created_at',
                 'categories.name as category_name'
             ])
-            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->leftJoin('order_items', function($join) use ($startDate, $endDate) {
-                $join->on('products.id', '=', 'order_items.product_id');
-                if ($startDate && $endDate) {
-                    $join->leftJoin('orders', function($orderJoin) use ($startDate, $endDate) {
-                        $orderJoin->on('order_items.order_id', '=', 'orders.id')
-                                 ->where('orders.status', '!=', 'cancelled')
-                                 ->whereBetween('orders.created_at', [$startDate, $endDate]);
-                    });
-                } else {
-                    $join->leftJoin('orders', function($orderJoin) {
-                        $orderJoin->on('order_items.order_id', '=', 'orders.id')
-                                 ->where('orders.status', '!=', 'cancelled');
-                    });
-                }
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id');
+
+            // DIPERBAIKI: Subquery untuk menghitung total_sold dan revenue
+            $salesSubquery = OrderItem::select('product_id')
+                ->selectRaw('COALESCE(SUM(quantity), 0) as total_sold')
+                ->selectRaw('COALESCE(SUM(quantity * price), 0) as revenue') // DIPERBAIKI: Gunakan price dari order_items
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', '!=', 'cancelled');
+
+            // Filter berdasarkan tanggal jika ada
+            if ($startDate && $endDate) {
+                $salesSubquery->whereBetween('orders.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            }
+
+            $salesSubquery = $salesSubquery->groupBy('product_id');
+
+            // Join dengan subquery sales
+            $query->leftJoinSub($salesSubquery, 'sales', function ($join) {
+                $join->on('products.id', '=', 'sales.product_id');
             })
-            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as total_sold')
-            ->selectRaw('COALESCE(SUM(order_items.quantity * order_items.price), 0) as revenue')
-            ->groupBy('products.id', 'products.name', 'products.price', 'products.stock', 'products.is_active', 'categories.name');
+            ->selectRaw('COALESCE(sales.total_sold, 0) as total_sold')
+            ->selectRaw('COALESCE(sales.revenue, 0) as revenue');
 
             // Filter berdasarkan kategori
             if ($category !== 'all') {
@@ -212,13 +216,21 @@ class AdminReportController extends Controller
 
             $products = $query->orderByDesc('total_sold')->get();
 
-            // Hitung ringkasan
+            // DIPERBAIKI: Hitung ringkasan dengan data yang benar
+            $totalProducts = Product::count();
+            $activeProducts = Product::where('is_active', true)->count();
+            $lowStockProducts = Product::where('stock', '<=', 10)->count();
+
+            // Hitung total dari hasil query, bukan dari collection
+            $totalSoldItems = $products->sum('total_sold');
+            $totalRevenue = $products->sum('revenue');
+
             $summary = [
-                'total_products' => (int) Product::count(),
-                'total_sold_items' => (int) $products->sum('total_sold'),
-                'total_revenue' => (int) $products->sum('revenue'),
-                'active_products' => (int) Product::where('is_active', true)->count(),
-                'low_stock_products' => (int) Product::where('stock', '<=', 10)->count(),
+                'total_products' => (int) $totalProducts,
+                'total_sold_items' => (int) $totalSoldItems,
+                'total_revenue' => (float) $totalRevenue,
+                'active_products' => (int) $activeProducts,
+                'low_stock_products' => (int) $lowStockProducts,
             ];
 
             // Ambil kategori untuk filter
@@ -229,7 +241,19 @@ class AdminReportController extends Controller
                 ->pluck('name');
 
             return Inertia::render('Admin/Reports/Products', [
-                'products' => $products,
+                'products' => $products->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'price' => (float) $product->price, // DIPERBAIKI: Cast ke float
+                        'stock' => (int) $product->stock,
+                        'is_active' => (bool) $product->is_active,
+                        'category_name' => $product->category_name,
+                        'total_sold' => (int) $product->total_sold,
+                        'revenue' => (float) $product->revenue, // DIPERBAIKI: Cast ke float
+                        'created_at' => $product->created_at,
+                    ];
+                }),
                 'summary' => $summary,
                 'categories' => $categories,
                 'filters' => [
@@ -251,7 +275,7 @@ class AdminReportController extends Controller
                 'summary' => [
                     'total_products' => 0,
                     'total_sold_items' => 0,
-                    'total_revenue' => 0,
+                    'total_revenue' => 0.0,
                     'active_products' => 0,
                     'low_stock_products' => 0,
                 ],
