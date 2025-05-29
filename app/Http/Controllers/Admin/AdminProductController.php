@@ -190,8 +190,8 @@ class AdminProductController extends Controller
     public function show(Product $product)
     {
         try {
-            // Load related data dengan null safety
-            $product->load(['orderItems.order']);
+            // Load related data dengan kategori relasi objek
+            $product->load(['category', 'orderItems.order']);
 
             // Calculate statistics for this product dengan null safety
             $orderItems = $product->orderItems ?? collect([]);
@@ -217,6 +217,7 @@ class AdminProductController extends Controller
                 ->with('error', 'Produk tidak ditemukan');
         }
     }
+
 
     /**
      * Show the form for editing the specified resource.
