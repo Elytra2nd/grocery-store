@@ -13,6 +13,11 @@ export interface User {
     updated_at?: string;
 }
 
+export interface Category {
+    id: number;
+    name: string;
+}
+
 export interface Role {
     id: number;
     name: string;
@@ -28,7 +33,8 @@ export interface Product {
     description: string;
     price: number;
     stock: number;
-    category: string;
+    category_id: number | null;
+    category?: Category | null;
     image?: string | null;
     is_active: boolean;
     weight?: number;
@@ -131,6 +137,7 @@ export interface OrderStatistics {
 
 // Filter interfaces
 export interface ProductFilters {
+    category_id: string;
     search?: string;
     category?: string;
     status?: string;

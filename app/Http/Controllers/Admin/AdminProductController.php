@@ -28,15 +28,14 @@ class AdminProductController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Product::query();
+            $query = Product::with('category'); // Eager load kategori
 
             // Search functionality
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('category_id', 'like', "%{$search}%");
+                      ->orWhere('description', 'like', "%{$search}%");
                 });
             }
 
@@ -69,11 +68,10 @@ class AdminProductController extends Controller
                 ->paginate(10)
                 ->withQueryString();
 
-            // Get categories for filter - dengan null safety
-            $categories = Category::orderBy('name')
-                ->pluck('name');
+            // Get categories for filter: id => name
+            $categories = Category::orderBy('name')->pluck('name', 'id');
 
-            // Get statistics dengan null safety
+            // Get statistics
             $statistics = [
                 'total_products' => Product::count() ?? 0,
                 'active_products' => Product::where('is_active', true)->count() ?? 0,
@@ -92,8 +90,6 @@ class AdminProductController extends Controller
 
         } catch (\Exception $e) {
             Log::error('AdminProductController@index error: ' . $e->getMessage());
-
-            // Return safe fallback data
             return Inertia::render('Admin/Products/Index', [
                 'products' => [
                     'data' => [],
@@ -119,24 +115,24 @@ class AdminProductController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-{
-    try {
-        $categories = Category::orderBy('name')
-            ->pluck('name', 'id'); // <-- Ambil id dan name
+    {
+        try {
+            $categories = Category::orderBy('name')
+                ->pluck('name', 'id'); // <-- Ambil id dan name
 
-        return Inertia::render('Admin/Products/Create', [
-            'categories' => $categories,
-        ]);
+            return Inertia::render('Admin/Products/Create', [
+                'categories' => $categories,
+            ]);
 
-    } catch (\Exception $e) {
-        Log::error('AdminProductController@create error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@create error: ' . $e->getMessage());
 
-        return Inertia::render('Admin/Products/Create', [
-            'categories' => [],
-            'error' => 'Terjadi kesalahan saat memuat halaman.'
-        ]);
+            return Inertia::render('Admin/Products/Create', [
+                'categories' => [],
+                'error' => 'Terjadi kesalahan saat memuat halaman.'
+            ]);
+        }
     }
-}
 
     /**
      * Store a newly created resource in storage.
@@ -230,23 +226,22 @@ class AdminProductController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Product $product)
-{
-    try {
-        // Ambil kategori dalam bentuk id => name supaya mudah dipakai di <select>
-        $categories = Category::orderBy('name')->pluck('name', 'id');
+    {
+        try {
+            // Ambil kategori dalam bentuk id => name supaya mudah dipakai di <select>
+            $categories = Category::orderBy('name')->pluck('name', 'id');
 
-        return Inertia::render('Admin/Products/Edit', [
-            'product' => $product,
-            'categories' => $categories,
-        ]);
+            return Inertia::render('Admin/Products/Edit', [
+                'product' => $product,
+                'categories' => $categories,
+            ]);
 
-    } catch (\Exception $e) {
-        Log::error('AdminProductController@edit error: ' . $e->getMessage());
-        return redirect()->route('admin.products.index')
-            ->with('error', 'Produk tidak ditemukan');
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@edit error: ' . $e->getMessage());
+            return redirect()->route('admin.products.index')
+                ->with('error', 'Produk tidak ditemukan');
+        }
     }
-}
-
 
     /**
      * Update the specified resource in storage.
@@ -336,9 +331,6 @@ class AdminProductController extends Controller
         }
     }
 
-    /**
-     * Handle bulk actions for multiple products.
-     */
     public function bulkAction(Request $request)
     {
         $request->validate([
@@ -363,14 +355,11 @@ class AdminProductController extends Controller
                     $products->update(['is_active' => true]);
                     $message = $affectedCount . ' produk berhasil diaktifkan';
                     break;
-
                 case 'deactivate':
                     $products->update(['is_active' => false]);
                     $message = $affectedCount . ' produk berhasil dinonaktifkan';
                     break;
-
                 case 'delete':
-                    // Check if any product has orders
                     $productsWithOrders = $products->whereHas('orderItems')->pluck('name');
                     if ($productsWithOrders->isNotEmpty()) {
                         return back()->withErrors([
@@ -378,8 +367,6 @@ class AdminProductController extends Controller
                             $productsWithOrders->implode(', ')
                         ]);
                     }
-
-                    // Delete images for all products
                     $productList = $products->get();
                     foreach ($productList as $product) {
                         if ($product->image) {
@@ -390,7 +377,6 @@ class AdminProductController extends Controller
                             }
                         }
                     }
-
                     $products->delete();
                     $message = $affectedCount . ' produk berhasil dihapus';
                     break;
@@ -492,7 +478,6 @@ class AdminProductController extends Controller
             return Inertia::render('Admin/Products/LowStock', [
                 'products' => $products,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminProductController@lowStock error: ' . $e->getMessage());
             return Inertia::render('Admin/Products/LowStock', [
@@ -508,31 +493,29 @@ class AdminProductController extends Controller
     public function categories()
     {
         try {
-    // Ambil semua kategori dengan nama dan hitung produk terkait lewat relasi
-    $categories = Category::withCount([
-        'products', // hitung total produk per kategori
-        'products as active_products_count' => function ($query) {
-            $query->where('is_active', true); // hitung produk aktif per kategori
+            $categories = Category::withCount([
+                'products',
+                'products as active_products_count' => function ($query) {
+                    $query->where('is_active', true);
+                }
+            ])->orderBy('name')->get()->map(function ($category) {
+                return [
+                    'name' => $category->name,
+                    'products_count' => $category->products_count,
+                    'active_products_count' => $category->active_products_count,
+                ];
+            });
+
+            return Inertia::render('Admin/Categories/Index', [
+                'categories' => $categories,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('AdminProductController@categories error: ' . $e->getMessage());
+            return Inertia::render('Admin/Categories/Index', [
+                'categories' => [],
+                'error' => 'Terjadi kesalahan saat memuat data.'
+            ]);
         }
-    ])->orderBy('name')->get()->map(function ($category) {
-        return [
-            'name' => $category->name,
-            'products_count' => $category->products_count,
-            'active_products_count' => $category->active_products_count,
-        ];
-    });
-
-    return Inertia::render('Admin/Categories/Index', [
-        'categories' => $categories,
-    ]);
-} catch (\Exception $e) {
-    Log::error('AdminProductController@categories error: ' . $e->getMessage());
-    return Inertia::render('Admin/Categories/Index', [
-        'categories' => [],
-        'error' => 'Terjadi kesalahan saat memuat data.'
-    ]);
-}
-
     }
 
     /**
@@ -572,16 +555,13 @@ class AdminProductController extends Controller
 
             $callback = function() use ($products) {
                 $file = fopen('php://output', 'w');
-
                 // Add BOM for UTF-8
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
                 // Header
                 fputcsv($file, [
                     'ID', 'Nama', 'Deskripsi', 'Harga', 'Stok',
                     'Kategori', 'Status', 'Tanggal Dibuat'
                 ]);
-
                 // Data
                 foreach ($products as $product) {
                     fputcsv($file, [
@@ -595,7 +575,6 @@ class AdminProductController extends Controller
                         $product->created_at ? $product->created_at->format('Y-m-d H:i:s') : '',
                     ]);
                 }
-
                 fclose($file);
             };
 

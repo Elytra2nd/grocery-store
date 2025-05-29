@@ -72,15 +72,6 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                     <div className="w-full max-w-2xl">
                         {/* Header */}
                         <div className="mb-6">
-                            <div className="flex items-center">
-                                <Link
-                                    href={route('admin.products.index')}
-                                    className="mr-4 inline-flex items-center text-sm text-amber-700 hover:text-amber-900 transition-colors duration-150"
-                                >
-                                    <ArrowLeftIcon className="h-4 w-4 mr-1" />
-                                    Kembali
-                                </Link>
-                            </div>
                             <h2 className="text-2xl font-extrabold text-amber-900 sm:text-3xl">
                                 Tambah Produk Baru
                             </h2>
