@@ -1,485 +1,717 @@
-import { Head, router } from '@inertiajs/react';
-import { PageProps } from '@/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import React, { useRef, useState } from 'react';
+// resources/js/Pages/Admin/Orders/Index.tsx
+import React, { useState, FormEvent } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Order, PageProps, PaginatedData, OrderStatistics, OrderFilters } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import {
+    EyeIcon,
+    PencilIcon,
+    TrashIcon,
+    FunnelIcon,
+    DocumentArrowDownIcon,
+    ClockIcon,
+    CurrencyDollarIcon,
+    ShoppingCartIcon,
+    TruckIcon,
+    PlusIcon
+} from '@heroicons/react/24/outline';
 
-interface FinancialReportProps extends PageProps {
-    revenue: {
-        gross_revenue: number;
-        net_revenue: number;
-        total_orders: number;
-        average_order_value: number;
-        refunds: number;
-        growth_rate: number;
-    };
-    revenueByCategory: Array<{
-        category: string;
-        revenue: number;
-    }>;
-    dailyRevenue: Array<{
-        date: string;
-        revenue: number;
-        orders: number;
-    }>;
-    filters: {
-        start_date: string;
-        end_date: string;
-    };
-    error?: string;
+interface Props extends PageProps {
+    orders: PaginatedData<Order>;
+    statistics: OrderStatistics;
+    filters: OrderFilters;
+    statuses: Record<string, string>;
 }
 
-export default function Financial({
-    revenue,
-    revenueByCategory,
-    dailyRevenue,
+export default function OrdersIndex({
+    orders,
+    statistics,
     filters,
-    error
-}: FinancialReportProps) {
-    const startDateRef = useRef<HTMLInputElement>(null);
-    const endDateRef = useRef<HTMLInputElement>(null);
-    const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    statuses
+}: Props): JSX.Element {
+    const pageProps = usePage<PageProps>().props;
+    const flash = pageProps.flash ?? {};
+    const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+    const [bulkAction, setBulkAction] = useState<string>('');
+    const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
 
-    const handleDateFilter = (e: React.FormEvent<HTMLFormElement>) => {
+    // Safe fallbacks untuk data yang mungkin undefined
+    const safeOrders = orders?.data || [];
+    const safeStatistics = statistics || {
+        total_orders: 0,
+        pending_orders: 0,
+        processing_orders: 0,
+        shipped_orders: 0,
+        delivered_orders: 0,
+        cancelled_orders: 0,
+        total_revenue: 0,
+        today_orders: 0,
+        today_revenue: 0,
+    };
+    const safeStatuses = statuses || {};
+    const safeFilters = filters || {};
+
+    const handleSearch = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        router.get('/admin/reports/financial', {
-            start_date: formData.get('start_date'),
-            end_date: formData.get('end_date'),
+        const searchParams = Object.fromEntries(formData) as unknown as OrderFilters;
+        router.get('/admin/orders', searchParams as Record<string, any>, {
+            preserveState: true,
+            replace: true,
         });
     };
 
-    const handleResetFilter = () => {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const handleBulkAction = (): void => {
+        if (selectedOrders.length === 0 || !bulkAction) return;
 
-        const start_date = firstDay.toISOString().slice(0, 10);
-        const end_date = lastDay.toISOString().slice(0, 10);
+        const actionData: Record<string, any> = {
+            action: bulkAction.startsWith('update_status_') ? 'update_status' : bulkAction,
+            order_ids: selectedOrders,
+        };
 
-        if (startDateRef.current) startDateRef.current.value = start_date;
-        if (endDateRef.current) endDateRef.current.value = end_date;
+        if (bulkAction.startsWith('update_status_')) {
+            actionData.status = bulkAction.replace('update_status_', '');
+        }
 
-        router.get('/admin/reports/financial', {
-            start_date,
-            end_date,
+        router.post('/admin/orders/bulk-action', actionData, {
+            onSuccess: () => {
+                setSelectedOrders([]);
+                setBulkAction('');
+                setShowBulkModal(false);
+            },
+            onError: (errors) => {
+                console.error('Bulk action failed:', errors);
+            }
         });
     };
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            maximumFractionDigits: 0,
-        }).format(value || 0);
+    const toggleOrderSelection = (orderId: number): void => {
+        setSelectedOrders(prev =>
+            prev.includes(orderId)
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId]
+        );
     };
 
-    const formatChartDate = (date: string) => {
-        return new Date(date).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short'
-        });
+    const toggleSelectAll = (): void => {
+        if (selectedOrders.length === safeOrders.length) {
+            setSelectedOrders([]);
+        } else {
+            setSelectedOrders(safeOrders.map(order => order.id));
+        }
     };
 
-    const safeRevenue = {
-        gross_revenue: revenue?.gross_revenue || 0,
-        net_revenue: revenue?.net_revenue || 0,
-        total_orders: revenue?.total_orders || 0,
-        average_order_value: revenue?.average_order_value || 0,
-        refunds: revenue?.refunds || 0,
-        growth_rate: revenue?.growth_rate || 0,
-    };
-
-    const safeDailyRevenue = Array.isArray(dailyRevenue) ? dailyRevenue : [];
-    const safeRevenueByCategory = Array.isArray(revenueByCategory) ? revenueByCategory : [];
-
-    const handleExport = () => {
-        const params = new URLSearchParams({
-            start_date: filters.start_date,
-            end_date: filters.end_date,
-        });
-        window.location.href = `/admin/reports/export/financial?${params.toString()}`;
+    const handleDelete = (order: Order): void => {
+        if (confirm(`Apakah Anda yakin ingin menghapus pesanan #${order.order_number}?`)) {
+            router.delete(`/admin/orders/${order.id}`, {
+                onSuccess: () => {
+                    // Remove from selected orders if it was selected
+                    setSelectedOrders(prev => prev.filter(id => id !== order.id));
+                }
+            });
+        }
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Laporan Keuangan" />
+            <Head title="Kelola Pesanan" />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-light text-amber-900">Laporan Keuangan</h1>
-                    <button
-                        onClick={handleExport}
-                        className="group px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span>Export Excel</span>
+            <div className="py-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Header */}
+                    <div className="md:flex md:items-center md:justify-between mb-6">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                                Kelola Pesanan
+                            </h2>
                         </div>
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded animate-shake">
-                        <strong>Error:</strong> {error}
+                        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+                            <Link
+                                href="/admin/orders/create"
+                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                                Buat Pesanan
+                            </Link>
+                            <button
+                                onClick={() => router.get('/admin/orders/export')}
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <DocumentArrowDownIcon className="-ml-1 mr-2 h-5 w-5" />
+                                Export
+                            </button>
+                        </div>
                     </div>
-                )}
 
-                {/* Filter Section */}
-                <form onSubmit={handleDateFilter} className="mb-8 flex gap-4 flex-wrap bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-amber-200">
-                    <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-amber-700">Mulai:</label>
-                        <input
-                            type="date"
-                            name="start_date"
-                            defaultValue={filters?.start_date || ''}
-                            ref={startDateRef}
-                            className="rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-all duration-200"
+                    {/* Flash Messages */}
+                    {flash.success && (
+                        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm font-medium">{flash.success}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {flash.error && (
+                        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm font-medium">{flash.error}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <StatCard
+                            title="Total Pesanan"
+                            value={safeStatistics.total_orders}
+                            icon={ShoppingCartIcon}
+                            color="blue"
+                        />
+                        <StatCard
+                            title="Menunggu Konfirmasi"
+                            value={safeStatistics.pending_orders}
+                            icon={ClockIcon}
+                            color="yellow"
+                        />
+                        <StatCard
+                            title="Sedang Dikirim"
+                            value={safeStatistics.shipped_orders}
+                            icon={TruckIcon}
+                            color="indigo"
+                        />
+                        <StatCard
+                            title="Total Pendapatan"
+                            value={`Rp ${safeStatistics.total_revenue.toLocaleString('id-ID')}`}
+                            icon={CurrencyDollarIcon}
+                            color="green"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-amber-700">Sampai:</label>
-                        <input
-                            type="date"
-                            name="end_date"
-                            defaultValue={filters?.end_date || ''}
-                            ref={endDateRef}
-                            className="rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-all duration-200"
+
+                    {/* Filters */}
+                    <FilterForm
+                        onSubmit={handleSearch}
+                        statuses={safeStatuses}
+                        filters={safeFilters}
+                    />
+
+                    {/* Bulk Actions */}
+                    {selectedOrders.length > 0 && (
+                        <BulkActions
+                            selectedCount={selectedOrders.length}
+                            bulkAction={bulkAction}
+                            setBulkAction={setBulkAction}
+                            onExecute={() => setShowBulkModal(true)}
+                            statuses={safeStatuses}
                         />
-                    </div>
-                    <button
-                        type="submit"
-                        className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                    >
-                        Terapkan Filter
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleResetFilter}
-                        className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-300"
-                    >
-                        Reset
-                    </button>
-                </form>
+                    )}
 
-                {/* Enhanced Revenue Metrics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {[
-                        {
-                            id: 'gross',
-                            title: 'Pendapatan Kotor',
-                            value: safeRevenue.gross_revenue,
-                            subtitle: `${safeRevenue.total_orders} pesanan`,
-                            color: 'blue',
-                            bgGradient: 'from-blue-500 to-blue-600',
-                            icon: '💰'
-                        },
-                        {
-                            id: 'net',
-                            title: 'Pendapatan Bersih',
-                            value: safeRevenue.net_revenue,
-                            subtitle: 'Setelah refund',
-                            color: 'green',
-                            bgGradient: 'from-green-500 to-green-600',
-                            icon: '✅'
-                        },
-                        {
-                            id: 'average',
-                            title: 'Rata-rata Order',
-                            value: safeRevenue.average_order_value,
-                            subtitle: 'Per pesanan',
-                            color: 'purple',
-                            bgGradient: 'from-purple-500 to-purple-600',
-                            icon: '📊'
-                        },
-                        {
-                            id: 'growth',
-                            title: 'Pertumbuhan',
-                            value: safeRevenue.growth_rate,
-                            subtitle: 'Vs bulan lalu',
-                            color: safeRevenue.growth_rate >= 0 ? 'green' : 'red',
-                            bgGradient: safeRevenue.growth_rate >= 0 ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600',
-                            icon: safeRevenue.growth_rate >= 0 ? '📈' : '📉',
-                            isPercentage: true
-                        }
-                    ].map((metric, index) => (
-                        <div
-                            key={metric.id}
-                            className={`group relative bg-white rounded-xl shadow-lg border-l-4 border-${metric.color}-500 overflow-hidden transition-all duration-500 hover:shadow-2xl transform hover:scale-105 hover:-translate-y-2 cursor-pointer ${
-                                hoveredCard === metric.id ? 'ring-4 ring-amber-300/50' : ''
-                            }`}
-                            onMouseEnter={() => setHoveredCard(metric.id)}
-                            onMouseLeave={() => setHoveredCard(null)}
-                            style={{
-                                animationDelay: `${index * 100}ms`
-                            }}
-                        >
-                            {/* Animated background gradient */}
-                            <div className={`absolute inset-0 bg-gradient-to-br ${metric.bgGradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                    {/* Orders Table */}
+                    <OrdersTable
+                        orders={safeOrders}
+                        selectedOrders={selectedOrders}
+                        onToggleSelection={toggleOrderSelection}
+                        onToggleSelectAll={toggleSelectAll}
+                        onDelete={handleDelete}
+                        statuses={safeStatuses}
+                    />
 
-                            {/* Shimmer effect */}
-                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-
-                            <div className="relative p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-2 mb-2">
-                                            <span className="text-2xl animate-bounce">{metric.icon}</span>
-                                            <h3 className="text-lg font-semibold text-gray-700 group-hover:text-gray-800 transition-colors duration-300">
-                                                {metric.title}
-                                            </h3>
-                                        </div>
-                                        <p className={`text-2xl font-bold text-${metric.color}-600 transition-all duration-300 group-hover:scale-110`}>
-                                            {metric.isPercentage
-                                                ? `${metric.value >= 0 ? '+' : ''}${metric.value.toFixed(1)}%`
-                                                : formatCurrency(metric.value)
-                                            }
-                                        </p>
-                                        <p className="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors duration-300">
-                                            {metric.subtitle}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Animated progress bar */}
-                                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                    <div
-                                        className={`h-full bg-gradient-to-r ${metric.bgGradient} rounded-full transition-all duration-1000 ease-out transform ${
-                                            hoveredCard === metric.id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
-                                        }`}
-                                        style={{
-                                            width: hoveredCard === metric.id ? '100%' : '70%'
-                                        }}
-                                    ></div>
-                                </div>
-
-                                {/* Floating particles effect */}
-                                {hoveredCard === metric.id && (
-                                    <>
-                                        <div className="absolute top-4 right-4 w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>
-                                        <div className="absolute top-8 right-8 w-1 h-1 bg-orange-400 rounded-full animate-pulse"></div>
-                                        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce"></div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Enhanced Revenue Chart */}
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg mb-8 border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
-                    <div className="p-6">
-                        <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-                            <span className="text-2xl mr-3 animate-pulse">📈</span>
-                            Trend Pendapatan Harian
-                        </h3>
-                        {safeDailyRevenue.length > 0 ? (
-                            <div className="h-80">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={safeDailyRevenue}>
-                                        <defs>
-                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#D97706" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#D97706" stopOpacity={0.05}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                                        <XAxis
-                                            dataKey="date"
-                                            tickFormatter={formatChartDate}
-                                            tick={{ fontSize: 12, fill: '#6b7280' }}
-                                        />
-                                        <YAxis
-                                            tickFormatter={value => formatCurrency(value)}
-                                            width={120}
-                                            tick={{ fontSize: 12, fill: '#6b7280' }}
-                                        />
-                                        <Tooltip
-                                            formatter={(value: number, name: string) => [
-                                                name === 'revenue' ? formatCurrency(value) : value,
-                                                name === 'revenue' ? 'Pendapatan' : 'Pesanan'
-                                            ]}
-                                            labelFormatter={(label) => `Tanggal: ${formatChartDate(label)}`}
-                                            contentStyle={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                border: '1px solid #e5e7eb',
-                                                borderRadius: '8px',
-                                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
-                                            }}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="revenue"
-                                            stroke="#D97706"
-                                            strokeWidth={3}
-                                            dot={{ r: 5, fill: '#D97706' }}
-                                            activeDot={{ r: 8, fill: '#B45309' }}
-                                            fill="url(#colorRevenue)"
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        ) : (
-                            <div className="h-80 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
-                                <div className="text-center animate-pulse">
-                                    <p className="text-lg mb-2">Tidak ada data pendapatan</p>
-                                    <p className="text-sm">Silakan ubah rentang tanggal</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Revenue by Category */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Enhanced Table */}
-                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
-                        <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-                                <span className="text-2xl mr-3">🏷️</span>
-                                Pendapatan per Kategori
-                            </h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                                Kategori
-                                            </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                                Pendapatan
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {safeRevenueByCategory.length > 0 ? (
-                                            safeRevenueByCategory.map((item, index) => (
-                                                <tr
-                                                    key={index}
-                                                    className="hover:bg-amber-50 transition-all duration-300 group cursor-pointer transform hover:scale-[1.02]"
-                                                    style={{
-                                                        animationDelay: `${index * 50}ms`
-                                                    }}
-                                                >
-                                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 group-hover:text-amber-800 transition-colors duration-300">
-                                                        {item.category}
-                                                    </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold group-hover:text-amber-800 transition-colors duration-300">
-                                                        {formatCurrency(item.revenue)}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td
-                                                    colSpan={2}
-                                                    className="px-4 py-8 text-center text-gray-500"
-                                                >
-                                                    Tidak ada data kategori
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Enhanced Chart */}
-                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
-                        <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-                                <span className="text-2xl mr-3">📊</span>
-                                Chart Kategori
-                            </h3>
-                            {safeRevenueByCategory.length > 0 ? (
-                                <div className="h-80">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={safeRevenueByCategory} layout="horizontal">
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                                            <XAxis
-                                                type="number"
-                                                tickFormatter={value => formatCurrency(value)}
-                                                width={100}
-                                                tick={{ fontSize: 12, fill: '#6b7280' }}
-                                            />
-                                            <YAxis
-                                                type="category"
-                                                dataKey="category"
-                                                width={100}
-                                                tick={{ fontSize: 12, fill: '#6b7280' }}
-                                            />
-                                            <Tooltip
-                                                formatter={(value: number) => [
-                                                    formatCurrency(value),
-                                                    'Pendapatan'
-                                                ]}
-                                                contentStyle={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
-                                                }}
-                                            />
-                                            <Bar
-                                                dataKey="revenue"
-                                                fill="url(#barGradient)"
-                                                radius={[0, 4, 4, 0]}
-                                            />
-                                            <defs>
-                                                <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
-                                                    <stop offset="5%" stopColor="#D97706" stopOpacity={0.8}/>
-                                                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.6}/>
-                                                </linearGradient>
-                                            </defs>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            ) : (
-                                <div className="h-80 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
-                                    <p className="animate-pulse">Tidak ada data untuk ditampilkan</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* Pagination */}
+                    {orders?.links && (
+                        <Pagination
+                            links={orders.links}
+                            meta={orders}
+                        />
+                    )}
                 </div>
             </div>
 
-            {/* Custom CSS untuk animasi tambahan */}
-            <style>{`
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-5px); }
-                    75% { transform: translateX(5px); }
-                }
-
-                .animate-shake {
-                    animation: shake 0.5s ease-in-out;
-                }
-
-                @keyframes slideInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .grid > div {
-                    animation: slideInUp 0.6s ease-out forwards;
-                    opacity: 0;
-                }
-
-                .grid > div:nth-child(1) { animation-delay: 0.1s; }
-                .grid > div:nth-child(2) { animation-delay: 0.2s; }
-                .grid > div:nth-child(3) { animation-delay: 0.3s; }
-                .grid > div:nth-child(4) { animation-delay: 0.4s; }
-            `}</style>
+            {/* Bulk Action Confirmation Modal */}
+            {showBulkModal && (
+                <BulkActionModal
+                    action={bulkAction}
+                    selectedCount={selectedOrders.length}
+                    onConfirm={handleBulkAction}
+                    onCancel={() => setShowBulkModal(false)}
+                />
+            )}
         </AuthenticatedLayout>
+    );
+}
+
+// Sub-components dengan perbaikan
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    color: 'blue' | 'green' | 'yellow' | 'indigo' | 'red';
+}
+
+function StatCard({ title, value, icon: Icon, color }: StatCardProps): JSX.Element {
+    const colorClasses = {
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        yellow: 'bg-yellow-500',
+        indigo: 'bg-indigo-500',
+        red: 'bg-red-500',
+    };
+
+    return (
+        <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div className="p-5">
+                <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                        <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
+                            <Icon className="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt className="text-sm font-medium text-gray-500 truncate">
+                                {title}
+                            </dt>
+                            <dd className="text-lg font-medium text-gray-900">
+                                {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface FilterFormProps {
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    statuses: Record<string, string>;
+    filters: OrderFilters;
+}
+
+function FilterForm({ onSubmit, statuses, filters }: FilterFormProps): JSX.Element {
+    return (
+        <div className="bg-white shadow rounded-lg mb-6">
+            <div className="px-4 py-5 sm:p-6">
+                <form onSubmit={onSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Pencarian
+                            </label>
+                            <input
+                                type="text"
+                                name="search"
+                                defaultValue={filters.search || ''}
+                                placeholder="Nomor pesanan atau nama pelanggan..."
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Status
+                            </label>
+                            <select
+                                name="status"
+                                defaultValue={filters.status || ''}
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            >
+                                <option value="">Semua Status</option>
+                                {Object.entries(statuses).map(([key, label]) => (
+                                    <option key={key} value={key}>
+                                        {label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Dari Tanggal
+                            </label>
+                            <input
+                                type="date"
+                                name="date_from"
+                                defaultValue={filters.date_from || ''}
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Sampai Tanggal
+                            </label>
+                            <input
+                                type="date"
+                                name="date_to"
+                                defaultValue={filters.date_to || ''}
+                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <button
+                            type="submit"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            <FunnelIcon className="-ml-1 mr-2 h-4 w-4" />
+                            Filter
+                        </button>
+
+                        <Link
+                            href="/admin/orders"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Reset
+                        </Link>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+interface BulkActionsProps {
+    selectedCount: number;
+    bulkAction: string;
+    setBulkAction: (action: string) => void;
+    onExecute: () => void;
+    statuses: Record<string, string>;
+}
+
+function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute, statuses }: BulkActionsProps): JSX.Element {
+    return (
+        <div className="bg-white shadow rounded-lg mb-6">
+            <div className="px-4 py-3 sm:px-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <span className="text-sm text-gray-700">
+                            {selectedCount} pesanan dipilih
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <select
+                            value={bulkAction}
+                            onChange={(e) => setBulkAction(e.target.value)}
+                            className="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        >
+                            <option value="">Pilih Aksi</option>
+                            <optgroup label="Update Status">
+                                {Object.entries(statuses).map(([key, label]) => (
+                                    <option key={`status_${key}`} value={`update_status_${key}`}>
+                                        Ubah ke {label}
+                                    </option>
+                                ))}
+                            </optgroup>
+                            <option value="export">Export</option>
+                            <option value="delete">Hapus</option>
+                        </select>
+                        <button
+                            onClick={onExecute}
+                            disabled={!bulkAction}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            Jalankan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface OrdersTableProps {
+    orders: Order[];
+    selectedOrders: number[];
+    onToggleSelection: (id: number) => void;
+    onToggleSelectAll: () => void;
+    onDelete: (order: Order) => void;
+    statuses: Record<string, string>;
+}
+
+function OrdersTable({
+    orders,
+    selectedOrders,
+    onToggleSelection,
+    onToggleSelectAll,
+    onDelete,
+    statuses
+}: OrdersTableProps): JSX.Element {
+    const getStatusBadgeClass = (status: string): string => {
+        const statusClasses = {
+            pending: 'bg-yellow-100 text-yellow-800',
+            processing: 'bg-blue-100 text-blue-800',
+            shipped: 'bg-indigo-100 text-indigo-800',
+            delivered: 'bg-green-100 text-green-800',
+            cancelled: 'bg-red-100 text-red-800',
+        };
+        return statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800';
+    };
+
+    // Handle empty orders
+    if (!orders || orders.length === 0) {
+        return (
+            <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-12 text-center">
+                    <div className="mx-auto h-12 w-12 text-gray-400">
+                        <ShoppingCartIcon />
+                    </div>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada pesanan</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                        Belum ada pesanan yang dibuat.
+                    </p>
+                    <div className="mt-6">
+                        <Link
+                            href="/admin/orders/create"
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Buat Pesanan
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedOrders.length === orders.length && orders.length > 0}
+                                    onChange={onToggleSelectAll}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Pesanan
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Pelanggan
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tanggal
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Aksi
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {orders.map((order) => (
+                            <tr key={order.id} className="hover:bg-gray-50 transition-colors duration-150">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedOrders.includes(order.id)}
+                                        onChange={() => onToggleSelection(order.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        #{order.order_number}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        {order.order_items?.length || 0} item
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        {order.user?.name || 'N/A'}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        {order.user?.email || 'N/A'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                    Rp {(order.total_amount || 0).toLocaleString('id-ID')}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
+                                        {statuses[order.status] || order.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {new Date(order.created_at).toLocaleDateString('id-ID')}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="flex items-center justify-end space-x-2">
+                                        <Link
+                                            href={`/admin/orders/${order.id}`}
+                                            className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
+                                            title="Lihat Detail"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </Link>
+                                        <Link
+                                            href={`/admin/orders/${order.id}/edit`}
+                                            className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-colors duration-150"
+                                            title="Edit Pesanan"
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </Link>
+                                        {order.status === 'cancelled' && (
+                                            <button
+                                                onClick={() => onDelete(order)}
+                                                className="text-red-600 hover:text-red-900 p-1 rounded transition-colors duration-150"
+                                                title="Hapus Pesanan"
+                                            >
+                                                <TrashIcon className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+interface PaginationProps {
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+    meta: PaginatedData<any>;
+}
+
+function Pagination({ links, meta }: PaginationProps): JSX.Element {
+    return (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
+            <div className="flex-1 flex justify-between sm:hidden">
+                {meta.prev_page_url && (
+                    <Link
+                        href={meta.prev_page_url}
+                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        Previous
+                    </Link>
+                )}
+                {meta.next_page_url && (
+                    <Link
+                        href={meta.next_page_url}
+                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        Next
+                    </Link>
+                )}
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm text-gray-700">
+                        Showing{' '}
+                        <span className="font-medium">{meta.from || 0}</span>
+                        {' '}to{' '}
+                        <span className="font-medium">{meta.to || 0}</span>
+                        {' '}of{' '}
+                        <span className="font-medium">{meta.total || 0}</span>
+                        {' '}results
+                    </p>
+                </div>
+                <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {links.map((link, index) => (
+                            <Link
+                                key={index}
+                                href={link.url || '#'}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                    link.active
+                                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                } ${
+                                    index === 0 ? 'rounded-l-md' : ''
+                                } ${
+                                    index === links.length - 1 ? 'rounded-r-md' : ''
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface BulkActionModalProps {
+    action: string;
+    selectedCount: number;
+    onConfirm: () => void;
+    onCancel: () => void;
+}
+
+function BulkActionModal({ action, selectedCount, onConfirm, onCancel }: BulkActionModalProps): JSX.Element {
+    const getActionText = (action: string): string => {
+        if (action.startsWith('update_status_')) {
+            const status = action.replace('update_status_', '');
+            return `mengubah status menjadi ${status}`;
+        }
+
+        switch (action) {
+            case 'export': return 'mengekspor';
+            case 'delete': return 'menghapus';
+            default: return action;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div className="mt-3 text-center">
+                    <h3 className="text-lg font-medium text-gray-900">
+                        Konfirmasi Aksi
+                    </h3>
+                    <div className="mt-2 px-7 py-3">
+                        <p className="text-sm text-gray-500">
+                            Apakah Anda yakin ingin {getActionText(action)} {selectedCount} pesanan yang dipilih?
+                        </p>
+                    </div>
+                    <div className="flex justify-center space-x-4 px-4 py-3">
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors duration-150"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-150"
+                        >
+                            Ya, Lanjutkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
