@@ -84,14 +84,7 @@ const adminNavigation = (pesananBadge: number) => [
             { name: 'Semua Produk', href: '/admin/products' },
             { name: 'Tambah Produk', href: '/admin/products/create' },
             { name: 'Stok Rendah', href: '/admin/products/low-stock' },
-        ]
-    },
-    {
-        name: 'Kategori',
-        href: '/admin/categories',
-        icon: CubeIcon,
-        children: [
-            { name: 'Semua Kategori', href: '/admin/categories' },
+            { name: 'Kategori', href: '/admin/products/categories' },
         ]
     },
     {
@@ -118,7 +111,7 @@ const adminNavigation = (pesananBadge: number) => [
         href: '/admin/reports',
         icon: ChartBarIcon,
         children: [
-            {name: 'Semua Laporan', href: '/admin/reports' },
+            { name: 'Semua Laporan', href: '/admin/reports' },
             { name: 'Penjualan', href: '/admin/reports/sales' },
             { name: 'pelanggan', href: '/admin/reports/customers' },
             { name: 'produk', href: '/admin/reports/products' },
@@ -278,7 +271,7 @@ function MobileSidebar({ open, onClose, navigation }: MobileSidebarProps) {
     );
 }
 
-// --- User Dropdown & Flash Messages ---
+// --- User Dropdown Menu & FlashMessages ---
 type UserType = {
     name?: string;
     email?: string;
@@ -381,7 +374,7 @@ function FlashMessages({ flash }: { flash?: { success?: string; error?: string }
 type AuthenticatedUser = {
     name?: string;
     email?: string;
-    roles?: string[]; // FIXED: Changed from { name: string }[] to string[]
+    roles?: { name: string }[];
     [key: string]: any;
 };
 
@@ -398,10 +391,7 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
     const pageProps = usePage<PageProps>().props;
     const pesananBadge = pageProps?.order_count ?? 0;
     const navigation = adminNavigation(pesananBadge);
-
-    // FIXED: Updated admin check to handle string array
-    const isAdmin = pageProps.auth?.user?.roles?.includes('admin') || false;
-
+    const isAdmin = pageProps.auth?.user?.roles?.some((role: { name: string }) => role.name === 'admin') || false;
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -420,7 +410,6 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                 <div className={`hidden md:flex transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
                     <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} navigation={navigation} />
                 </div>
-
                 {/* Main content */}
                 <div className="flex-1 flex flex-col">
                     {/* Topbar */}
@@ -440,7 +429,6 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                             {sidebarCollapsed ? <Bars3Icon className="h-6 w-6 text-amber-700" /> : <XMarkIcon className="h-6 w-6 text-amber-700" />}
                         </button>
                         {header && <div className="ml-4 flex-1">{header}</div>}
-
                         {/* User Dropdown */}
                         <div className="relative">
                             <button
@@ -466,12 +454,10 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
                             )}
                         </div>
                     </div>
-
                     {/* Breadcrumb */}
                     <div className="px-6 pt-4">
                         <Breadcrumb />
                     </div>
-
                     <main className="flex-1 p-6">
                         <FlashMessages flash={pageProps.flash as { success?: string; error?: string }} />
                         {children}
@@ -480,7 +466,6 @@ export default function AuthenticatedLayout({ children, header }: { children: Re
             </div>
         );
     }
-
     // User layout (original Breeze layout)
     return (
         <div className="min-h-screen bg-[#e9e4db]">

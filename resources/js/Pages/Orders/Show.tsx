@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 
 interface OrderItem {
@@ -133,6 +133,23 @@ export default function OrderShow({ order, auth }: OrderShowProps): JSX.Element 
 
   const progress = getOrderProgress(order.status);
 
+  // Handler aksi tombol
+  const handleCancelOrder = () => {
+    if (confirm('Yakin ingin membatalkan pesanan ini?')) {
+      router.patch(`/orders/${order.id}/cancel`);
+    }
+  };
+
+  const handleReorder = () => {
+    alert('Fitur pesan ulang belum diimplementasikan.');
+    // router.post(`/orders/${order.id}/reorder`);
+  };
+
+  const handleReview = () => {
+    alert('Fitur ulasan belum diimplementasikan.');
+    // router.visit(`/orders/${order.id}/review`);
+  };
+
   return (
     <BuyerAuthenticatedLayout
       header={
@@ -155,7 +172,6 @@ export default function OrderShow({ order, auth }: OrderShowProps): JSX.Element 
       }
     >
       <Head title={`Order ${order.order_number}`} />
-
       <div className="py-12">
         <div className="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
           {/* Order Summary Card */}
@@ -335,17 +351,26 @@ export default function OrderShow({ order, auth }: OrderShowProps): JSX.Element 
                 </div>
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                   {order.status === 'delivered' && (
-                    <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <button
+                      onClick={handleReview}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    >
                       Berikan Ulasan
                     </button>
                   )}
                   {order.status === 'delivered' && (
-                    <button className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <button
+                      onClick={handleReorder}
+                      className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    >
                       Pesan Lagi
                     </button>
                   )}
                   {(order.status === 'pending' || order.status === 'processing') && (
-                    <button className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <button
+                      onClick={handleCancelOrder}
+                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    >
                       Batalkan Pesanan
                     </button>
                   )}

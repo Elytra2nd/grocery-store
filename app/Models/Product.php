@@ -15,9 +15,15 @@ class Product extends Model
         'price',
         'stock',
         'image',
-        'category',
+        'category_id', // sesuaikan ini
         'is_active',
     ];
+
+    // Relasi ke Category (many products belong to one category)
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function cartItems()
     {

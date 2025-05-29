@@ -2,6 +2,7 @@ import React from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { PageProps } from "@/types";
+import { DocumentTextIcon } from "@heroicons/react/24/solid";
 
 interface Product {
     id: number;
@@ -21,10 +22,16 @@ interface ProductsProps extends Record<string, unknown> {
 }
 
 export default function Products() {
-    // Ambil props dari backend
-    const { products = [], summary = { total_products: null, total_sold_items: null, total_revenue: null }, error } = usePage<PageProps<ProductsProps>>().props;
+    const {
+        products = [],
+        summary = {
+            total_products: null,
+            total_sold_items: null,
+            total_revenue: null,
+        },
+        error,
+    } = usePage<PageProps<ProductsProps>>().props;
 
-    // Helper format rupiah
     const formatRupiah = (value: number | null | undefined) =>
         typeof value === "number"
             ? "Rp " + value.toLocaleString("id-ID")
@@ -40,11 +47,14 @@ export default function Products() {
 
             <div className="p-6 space-y-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <h1 className="text-2xl font-extrabold text-amber-900 drop-shadow-sm">Laporan Produk</h1>
+                    <h1 className="text-2xl font-extrabold text-amber-900 drop-shadow-sm">
+                        Laporan Produk
+                    </h1>
                     <button
                         onClick={handleExport}
-                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl shadow transition-all duration-150 text-sm font-semibold"
+                        className="flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
                     >
+                        <DocumentTextIcon className="w-5 h-5 mr-2" />
                         Export Laporan Produk
                     </button>
                 </div>
@@ -57,14 +67,8 @@ export default function Products() {
 
                 {/* Ringkasan Produk */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <SummaryCard
-                        label="Total Produk"
-                        value={summary.total_products}
-                    />
-                    <SummaryCard
-                        label="Total Terjual"
-                        value={summary.total_sold_items}
-                    />
+                    <SummaryCard label="Total Produk" value={summary.total_products} />
+                    <SummaryCard label="Total Terjual" value={summary.total_sold_items} />
                     <SummaryCard
                         label="Total Pendapatan"
                         value={summary.total_revenue}
@@ -94,11 +98,16 @@ export default function Products() {
                                     </tr>
                                 ) : (
                                     products.map((product) => (
-                                        <tr key={product.id} className="border-b hover:bg-amber-50 transition-colors duration-150">
+                                        <tr
+                                            key={product.id}
+                                            className="border-b hover:bg-amber-50 transition-colors duration-150"
+                                        >
                                             <td className="py-2">{product.id}</td>
-                                            <td className="py-2 text-amber-900 font-medium">{product.name}</td>
+                                            <td className="py-2 text-amber-900 font-medium">
+                                                {product.name}
+                                            </td>
                                             <td className="py-2">
-                                                {typeof product.total_sold === 'number'
+                                                {typeof product.total_sold === "number"
                                                     ? product.total_sold.toLocaleString("id-ID")
                                                     : "-"}
                                             </td>
@@ -117,7 +126,6 @@ export default function Products() {
     );
 }
 
-// Komponen kartu ringkasan autumn enchant
 function SummaryCard({
     label,
     value,
@@ -132,7 +140,6 @@ function SummaryCard({
             ? "Rp " + val.toLocaleString("id-ID")
             : "-";
 
-    // Pilih warna autumn berdasarkan label
     const colorMap: Record<string, string> = {
         "Total Produk": "from-amber-400/70 to-orange-100/50",
         "Total Terjual": "from-orange-400/70 to-yellow-100/50",
@@ -141,12 +148,14 @@ function SummaryCard({
     const gradient = colorMap[label] || "from-amber-400/70 to-orange-100/50";
 
     return (
-        <div
-            className={`relative overflow-hidden rounded-2xl border border-amber-100 shadow bg-white/70 backdrop-blur group hover:scale-[1.03] hover:shadow-2xl transition-all duration-200`}
-        >
-            <div className={`absolute inset-0 z-0 bg-gradient-to-br ${gradient} opacity-60 group-hover:opacity-80 transition-all duration-300`} />
+        <div className="relative overflow-hidden rounded-2xl border border-amber-100 shadow bg-white/70 backdrop-blur group hover:scale-[1.03] hover:shadow-2xl transition-all duration-200">
+            <div
+                className={`absolute inset-0 z-0 bg-gradient-to-br ${gradient} opacity-60 group-hover:opacity-80 transition-all duration-300`}
+            />
             <div className="relative z-10 p-4 flex flex-col items-start">
-                <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">{label}</div>
+                <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">
+                    {label}
+                </div>
                 <div className="text-2xl font-extrabold text-amber-900 drop-shadow">
                     {isCurrency
                         ? formatRupiah(value)

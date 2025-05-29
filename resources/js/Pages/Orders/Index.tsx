@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import BuyerAuthenticatedLayout from '@/Layouts/BuyerAuthenticatedLayout';
 
 interface OrderItem {
@@ -37,9 +37,14 @@ interface OrderHistoryProps {
       email: string;
     };
   };
+  flash?: {
+    message?: string;
+    success?: string;
+    error?: string;
+  };
 }
 
-export default function OrderHistory({ orders, auth }: OrderHistoryProps): JSX.Element {
+export default function OrderHistory({ orders, auth, flash }: OrderHistoryProps): JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at-desc');
@@ -126,6 +131,31 @@ export default function OrderHistory({ orders, auth }: OrderHistoryProps): JSX.E
     });
   };
 
+  // ACTION HANDLERS
+
+  // Lihat detail pesanan
+  const handleShowOrder = (orderId: number) => {
+    // Jika pakai Ziggy:
+    // router.visit(route('orders.show', { order: orderId }));
+    // Jika tidak pakai Ziggy:
+    router.visit(`/orders/${orderId}`);
+  };
+
+  // Batalkan pesanan
+  const handleCancelOrder = (orderId: number) => {
+    if (confirm('Yakin ingin membatalkan pesanan ini?')) {
+      // Jika pakai Ziggy:
+      // router.patch(route('orders.cancel', { order: orderId }), {});
+      // Jika tidak pakai Ziggy:
+      router.patch(`/orders/${orderId}/cancel`, {});
+    }
+  };
+
+  // Pesan ulang
+  const handleReorder = (orderId: number) => {
+    alert('Fitur pesan ulang belum diimplementasikan.');
+  };
+
   return (
     <BuyerAuthenticatedLayout
       header={
@@ -135,6 +165,23 @@ export default function OrderHistory({ orders, auth }: OrderHistoryProps): JSX.E
       }
     >
       <Head title="Order History" />
+
+      {/* Flash Messages */}
+      {flash?.message && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+          {flash.message}
+        </div>
+      )}
+      {flash?.success && (
+        <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          {flash.success}
+        </div>
+      )}
+      {flash?.error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          {flash.error}
+        </div>
+      )}
 
       <div className="py-12">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -330,15 +377,26 @@ export default function OrderHistory({ orders, auth }: OrderHistoryProps): JSX.E
                       {order.order_items.length} item{order.order_items.length !== 1 ? '' : ''}
                     </div>
                     <div className="flex space-x-3">
-                      <Link
-                        href={`/orders/${order.id}`}
+                      <button
+                        onClick={() => handleShowOrder(order.id)}
                         className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
                       >
                         Lihat Detail
-                      </Link>
+                      </button>
                       {order.status === 'delivered' && (
-                        <button className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                        <button
+                          onClick={() => handleReorder(order.id)}
+                          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                        >
                           Pesan Lagi
+                        </button>
+                      )}
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                        >
+                          Batalkan
                         </button>
                       )}
                     </div>
