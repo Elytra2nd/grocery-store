@@ -125,11 +125,6 @@ const adminNavigation = (pesananBadge: number) => [
             { name: 'Laporan Keuangan', href: '/admin/reports/financial' },
         ]
     },
-    {
-        name: 'Pengaturan',
-        href: '/admin/settings',
-        icon: CogIcon,
-    }
 ];
 
 // --- Desktop Sidebar ---
