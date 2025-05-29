@@ -85,18 +85,6 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
                             })}
                         </div>
                     )}
-
-                    <div className="mt-8 text-center">
-                        <Link
-                            href="/admin/products"
-                            className="inline-flex items-center text-amber-700 hover:text-amber-900 text-sm font-medium transition-colors duration-150"
-                        >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Kembali ke Daftar Produk
-                        </Link>
-                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>
