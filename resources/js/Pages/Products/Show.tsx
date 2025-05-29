@@ -57,7 +57,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             total_price: product.price
         }, {
             onSuccess: () => {
-                // Redirect ke halaman pesanan atau notifikasi sukses
                 router.visit('/orders');
             },
             onError: (errors) => {
@@ -114,20 +113,25 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                     <div className="max-w-7xl mx-auto">
                         {/* Product Detail Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
-                            {/* Product Image */}
+                            {/* Product Image - DIPERBAIKI */}
                             <div className="flex items-center justify-center">
                                 <div className="w-full max-w-lg aspect-square bg-gray-800/60 backdrop-blur-md rounded-3xl overflow-hidden border border-gray-700/50 shadow-2xl relative group transition-all duration-300">
                                     {product.image ? (
                                         <img
-                                            src={`/storage/${product.image}`}
+                                            src={`/storage/products/${product.image}`}
                                             alt={product.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            onError={(e) => {
+                                                // Fallback jika gambar tidak ditemukan
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                            }}
                                         />
-                                    ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                                            <span className="text-amber-400 text-6xl font-extrabold tracking-widest">NEO</span>
-                                        </div>
-                                    )}
+                                    ) : null}
+                                    {/* Fallback placeholder */}
+                                    <div className={`w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center ${product.image ? 'hidden' : ''}`}>
+                                        <span className="text-amber-400 text-6xl font-extrabold tracking-widest">NEO</span>
+                                    </div>
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent pointer-events-none" />
                                 </div>
                             </div>
@@ -137,7 +141,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                 {/* Category & Stock */}
                                 <div className="flex flex-wrap justify-between items-start gap-4">
                                     <span className="text-xs md:text-sm font-medium text-amber-400 bg-amber-400/20 px-4 py-2 rounded-full border border-amber-400/30 shadow-sm">
-                                        {String(product.category ?? '')}
+                                        {product.category?.name || 'No Category'}
                                     </span>
                                     <span className={`text-xs md:text-sm font-semibold px-4 py-2 rounded-full shadow-sm ${product.stock > 0
                                         ? 'text-emerald-400 bg-emerald-400/20 border border-emerald-400/30'
@@ -220,7 +224,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
                         </div>
 
-                        {/* Related Products Section */}
+                        {/* Related Products Section - DIPERBAIKI */}
                         {relatedProducts && relatedProducts.length > 0 && (
                             <section className="w-full py-12">
                                 <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-12 bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent tracking-wide drop-shadow">
@@ -233,19 +237,22 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                             href={`/products/${relatedProduct.id}`}
                                             className="group bg-gray-800/60 backdrop-blur-md rounded-xl overflow-hidden border border-gray-700/50 hover:border-amber-400/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col"
                                         >
-                                            {/* Related Product Image */}
+                                            {/* Related Product Image - DIPERBAIKI */}
                                             <div className="aspect-square overflow-hidden relative">
                                                 {relatedProduct.image ? (
                                                     <img
-                                                        src={`/storage/${relatedProduct.image}`}
+                                                        src={`/storage/products/${relatedProduct.image}`}
                                                         alt={relatedProduct.name}
                                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                        }}
                                                     />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                                                        <span className="text-amber-400 text-2xl font-bold">NEO</span>
-                                                    </div>
-                                                )}
+                                                ) : null}
+                                                <div className={`w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center ${relatedProduct.image ? 'hidden' : ''}`}>
+                                                    <span className="text-amber-400 text-2xl font-bold">NEO</span>
+                                                </div>
                                                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-transparent to-transparent" />
                                             </div>
                                             {/* Related Product Info */}

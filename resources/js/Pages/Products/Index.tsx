@@ -5,6 +5,24 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Product } from '@/types'
 import { PageProps } from '@/types';
 
+type Category = {
+    id: number;
+    name: string;
+};
+
+type ProductFilters = {
+    search: string;
+    category: string;
+    min_price: number;
+    max_price: number;
+    sort_by: string;
+    sort_order: string;
+    in_stock: boolean;
+    per_page: number;
+    page: number;
+    [key: string]: any;
+};
+
 interface ProductIndexProps {
     products: {
         data: Product[];
@@ -16,7 +34,7 @@ interface ProductIndexProps {
         from: number;
         to: number;
     };
-    categories: string[];
+    categories: Category[]; // Array objek, bukan string[]
     priceRange: {
         min_price: number;
         max_price: number;
@@ -42,7 +60,7 @@ export default function ProductIndex({
 }: ProductIndexProps): JSX.Element {
     const { auth, flash } = usePage<PageProps>().props;
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [localFilters, setLocalFilters] = useState({
+    const [localFilters, setLocalFilters] = useState<ProductFilters>({
         search: filters.search || '',
         category: filters.category || '',
         min_price: filters.min_price ?? priceRange.min_price,
@@ -64,7 +82,7 @@ export default function ProductIndex({
         return () => clearTimeout(timeoutId);
     }, [localFilters.search]);
 
-    const handleFilterChange = (extra: Partial<typeof localFilters> = {}) => {
+    const handleFilterChange = (extra: Partial<ProductFilters> = {}) => {
         const params = {
             ...localFilters,
             ...extra,
@@ -85,7 +103,7 @@ export default function ProductIndex({
     };
 
     const clearFilters = () => {
-        const resetFilters = {
+        const resetFilters: ProductFilters = {
             search: '',
             category: '',
             min_price: priceRange.min_price,
@@ -103,7 +121,7 @@ export default function ProductIndex({
         });
     };
 
-    const handleInputChange = (key: string, value: any) => {
+    const handleInputChange = (key: keyof ProductFilters, value: any) => {
         setLocalFilters(prev => ({
             ...prev,
             [key]: value,
@@ -187,15 +205,6 @@ export default function ProductIndex({
                                 >
                                     Login
                                 </Link>
-                                <Link href={route('buyer/dashboard')} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
-                                    Dashboard
-                                </Link>
-                                <Link href={route('cart.index')} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
-                                    Keranjang
-                                </Link>
-                                <Link href={route('orders.index')} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
-                                    Pesanan Saya
-                                </Link>
                             </div>
                         )}
                         <header className="pt-16 sm:pt-20 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 text-center">
@@ -260,12 +269,8 @@ export default function ProductIndex({
                                             value={localFilters.per_page}
                                             onChange={e => {
                                                 const perPage = parseInt(e.target.value);
-                                                setLocalFilters(prev => ({
-                                                    ...prev,
-                                                    per_page: perPage,
-                                                    page: 1,
-                                                }));
-                                                handleFilterChange({ per_page: perPage, page: 1 });
+                                                handleInputChange('per_page', perPage);
+                                                handleInputChange('page', 1);
                                             }}
                                             className="bg-gray-800/60 border border-gray-700/50 rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-amber-400/60"
                                         >
@@ -282,7 +287,7 @@ export default function ProductIndex({
                             <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block mb-6`}>
                                 <div className="bg-gray-800/40 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-gray-700/50">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                        {/* Category Filter */}
+                                        {/* Category Filter - DIPERBAIKI */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
                                             <select
@@ -292,7 +297,9 @@ export default function ProductIndex({
                                             >
                                                 <option value="">All Categories</option>
                                                 {categories.map(category => (
-                                                    <option key={category} value={category}>{category}</option>
+                                                    <option key={category.id} value={category.name}>
+                                                        {category.name}
+                                                    </option>
                                                 ))}
                                             </select>
                                         </div>
@@ -368,7 +375,7 @@ export default function ProductIndex({
                         </div>
                     </div>
 
-                    {/* Products grid section */}
+                    {/* Products grid section - DIPERBAIKI */}
                     <main className="flex-grow px-4 sm:px-6 lg:px-8 pb-20">
                         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                             {products.data.map((product: Product) => (
@@ -377,29 +384,34 @@ export default function ProductIndex({
                                     href={`/products/${product.id}`}
                                     className="group relative bg-gray-800/60 backdrop-blur-md rounded-xl overflow-hidden border border-gray-700/50 hover:border-amber-400/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 block"
                                 >
-                                    {/* Product image container */}
+                                    {/* Product image container - DIPERBAIKI */}
                                     <div className="aspect-square overflow-hidden relative">
                                         {product.image ? (
                                             <img
-                                                src={`/storage/${product.image}`}
+                                                src={`/storage/products/${product.image}`}
                                                 alt={product.name}
                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 loading="lazy"
+                                                onError={(e) => {
+                                                    // Fallback jika gambar tidak ditemukan
+                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                }}
                                             />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                                                <span className="text-amber-400 text-xl sm:text-2xl font-bold">NEO</span>
-                                            </div>
-                                        )}
+                                        ) : null}
+                                        {/* Fallback placeholder */}
+                                        <div className={`w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center ${product.image ? 'hidden' : ''}`}>
+                                            <span className="text-amber-400 text-xl sm:text-2xl font-bold">NEO</span>
+                                        </div>
                                         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-transparent to-transparent" />
                                     </div>
 
                                     {/* Product information */}
                                     <div className="p-4 sm:p-5 space-y-3">
-                                        {/* Category and stock status */}
+                                        {/* Category and stock status - DIPERBAIKI */}
                                         <div className="flex justify-between items-start">
                                             <span className="text-xs font-medium text-amber-400 bg-gray-700/50 px-2 py-1 rounded-full border border-gray-600/50">
-                                                {String(product.category ?? '')}
+                                                {product.category?.name || 'No Category'}
                                             </span>
                                             <span className={`text-xs font-semibold ${product.stock > 0 ? 'text-emerald-400' : 'text-red-500'}`}>
                                                 {product.stock > 0 ? `${product.stock} left` : 'Sold Out'}
@@ -459,140 +471,24 @@ export default function ProductIndex({
 
                         {/* Pagination */}
                         {products.last_page > 1 && (
-                            <div className="mt-12">
-                                <div className="text-center mb-6">
-                                    <p className="text-gray-400 text-sm">
-                                        Showing{' '}
-                                        <span className="text-amber-400 font-semibold">{products.from}</span> to{' '}
-                                        <span className="text-amber-400 font-semibold">{products.to}</span> of{' '}
-                                        <span className="text-amber-400 font-semibold">{products.total}</span> products
-                                    </p>
-                                </div>
-                                <div className="flex justify-center">
-                                    <div className="flex flex-wrap items-center justify-center gap-2">
-                                        {/* Previous Button */}
-                                        {products.current_page > 1 && (
-                                            <Link
-                                                href={products.links.find(link => link.label.includes('Previous'))?.url || '#'}
-                                                className="flex items-center space-x-2 px-4 py-2 bg-gray-800/60 backdrop-blur-md text-gray-300 hover:bg-gray-700/60 hover:text-white border border-gray-700/50 rounded-lg transition-all duration-300 hover:border-amber-400/40"
-                                                preserveState
-                                                preserveScroll
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                                </svg>
-                                                <span className="hidden sm:inline">Previous</span>
-                                            </Link>
-                                        )}
-
-                                        {/* Page Numbers */}
-                                        <div className="flex items-center space-x-1">
-                                            {(() => {
-                                                const current = products.current_page;
-                                                const last = products.last_page;
-                                                const pages = [];
-
-                                                if (current > 3) {
-                                                    pages.push(
-                                                        <Link
-                                                            key={1}
-                                                            href={products.links.find(link => link.label === '1')?.url || route('products.index', { ...localFilters, page: 1 })}
-                                                            className="px-3 py-2 bg-gray-800/60 backdrop-blur-md text-gray-300 hover:bg-gray-700/60 hover:text-white border border-gray-700/50 rounded-lg transition-all duration-300 hover:border-amber-400/40 text-sm"
-                                                            preserveState
-                                                            preserveScroll
-                                                        >
-                                                            1
-                                                        </Link>
-                                                    );
-                                                    if (current > 4) {
-                                                        pages.push(
-                                                            <span key="dots1" className="px-2 py-2 text-gray-500 text-sm">...</span>
-                                                        );
-                                                    }
-                                                }
-
-                                                for (let i = Math.max(1, current - 2); i <= Math.min(last, current + 2); i++) {
-                                                    pages.push(
-                                                        <Link
-                                                            key={i}
-                                                            href={
-                                                                i === current
-                                                                    ? '#'
-                                                                    : products.links.find(link => link.label === i.toString())?.url ||
-                                                                    route('products.index', { ...localFilters, page: i })
-                                                            }
-                                                            className={`px-3 py-2 rounded-lg text-sm transition-all duration-300 ${i === current
-                                                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20'
-                                                                : 'bg-gray-800/60 backdrop-blur-md text-gray-300 hover:bg-gray-700/60 hover:text-white border border-gray-700/50 hover:border-amber-400/40'
-                                                                }`}
-                                                            preserveState
-                                                            preserveScroll
-                                                        >
-                                                            {i}
-                                                        </Link>
-                                                    );
-                                                }
-                                                if (current < last - 2) {
-                                                    if (current < last - 3) {
-                                                        pages.push(
-                                                            <span key="dots2" className="px-2 py-2 text-gray-500 text-sm">...</span>
-                                                        );
-                                                    }
-                                                    pages.push(
-                                                        <Link
-                                                            key={last}
-                                                            href={products.links.find(link => link.label === last.toString())?.url || route('products.index', { ...localFilters, page: last })}
-                                                            className="px-3 py-2 bg-gray-800/60 backdrop-blur-md text-gray-300 hover:bg-gray-700/60 hover:text-white border border-gray-700/50 rounded-lg transition-all duration-300 hover:border-amber-400/40 text-sm"
-                                                            preserveState
-                                                            preserveScroll
-                                                        >
-                                                            {last}
-                                                        </Link>
-                                                    );
-                                                }
-                                                return pages;
-                                            })()}
-                                        </div>
-
-                                        {/* Next Button */}
-                                        {products.current_page < products.last_page && (
-                                            <Link
-                                                href={products.links.find(link => link.label.includes('Next'))?.url || '#'}
-                                                className="flex items-center space-x-2 px-4 py-2 bg-gray-800/60 backdrop-blur-md text-gray-300 hover:bg-gray-700/60 hover:text-white border border-gray-700/50 rounded-lg transition-all duration-300 hover:border-amber-400/40"
-                                                preserveState
-                                                preserveScroll
-                                            >
-                                                <span className="hidden sm:inline">Next</span>
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Quick Page Jump */}
-                                <div className="hidden md:flex justify-center mt-6">
-                                    <div className="flex items-center space-x-3 bg-gray-800/40 backdrop-blur-md rounded-lg p-3 border border-gray-700/50">
-                                        <span className="text-gray-300 text-sm">Go to page:</span>
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            max={products.last_page}
-                                            placeholder={products.current_page.toString()}
-                                            className="w-16 bg-gray-700/50 border border-gray-600/50 rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 transition-all duration-300"
-                                            onKeyPress={e => {
-                                                if (e.key === 'Enter') {
-                                                    const page = parseInt((e.target as HTMLInputElement).value);
-                                                    if (page >= 1 && page <= products.last_page && page !== products.current_page) {
-                                                        goToPage(page);
-                                                    }
-                                                }
-                                            }}
+                            <div className="mt-12 flex justify-center">
+                                <nav className="flex items-center space-x-2">
+                                    {products.links.map((link, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => link.url && router.visit(link.url)}
+                                            disabled={!link.url}
+                                            className={`px-3 py-2 text-sm rounded-lg transition-all duration-300 ${
+                                                link.active
+                                                    ? 'bg-amber-500 text-white'
+                                                    : link.url
+                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
-                                        <span className="text-gray-400 text-sm">of {products.last_page}</span>
-                                    </div>
-                                </div>
+                                    ))}
+                                </nav>
                             </div>
                         )}
                     </main>
