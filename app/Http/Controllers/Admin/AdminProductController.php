@@ -117,16 +117,12 @@ class AdminProductController extends Controller
     public function create()
     {
         try {
-            $categories = Category::orderBy('name')
-                ->pluck('name', 'id'); // <-- Ambil id dan name
-
+            $categories = Category::orderBy('name')->get(['id', 'name']);
             return Inertia::render('Admin/Products/Create', [
                 'categories' => $categories,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminProductController@create error: ' . $e->getMessage());
-
             return Inertia::render('Admin/Products/Create', [
                 'categories' => [],
                 'error' => 'Terjadi kesalahan saat memuat halaman.'
@@ -228,14 +224,13 @@ class AdminProductController extends Controller
     public function edit(Product $product)
     {
         try {
-            // Ambil kategori dalam bentuk id => name supaya mudah dipakai di <select>
-            $categories = Category::orderBy('name')->pluck('name', 'id');
+        // Ambil semua kategori sebagai array objek (id & name)
+            $categories = Category::orderBy('name')->get(['id', 'name']);
 
             return Inertia::render('Admin/Products/Edit', [
                 'product' => $product,
                 'categories' => $categories,
             ]);
-
         } catch (\Exception $e) {
             Log::error('AdminProductController@edit error: ' . $e->getMessage());
             return redirect()->route('admin.products.index')
