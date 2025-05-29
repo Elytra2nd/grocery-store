@@ -27,7 +27,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
     }
 
     // PERBAIKI: Gunakan /cart/add bukan /cart/index
-    router.post("/cart/add", {
+    router.post("/cart", {
         product_id: product.id,
         quantity: 1
     }, {

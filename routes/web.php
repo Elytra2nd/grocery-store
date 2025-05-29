@@ -51,22 +51,24 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::prefix('cart')->name('cart.')->group(function () {
+        Route::post('/', [CartController::class, 'add'])->name('add');
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/', [CartController::class, 'add'])->name('buyer.cart.add');
         Route::put('/{id}', [CartController::class, 'update'])->name('update');
-        Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
+        Route::delete('/{id}', [CartController::class, 'destroy'])->name('destroy');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
 
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', [OrderController::class, 'index'])->name('index');
-        Route::post('/', [OrderController::class, 'store'])->name('store');
-        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-        Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-        // Untuk buy now/order
-        Route::post('/buyer/orders/create', [OrderController::class, 'buyNow'])->name('buyer.orders.create');
-
+    // Orders (hanya untuk user login)
+    Route::middleware('auth')->group(function () {
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::post('/', [OrderController::class, 'store'])->name('store');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+            Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+            Route::post('/buy-now', [OrderController::class, 'buyNow'])->name('buy-now');
+        });
     });
+
 });
 
 // ===================

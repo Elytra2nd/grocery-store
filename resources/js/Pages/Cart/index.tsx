@@ -30,9 +30,14 @@ interface CartIndexProps {
       email: string;
     };
   };
+  flash?: {
+    message?: string;
+    success?: string;
+    error?: string;
+  };
 }
 
-export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexProps): JSX.Element {
+export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartIndexProps): JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +139,23 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
     >
       <Head title="Keranjang Belanja" />
 
+      {/* Flash Messages */}
+      {flash?.message && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+          {flash.message}
+        </div>
+      )}
+      {flash?.success && (
+        <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          {flash.success}
+        </div>
+      )}
+      {flash?.error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          {flash.error}
+        </div>
+      )}
+
       <div className="py-12">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Welcome Section */}
@@ -175,7 +197,6 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
                     </svg>
                   </div>
                 </div>
-
                 {filteredCartItems.length > 0 && (
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-600">
@@ -243,7 +264,6 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
                         </p>
                       )}
                     </div>
-
                     {/* Quantity Controls */}
                     <div className="flex items-center space-x-3">
                       <button
@@ -316,7 +336,7 @@ export default function CartIndex({ cartItems, totalAmount, auth }: CartIndexPro
               </div>
               <button
                 onClick={handleCheckout}
-                disabled={isLoading || (cartItems.length > 0 && selectedItems.length === 0 && false)}
+                disabled={isLoading}
                 className={`px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200`}
               >
                 {isLoading ? 'Memproses...' : (selectedItems.length > 0
