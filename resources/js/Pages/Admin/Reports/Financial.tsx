@@ -111,9 +111,9 @@ export default function Financial({
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-lg font-semibold mb-2">Pertumbuhan</h3>
                         <p className={`text-2xl font-bold ${
-                            revenue.growth_rate >= 0 ? 'text-green-600' : 'text-red-600'
+                            (revenue.growth_rate ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                            {revenue.growth_rate.toFixed(1)}%
+                            {(revenue.growth_rate?.toFixed(1) ?? '0.0')}%
                         </p>
                     </div>
                 </div>
