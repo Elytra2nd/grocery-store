@@ -82,7 +82,6 @@ const adminNavigation = (pesananBadge: number) => [
         icon: CubeIcon,
         children: [
             { name: 'Semua Produk', href: '/admin/products' },
-            { name: 'Tambah Produk', href: '/admin/products/create' },
             { name: 'Stok Rendah', href: '/admin/products/low-stock' },
         ]
     },
