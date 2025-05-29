@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Cart;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,19 +13,20 @@ use Inertia\Inertia;
 
 class OrderController extends Controller
 {
-        public function index()
+    // Daftar pesanan user
+    public function index()
     {
-        // Mengambil semua orders milik user yang sedang login
-        $orders = Order::where('user_id', auth()->id())
-                      ->with(['orderItems.product']) // Include relasi jika ada
-                      ->orderBy('created_at', 'desc')
-                      ->get();
+        $orders = Order::where('user_id', Auth::id())
+            ->with(['orderItems.product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return Inertia::render('Orders/Index', [
             'orders' => $orders
         ]);
     }
-    // Membuat pesanan dari keranjang
+
+    // Checkout dari keranjang
     public function create(Request $request)
     {
         $request->validate([
@@ -35,25 +37,34 @@ class OrderController extends Controller
         $carts = Cart::with('product')->where('user_id', $user->id)->get();
 
         if ($carts->isEmpty()) {
-            return response()->json(['message' => 'Keranjang kosong'], 400);
+            return redirect()->back()->with('error', 'Keranjang kosong');
         }
 
         DB::beginTransaction();
 
         try {
-            // Buat order utama
             $order = Order::create([
                 'user_id'         => $user->id,
                 'order_number'    => Order::generateOrderNumber(),
                 'shipping_address'=> $request->shipping_address,
                 'status'          => Order::STATUS_PENDING,
-                'total_amount'    => 0, // Sementara, akan dihitung nanti
+                'total_amount'    => 0,
             ]);
 
             $total = 0;
 
-            // Simpan item pesanan
             foreach ($carts as $cart) {
+                // Validasi produk aktif
+                if (!$cart->product->is_active) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Ada produk yang sudah tidak aktif di keranjang Anda.');
+                }
+                // Validasi stok
+                if ($cart->quantity > $cart->product->stock) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', "Stok produk {$cart->product->name} tidak mencukupi.");
+                }
+
                 $subtotal = $cart->quantity * $cart->product->price;
                 $total += $subtotal;
 
@@ -63,39 +74,86 @@ class OrderController extends Controller
                     'quantity'   => $cart->quantity,
                     'price'      => $cart->product->price,
                 ]);
+
+                // Kurangi stok produk
+                $cart->product->decrement('stock', $cart->quantity);
             }
 
-            // Update total
             $order->update(['total_amount' => $total]);
-
-            // Kosongkan keranjang
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
 
-            return response()->json([
-                'message' => 'Pesanan berhasil dibuat',
-                'order'   => $order->load('orderItems.product')
-            ]);
+            return redirect()->route('orders.show', $order->id)->with('message', 'Pesanan berhasil dibuat');
         } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json(['message' => 'Gagal membuat pesanan', 'error' => $e->getMessage()], 500);
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal membuat pesanan: ' . $e->getMessage());
         }
     }
 
-    // Melihat detail pesanan tertentu
-    public function view($id)
+    // Buy Now (beli langsung satu produk)
+    public function buyNow(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'shipping_address' => 'required|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $product = Product::findOrFail($request->product_id);
+
+        if (!$product->is_active) {
+            return redirect()->back()->with('error', 'Produk tidak aktif.');
+        }
+
+        if ($request->quantity > $product->stock) {
+            return redirect()->back()->with('error', 'Stok produk tidak mencukupi.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $order = Order::create([
+                'user_id'          => $user->id,
+                'order_number'     => Order::generateOrderNumber(),
+                'shipping_address' => $request->shipping_address,
+                'status'           => Order::STATUS_PENDING,
+                'total_amount'     => $product->price * $request->quantity,
+            ]);
+
+            OrderItem::create([
+                'order_id'   => $order->id,
+                'product_id' => $product->id,
+                'quantity'   => $request->quantity,
+                'price'      => $product->price,
+            ]);
+
+            // Kurangi stok produk
+            $product->decrement('stock', $request->quantity);
+
+            DB::commit();
+
+            return redirect()->route('orders.show', $order->id)->with('message', 'Pembelian berhasil!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal melakukan pembelian: ' . $e->getMessage());
+        }
+    }
+
+    // Detail pesanan
+    public function show($id)
     {
         $order = Order::with('orderItems.product')
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        return response()->json([
+        return Inertia::render('Orders/Show', [
             'order' => $order
         ]);
     }
 
-    // Riwayat semua pesanan user
+    // (Opsional) Riwayat semua pesanan user dalam bentuk JSON
     public function history()
     {
         $orders = Order::with('orderItems.product')
@@ -103,8 +161,16 @@ class OrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json([
-            'orders' => $orders
-        ]);
+    }
+
+    // Batalkan pesanan
+    public function cancel($id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        if ($order->status !== Order::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Pesanan tidak bisa dibatalkan.');
+        }
+        $order->update(['status' => Order::STATUS_CANCELLED]);
+        return redirect()->route('orders.show', $order->id)->with('message', 'Pesanan berhasil dibatalkan.');
     }
 }

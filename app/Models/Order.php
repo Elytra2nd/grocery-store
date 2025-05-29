@@ -52,6 +52,7 @@ class Order extends Model
             return $item->quantity * $item->price;
         });
     }
+    
 
     // Status constants
     const STATUS_PENDING = 'pending';
