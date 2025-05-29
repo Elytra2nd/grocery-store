@@ -9,6 +9,7 @@ import {
     ShoppingCartIcon,
     UsersIcon,
     ChartBarIcon,
+    SquaresPlusIcon,
     CogIcon,
     ShoppingBagIcon,
     BellIcon,
@@ -88,7 +89,7 @@ const adminNavigation = (pesananBadge: number) => [
     {
         name: 'Kategori',
         href: '/admin/categories',
-        icon: CubeIcon,
+        icon: SquaresPlusIcon,
         children: [
             { name: 'Semua Kategori', href: '/admin/categories' },
         ]
@@ -109,7 +110,7 @@ const adminNavigation = (pesananBadge: number) => [
         icon: UsersIcon,
         children: [
             { name: 'Semua Pelanggan', href: '/admin/users' },
-            { name: 'pelanggan aktif', href: '/admin/users/active' },
+            { name: 'Pelanggan Aktif', href: '/admin/users/active' },
         ]
     },
     {
@@ -117,11 +118,11 @@ const adminNavigation = (pesananBadge: number) => [
         href: '/admin/reports',
         icon: ChartBarIcon,
         children: [
-            {name: 'Semua Laporan', href: '/admin/reports' },
-            { name: 'Penjualan', href: '/admin/reports/sales' },
-            { name: 'pelanggan', href: '/admin/reports/customers' },
-            { name: 'produk', href: '/admin/reports/products' },
-            { name: 'Keuangan', href: '/admin/reports/financial' },
+            { name: 'Semua Laporan', href: '/admin/reports' },
+            { name: 'Laporan Penjualan', href: '/admin/reports/sales' },
+            { name: 'Laporan Produk', href: '/admin/reports/products' },
+            { name: 'Laporan Pelanggan', href: '/admin/reports/customers' },
+            { name: 'Laporan Keuangan', href: '/admin/reports/financial' },
         ]
     },
     {
@@ -183,11 +184,10 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
                         <div key={item.name}>
                             <Link
                                 href={item.href}
-                                className={`group flex items-center px-3 py-2 rounded-md text-base font-medium transition-all ${
-                                    isActive
+                                className={`group flex items-center px-3 py-2 rounded-md text-base font-medium transition-all ${isActive
                                         ? 'bg-amber-100 text-amber-900'
                                         : 'text-amber-700 hover:bg-amber-50 hover:text-amber-900'
-                                } ${collapsed ? 'justify-center' : ''}`}
+                                    } ${collapsed ? 'justify-center' : ''}`}
                                 onClick={e => {
                                     handleMainClick(item);
                                     if (hasChildren) e.preventDefault();
@@ -217,11 +217,10 @@ function Sidebar({ collapsed, onToggle, navigation, onAnyNavigate }: SidebarProp
                                         <Link
                                             key={sub.name}
                                             href={sub.href}
-                                            className={`block px-2 py-1 rounded text-sm ${
-                                                url.startsWith(sub.href)
+                                            className={`block px-2 py-1 rounded text-sm ${url.startsWith(sub.href)
                                                     ? 'bg-amber-200 text-amber-900'
                                                     : 'text-amber-700 hover:bg-amber-50'
-                                            }`}
+                                                }`}
                                             onClick={onAnyNavigate}
                                         >
                                             {sub.name}
@@ -271,7 +270,7 @@ function MobileSidebar({ open, onClose, navigation }: MobileSidebarProps) {
                         <XMarkIcon className="h-6 w-6 text-amber-700" />
                     </button>
                 </div>
-                <Sidebar collapsed={false} onToggle={() => {}} navigation={navigation} onAnyNavigate={handleAnyNavigate} />
+                <Sidebar collapsed={false} onToggle={() => { }} navigation={navigation} onAnyNavigate={handleAnyNavigate} />
             </div>
         </div>
     );

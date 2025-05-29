@@ -61,15 +61,12 @@ function Pagination({ links, meta }: PaginationProps): JSX.Element {
                             <Link
                                 key={index}
                                 href={link.url || '#'}
-                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                    link.active
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${link.active
                                         ? 'z-10 bg-amber-50 border-amber-500 text-amber-700'
                                         : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                } ${
-                                    index === 0 ? 'rounded-l-md' : ''
-                                } ${
-                                    index === links.length - 1 ? 'rounded-r-md' : ''
-                                }`}
+                                    } ${index === 0 ? 'rounded-l-md' : ''
+                                    } ${index === links.length - 1 ? 'rounded-r-md' : ''
+                                    }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}
@@ -138,15 +135,15 @@ function StatCard({ title, value, color }: { title: string; value: number; color
     };
     return (
         <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5 flex items-center">
+            <div className="p-4 sm:p-5 flex items-center">
                 <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
                     <span className="text-white text-sm font-medium">
                         {title.charAt(0)}
                     </span>
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 sm:ml-5 w-0 flex-1">
                     <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
                             {title}
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
@@ -159,7 +156,7 @@ function StatCard({ title, value, color }: { title: string; value: number; color
     );
 }
 
-// FilterForm: gunakan category_id untuk filter
+// FilterForm dengan layout yang lebih baik
 function FilterForm({ onSubmit, categories, filters }: {
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
     categories: Record<number, string>;
@@ -169,9 +166,10 @@ function FilterForm({ onSubmit, categories, filters }: {
         <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-5 sm:p-6">
                 <form onSubmit={onSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                    {/* Grid yang lebih responsif */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Pencarian
                             </label>
                             <input
@@ -179,17 +177,17 @@ function FilterForm({ onSubmit, categories, filters }: {
                                 name="search"
                                 defaultValue={filters.search || ''}
                                 placeholder="Cari produk..."
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 text-sm"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Kategori
                             </label>
                             <select
                                 name="category_id"
                                 defaultValue={filters.category_id || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 text-sm"
                             >
                                 <option value="">Semua Kategori</option>
                                 {Object.entries(categories).map(([id, name]) => (
@@ -199,28 +197,28 @@ function FilterForm({ onSubmit, categories, filters }: {
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Status
                             </label>
                             <select
                                 name="status"
                                 defaultValue={filters.status || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 text-sm"
                             >
                                 <option value="">Semua Status</option>
                                 <option value="active">Aktif</option>
                                 <option value="inactive">Tidak Aktif</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Stok
                             </label>
                             <select
                                 name="stock_status"
                                 defaultValue={filters.stock_status || ''}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 text-sm"
                             >
                                 <option value="">Semua Stok</option>
                                 <option value="available">Tersedia</option>
@@ -229,16 +227,17 @@ function FilterForm({ onSubmit, categories, filters }: {
                             </select>
                         </div>
                     </div>
-                    <div className="flex justify-between">
+                    {/* Button group */}
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                         <button
                             type="submit"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                         >
                             Filter
                         </button>
                         <Link
                             href="/admin/products"
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                         >
                             Reset
                         </Link>
@@ -259,17 +258,17 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: {
     return (
         <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-3 sm:px-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center">
                         <span className="text-sm text-gray-700">
                             {selectedCount} produk dipilih
                         </span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <select
                             value={bulkAction}
                             onChange={(e) => setBulkAction(e.target.value)}
-                            className="border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                            className="border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 text-sm"
                         >
                             <option value="">Pilih Aksi</option>
                             <option value="activate">Aktifkan</option>
@@ -279,7 +278,7 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: {
                         <button
                             onClick={onExecute}
                             disabled={!bulkAction}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:bg-gray-400"
+                            className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:bg-gray-400"
                         >
                             Jalankan
                         </button>
@@ -290,7 +289,7 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: {
     );
 }
 
-// ProductsTable & ProductRow
+// ProductsTable yang lebih compact
 function ProductsTable({
     products,
     selectedProducts,
@@ -330,13 +329,14 @@ function ProductsTable({
             </div>
         );
     }
+
     return (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-amber-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider w-8">
                                 <input
                                     type="checkbox"
                                     checked={selectedProducts.length === products.length && products.length > 0}
@@ -344,22 +344,22 @@ function ProductsTable({
                                     className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                                 />
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Produk
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="hidden lg:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Kategori
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Harga
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Stok
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="hidden md:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                            <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider w-20">
                                 Aksi
                             </th>
                         </tr>
@@ -389,7 +389,6 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
 }) {
     const [imageError, setImageError] = useState<boolean>(false);
     const [imageLoading, setImageLoading] = useState<boolean>(true);
-    const [activeBtn, setActiveBtn] = useState<string | null>(null);
 
     const getImageSrc = (product: Product): string => {
         if (!product.image) return '';
@@ -412,19 +411,16 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
     };
 
     const PlaceholderImage = (): JSX.Element => (
-        <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center border border-gray-300">
-            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-gray-200 flex items-center justify-center border border-gray-300">
+            <svg className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
         </div>
     );
 
-    const btnBase =
-        "p-1 rounded transition-all duration-150 touch-manipulation focus:outline-none focus:ring-2 focus:ring-offset-2";
-
     return (
         <tr className="hover:bg-amber-50 transition-colors duration-150">
-            <td className="px-6 py-4 whitespace-nowrap">
+            <td className="px-2 sm:px-4 py-3 whitespace-nowrap">
                 <input
                     type="checkbox"
                     checked={isSelected}
@@ -432,20 +428,19 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
                     className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                 />
             </td>
-            <td className="px-6 py-4 whitespace-nowrap">
+            <td className="px-2 sm:px-4 py-3">
                 <div className="flex items-center">
-                    <div className="flex-shrink-0 h-16 w-16 relative">
+                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 relative">
                         {imageError || !product.image ? (
                             <PlaceholderImage />
                         ) : (
                             <>
                                 {imageLoading && (
-                                    <div className="absolute inset-0 h-16 w-16 bg-gray-200 animate-pulse rounded-lg border border-gray-300" />
+                                    <div className="absolute inset-0 h-10 w-10 sm:h-12 sm:w-12 bg-gray-200 animate-pulse rounded-lg border border-gray-300" />
                                 )}
                                 <img
-                                    className={`h-16 w-16 rounded-lg object-cover border border-gray-200 transition-opacity duration-300 ${
-                                        imageLoading ? 'opacity-0' : 'opacity-100'
-                                    }`}
+                                    className={`h-10 w-10 sm:h-12 sm:w-12 rounded-lg object-cover border border-gray-200 transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                                        }`}
                                     src={getImageSrc(product)}
                                     alt={product.name}
                                     onLoad={handleImageLoad}
@@ -455,93 +450,81 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
                             </>
                         )}
                     </div>
-                    <div className="ml-4 flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-xs" title={product.name}>
+                    <div className="ml-2 sm:ml-3 flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate" title={product.name}>
                             {product.name}
                         </div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs" title={product.description}>
-                            {product.description && product.description.length > 50
-                                ? `${product.description.substring(0, 50)}...`
+                        <div className="text-xs text-gray-500 truncate" title={product.description}>
+                            {product.description && product.description.length > 20
+                                ? `${product.description.substring(0, 20)}...`
                                 : product.description || 'Tidak ada deskripsi'
                             }
+                        </div>
+                        {/* Info tambahan untuk mobile */}
+                        <div className="lg:hidden mt-1 space-y-1">
+                            <div className="text-xs text-gray-500">
+                                {product.category?.name || 'Tidak ada kategori'}
+                            </div>
+                            <div className="sm:hidden text-xs text-gray-500">
+                                Stok: {product.stock || 0}
+                            </div>
+                            <div className="md:hidden text-xs">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${product.is_active
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                    }`}>
+                                    {product.is_active ? 'Aktif' : 'Tidak Aktif'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td className="hidden lg:table-cell px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                     {product.category?.name || 'Tidak ada kategori'}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                Rp {(product.price || 0).toLocaleString('id-ID')}
+            <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
+                <div className="text-xs sm:text-sm">
+                    Rp {(product.price || 0).toLocaleString('id-ID')}
+                </div>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td className="hidden sm:table-cell px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStockBadgeClass(product.stock || 0)}`}>
                     {product.stock || 0}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.is_active
+            <td className="hidden md:table-cell px-2 sm:px-4 py-3 whitespace-nowrap">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                }`}>
+                    }`}>
                     {product.is_active ? 'Aktif' : 'Tidak Aktif'}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex items-center justify-end space-x-2">
-                    {/* Lihat */}
+            <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex items-center justify-end space-x-1">
                     <Link
                         href={`/admin/products/${product.id}`}
-                        className={`${btnBase} ${
-                            activeBtn === 'view'
-                                ? 'scale-90 bg-indigo-100'
-                                : 'bg-indigo-50 hover:bg-indigo-100'
-                        }`}
+                        className="p-1 rounded bg-indigo-50 hover:bg-indigo-100 transition-colors"
                         title="Lihat Detail"
-                        onTouchStart={() => setActiveBtn('view')}
-                        onTouchEnd={() => setActiveBtn(null)}
-                        onMouseDown={() => setActiveBtn('view')}
-                        onMouseUp={() => setActiveBtn(null)}
-                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <EyeIcon className="h-5 w-5 text-indigo-600" />
+                        <EyeIcon className="h-4 w-4 text-indigo-600" />
                     </Link>
-                    {/* Edit */}
                     <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className={`${btnBase} ${
-                            activeBtn === 'edit'
-                                ? 'scale-90 bg-amber-100'
-                                : 'bg-amber-50 hover:bg-amber-100'
-                        }`}
+                        className="p-1 rounded bg-amber-50 hover:bg-amber-100 transition-colors"
                         title="Edit Produk"
-                        onTouchStart={() => setActiveBtn('edit')}
-                        onTouchEnd={() => setActiveBtn(null)}
-                        onMouseDown={() => setActiveBtn('edit')}
-                        onMouseUp={() => setActiveBtn(null)}
-                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <PencilIcon className="h-5 w-5 text-amber-600" />
+                        <PencilIcon className="h-4 w-4 text-amber-600" />
                     </Link>
-                    {/* Hapus */}
                     <button
                         onClick={() => onDelete(product)}
-                        className={`${btnBase} ${
-                            activeBtn === 'delete'
-                                ? 'scale-90 bg-red-100'
-                                : 'bg-red-50 hover:bg-red-100'
-                        }`}
+                        className="p-1 rounded bg-red-50 hover:bg-red-100 transition-colors"
                         title="Hapus Produk"
-                        onTouchStart={() => setActiveBtn('delete')}
-                        onTouchEnd={() => setActiveBtn(null)}
-                        onMouseDown={() => setActiveBtn('delete')}
-                        onMouseUp={() => setActiveBtn(null)}
-                        onMouseLeave={() => setActiveBtn(null)}
                     >
-                        <TrashIcon className="h-5 w-5 text-red-600" />
+                        <TrashIcon className="h-4 w-4 text-red-600" />
                     </button>
                 </div>
             </td>
@@ -622,21 +605,23 @@ export default function ProductsIndex({
             <Head title="Kelola Produk" />
 
             <div className="py-6">
+                {/* Container dengan max-width dan padding yang konsisten */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
-                    <div className="md:flex md:items-center md:justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-2xl font-bold leading-7 text-amber-900 sm:text-3xl sm:truncate">
+                            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-7 text-amber-900 truncate">
                                 Kelola Produk
                             </h2>
                         </div>
-                        <div className="mt-4 flex md:mt-0 md:ml-4">
+                        <div className="flex-shrink-0">
                             <Link
                                 href="/admin/products/create"
-                                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                             >
                                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                                Tambah Produk
+                                <span className="hidden sm:inline">Tambah Produk</span>
+                                <span className="sm:hidden">Tambah</span>
                             </Link>
                         </div>
                     </div>
@@ -653,8 +638,8 @@ export default function ProductsIndex({
                         </div>
                     )}
 
-                    {/* Statistik Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    {/* Statistik Cards - Perbaiki grid responsif */}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                         <StatCard title="Total Produk" value={safeStatistics.total_products} color="amber" />
                         <StatCard title="Produk Aktif" value={safeStatistics.active_products} color="green" />
                         <StatCard title="Stok Rendah" value={safeStatistics.low_stock_products} color="yellow" />
@@ -678,14 +663,18 @@ export default function ProductsIndex({
                         />
                     )}
 
-                    {/* Products Table */}
-                    <ProductsTable
-                        products={safeProducts}
-                        selectedProducts={selectedProducts}
-                        onToggleSelection={toggleProductSelection}
-                        onToggleSelectAll={toggleSelectAll}
-                        onDelete={handleDelete}
-                    />
+                    {/* Products Table - Tambahkan wrapper untuk scroll */}
+                    <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                        <div className="overflow-x-auto">
+                            <ProductsTable
+                                products={safeProducts}
+                                selectedProducts={selectedProducts}
+                                onToggleSelection={toggleProductSelection}
+                                onToggleSelectAll={toggleSelectAll}
+                                onDelete={handleDelete}
+                            />
+                        </div>
+                    </div>
 
                     {/* Pagination */}
                     {products?.links && (
