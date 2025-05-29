@@ -1,8 +1,6 @@
 import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Product } from '@/types';
-import { router } from '@inertiajs/react';
-import { PageProps } from '@/types';
+import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Product, PageProps } from '@/types';
 
 interface ProductShowProps {
     product: Product;
@@ -12,39 +10,34 @@ interface ProductShowProps {
 export default function ProductShow({ product, relatedProducts }: ProductShowProps): JSX.Element {
     const { auth } = usePage<PageProps>().props;
 
-    // Function untuk handle add to cart dengan auth check
-   const handleAddToCart = () => {
-    if (!auth?.user) {
-        const currentUrl = window.location.href;
-        sessionStorage.setItem('redirect_after_login', currentUrl);
+    // Handler: Tambah ke Keranjang
+    const handleAddToCart = () => {
+        if (!auth?.user) {
+            const currentUrl = window.location.href;
+            sessionStorage.setItem('redirect_after_login', currentUrl);
 
-        router.visit('/login', {
-            data: {
-                message: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang'
+            router.visit('/login', {
+                data: {
+                    message: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang'
+                }
+            });
+            return;
+        }
+
+        router.post("/cart/add", {
+            product_id: product.id,
+            quantity: 1
+        }, {
+            onSuccess: () => {
+                // Notifikasi atau reload cart bisa ditambahkan di sini
+            },
+            onError: (errors) => {
+                console.error('Error adding to cart:', errors);
             }
         });
-        return;
-    }
+    };
 
-    // PERBAIKI: Gunakan /cart/add bukan /cart/index
-    router.post("/cart/add", {
-        product_id: product.id,
-        quantity: 1
-    }, {
-        onSuccess: () => {
-            console.log('Produk berhasil ditambahkan ke keranjang');
-        },
-        onError: (errors) => {
-            console.error('Error adding to cart:', errors);
-        }
-    });
-};
-
-
-
-
-
-    // Function untuk handle buy now dengan auth check dan redirect
+    // Handler: Beli Sekarang
     const handleBuyNow = () => {
         if (!auth?.user) {
             const currentUrl = window.location.href;
@@ -58,15 +51,14 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             return;
         }
 
-        // Langsung buat order dan redirect ke products dengan notifikasi
-        router.post('/buyer/orders/create', {
+        router.post('/buyer/orders/buy-now', {
             product_id: product.id,
             quantity: 1,
             total_price: product.price
         }, {
             onSuccess: () => {
-                // Redirect ke products dengan success message
-                router.visit('/products');
+                // Redirect ke halaman pesanan atau notifikasi sukses
+                router.visit('/orders');
             },
             onError: (errors) => {
                 console.error('Error processing purchase:', errors);
@@ -87,11 +79,9 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                         </Link>
                         <div className="flex items-center gap-4">
                             {auth?.user ? (
-                                <>
-                                    <span className="items-center text-emerald-400 text-sm">
-                                        Halo, {auth.user.name}!
-                                    </span>
-                                </>
+                                <span className="items-center text-emerald-400 text-sm">
+                                    Halo, {auth.user.name}!
+                                </span>
                             ) : (
                                 <>
                                     <Link

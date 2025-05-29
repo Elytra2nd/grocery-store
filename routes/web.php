@@ -45,29 +45,32 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
-
+});
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/', [CartController::class, 'add'])->name('buyer.cart.add');
+        Route::post('/add', [CartController::class, 'add'])->name('add'); // <-- tambahkan ini
         Route::put('/{id}', [CartController::class, 'update'])->name('update');
         Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
 
+
+    Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
+    Route::post('/buyer/orders/buy-now', [OrderController::class, 'buyNow'])->name('buyer.orders.buy-now');
+    Route::post('/checkout', [OrderController::class, 'create'])->name('checkout');
+
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
-        Route::post('/', [OrderController::class, 'store'])->name('store');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-        // Untuk buy now/order
-        Route::post('/buyer/orders/create', [OrderController::class, 'buyNow'])->name('buyer.orders.create');
-
     });
-});
+
+
+
 
 // ===================
 // Admin Routes
