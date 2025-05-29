@@ -5,9 +5,10 @@ import { Product, PageProps } from '@/types';
 interface ProductShowProps {
     product: Product;
     relatedProducts: Product[];
+    cartItemId?: number; // Tambahan opsional jika ingin checkout 1 produk saja
 }
 
-export default function ProductShow({ product, relatedProducts }: ProductShowProps): JSX.Element {
+export default function ProductShow({ product, relatedProducts, cartItemId }: ProductShowProps): JSX.Element {
     const { auth } = usePage<PageProps>().props;
 
     // Handler: Tambah ke Keranjang
@@ -29,7 +30,8 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             quantity: 1
         }, {
             onSuccess: () => {
-                // Notifikasi atau reload cart bisa ditambahkan di sini
+                // Anda bisa menampilkan notifikasi di sini
+                // Contoh: toast.success('Berhasil ditambahkan ke keranjang');
             },
             onError: (errors) => {
                 console.error('Error adding to cart:', errors);
@@ -51,18 +53,13 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             return;
         }
 
-        router.post('/buyer/orders/buy-now', {
-            product_id: product.id,
-            quantity: 1,
-            total_price: product.price
-        }, {
-            onSuccess: () => {
-                router.visit('/orders');
-            },
-            onError: (errors) => {
-                console.error('Error processing purchase:', errors);
-            }
-        });
+        // Langsung redirect ke halaman checkout (bukan POST order langsung)
+        // Jika ingin checkout hanya produk ini, pastikan produk sudah ada di cart dan gunakan cartItemId
+        if (cartItemId) {
+            router.visit(`/checkout?items[]=${cartItemId}`);
+        } else {
+            router.visit('/checkout');
+        }
     };
 
     return (
@@ -113,7 +110,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                     <div className="max-w-7xl mx-auto">
                         {/* Product Detail Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
-                            {/* Product Image - DIPERBAIKI */}
+                            {/* Product Image */}
                             <div className="flex items-center justify-center">
                                 <div className="w-full max-w-lg aspect-square bg-gray-800/60 backdrop-blur-md rounded-3xl overflow-hidden border border-gray-700/50 shadow-2xl relative group transition-all duration-300">
                                     {product.image ? (
@@ -122,7 +119,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                             alt={product.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             onError={(e) => {
-                                                // Fallback jika gambar tidak ditemukan
                                                 e.currentTarget.style.display = 'none';
                                                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
                                             }}
@@ -135,7 +131,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent pointer-events-none" />
                                 </div>
                             </div>
-
                             {/* Product Details */}
                             <div className="flex flex-col justify-center space-y-8 text-white">
                                 {/* Category & Stock */}
@@ -201,7 +196,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                                 : 'Login untuk Beli'
                                         }
                                     </button>
-
                                     <button
                                         type="button"
                                         onClick={handleBuyNow}
@@ -224,7 +218,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
                         </div>
 
-                        {/* Related Products Section - DIPERBAIKI */}
+                        {/* Related Products Section */}
                         {relatedProducts && relatedProducts.length > 0 && (
                             <section className="w-full py-12">
                                 <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-12 bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent tracking-wide drop-shadow">
@@ -237,7 +231,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                             href={`/products/${relatedProduct.id}`}
                                             className="group bg-gray-800/60 backdrop-blur-md rounded-xl overflow-hidden border border-gray-700/50 hover:border-amber-400/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col"
                                         >
-                                            {/* Related Product Image - DIPERBAIKI */}
+                                            {/* Related Product Image */}
                                             <div className="aspect-square overflow-hidden relative">
                                                 {relatedProduct.image ? (
                                                     <img
