@@ -58,7 +58,7 @@ export default function OrdersCreate({ products, users, statuses }: Props): JSX.
     // Filter products based on search
     const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        product.category.toLowerCase().includes(productSearch.toLowerCase())
+        (product.category && String(product.category).toLowerCase().includes(productSearch.toLowerCase()))
     );
 
     // Filter users based on search
@@ -382,7 +382,7 @@ function ProductsSection({
                                             Stok: {item.product.stock}
                                         </div>
                                         <div className="text-sm text-gray-500">
-                                            Kategori: {item.product.category}
+                                            Kategori: {item.product.category ? String(item.product.category) : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -673,7 +673,7 @@ function ProductSelectionModal({
                                         <div className="text-sm text-gray-500">
                                             Rp {product.price.toLocaleString('id-ID')} | Stok: {product.stock}
                                         </div>
-                                        <div className="text-sm text-gray-500">{product.category}</div>
+                                        <div className="text-sm text-gray-500">{String(product.category ?? '')}</div>
                                     </div>
                                 </div>
                             </button>

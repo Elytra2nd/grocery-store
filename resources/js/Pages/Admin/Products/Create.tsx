@@ -15,7 +15,6 @@ type ProductFormData = {
     category_id: string;
     image: File | null;
     is_active: boolean;
-    [key: string]: any;
 };
 
 interface Props {

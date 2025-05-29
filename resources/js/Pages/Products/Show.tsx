@@ -137,7 +137,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                 {/* Category & Stock */}
                                 <div className="flex flex-wrap justify-between items-start gap-4">
                                     <span className="text-xs md:text-sm font-medium text-amber-400 bg-amber-400/20 px-4 py-2 rounded-full border border-amber-400/30 shadow-sm">
-                                        {product.category}
+                                        {String(product.category ?? '')}
                                     </span>
                                     <span className={`text-xs md:text-sm font-semibold px-4 py-2 rounded-full shadow-sm ${product.stock > 0
                                         ? 'text-emerald-400 bg-emerald-400/20 border border-emerald-400/30'

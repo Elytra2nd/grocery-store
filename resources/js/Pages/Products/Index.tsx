@@ -399,7 +399,7 @@ export default function ProductIndex({
                                         {/* Category and stock status */}
                                         <div className="flex justify-between items-start">
                                             <span className="text-xs font-medium text-amber-400 bg-gray-700/50 px-2 py-1 rounded-full border border-gray-600/50">
-                                                {product.category}
+                                                {String(product.category ?? '')}
                                             </span>
                                             <span className={`text-xs font-semibold ${product.stock > 0 ? 'text-emerald-400' : 'text-red-500'}`}>
                                                 {product.stock > 0 ? `${product.stock} left` : 'Sold Out'}
