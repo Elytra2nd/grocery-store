@@ -34,4 +34,21 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    // Scope untuk stok rendah
+    public function scopeLowStock($query, $threshold = 10)
+    {
+        return $query->where('stock', '<=', $threshold);
+    }
+
+    public function rupiahformat()
+    {
+        return 'Rp ' . number_format($this->price, 0, ',', '.');
+    }
+
 }
