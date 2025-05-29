@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,7 +11,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::where('is_active', true);
+        $query = Product::with('category')->where('is_active', true);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -18,13 +19,17 @@ class ProductController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%"); // <-- Ganti category_id ke category
+                  ->orWhereHas('category', function($categoryQuery) use ($search) {
+                      $categoryQuery->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
         // Category filter
-        if ($request->filled('category')) { // <-- Ganti category_id ke category
-            $query->where('category', $request->category);
+        if ($request->filled('category')) {
+            $query->whereHas('category', function($categoryQuery) use ($request) {
+                $categoryQuery->where('name', $request->category);
+            });
         }
 
         // Price range filter
@@ -52,12 +57,10 @@ class ProductController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
-        // Get categories for filter dropdown
-        $categories = Product::select('category')
-            ->where('is_active', true)
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+        // Get categories for filter dropdown - gunakan model Category langsung
+        $categories = Category::whereHas('products', function($query) {
+            $query->where('is_active', true);
+        })->pluck('name');
 
         // Get price range for filter
         $priceRange = Product::where('is_active', true)
@@ -82,8 +85,12 @@ class ProductController extends Controller
             abort(404);
         }
 
+        // Load category relationship
+        $product->load('category');
+
         // Get related products from same category
-        $relatedProducts = Product::where('category', $product->category) // Ganti category_id ke category
+        $relatedProducts = Product::with('category')
+            ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
             ->limit(4)
@@ -101,14 +108,17 @@ class ProductController extends Controller
             'q' => 'required|string|min:2|max:100',
         ]);
 
-        $products = Product::where('is_active', true)
+        $products = Product::with('category')
+            ->where('is_active', true)
             ->where(function($query) use ($request) {
                 $searchTerm = $request->q;
                 $query->where('name', 'like', "%{$searchTerm}%")
                       ->orWhere('description', 'like', "%{$searchTerm}%")
-                      ->orWhere('category', 'like', "%{$searchTerm}%"); // Ganti category_id ke category
+                      ->orWhereHas('category', function($categoryQuery) use ($searchTerm) {
+                          $categoryQuery->where('name', 'like', "%{$searchTerm}%");
+                      });
             })
-            ->select('id', 'name', 'price', 'image', 'stock')
+            ->select('id', 'name', 'price', 'image', 'stock', 'category_id')
             ->limit(10)
             ->get();
 
@@ -117,11 +127,10 @@ class ProductController extends Controller
 
     public function categories()
     {
-        $categories = Product::select('category')
-            ->where('is_active', true)
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+        // Gunakan model Category langsung
+        $categories = Category::whereHas('products', function($query) {
+            $query->where('is_active', true);
+        })->pluck('name');
 
         return response()->json($categories);
     }
