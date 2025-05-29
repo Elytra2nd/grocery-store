@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import React, { useRef, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -38,8 +38,7 @@ export default function Financial({
 }: FinancialReportProps) {
     const startDateRef = useRef<HTMLInputElement>(null);
     const endDateRef = useRef<HTMLInputElement>(null);
-    const [exportLoading, setExportLoading] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
     const handleDateFilter = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -94,264 +93,208 @@ export default function Financial({
     const safeDailyRevenue = Array.isArray(dailyRevenue) ? dailyRevenue : [];
     const safeRevenueByCategory = Array.isArray(revenueByCategory) ? revenueByCategory : [];
 
-    const handleExport = (reportType: string = 'summary') => {
-        setExportLoading(true);
-        setShowDropdown(false);
+    const handleExport = () => {
         const params = new URLSearchParams({
             start_date: filters.start_date,
             end_date: filters.end_date,
-            report_type: reportType,
         });
-
-        const url = `/admin/reports/export/financial?${params.toString()}`;
-
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setTimeout(() => setExportLoading(false), 2000);
+        window.location.href = `/admin/reports/export/financial?${params.toString()}`;
     };
-
-    const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
     return (
         <AuthenticatedLayout>
             <Head title="Laporan Keuangan" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
-                {/* Header Section - DIPERBAIKI: Ukuran lebih kecil */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 bg-white rounded-lg shadow-md p-6 border border-amber-200">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-amber-900 mb-1">Laporan Keuangan</h1>
-                        <p className="text-amber-700 text-sm">
-                            Periode: {new Date(filters.start_date).toLocaleDateString('id-ID')} - {new Date(filters.end_date).toLocaleDateString('id-ID')}
-                        </p>
-                    </div>
-
-                    {/* DIPERBAIKI: Export Dropdown dengan z-index yang benar */}
-                    <div className="mt-4 sm:mt-0 relative">
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            disabled={exportLoading}
-                            className={`px-6 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-sm ${
-                                exportLoading ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                        >
-                            {exportLoading ? (
-                                <div className="flex items-center space-x-2">
-                                    <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                    </svg>
-                                    <span>Mengekspor...</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center space-x-2">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <span>Export Excel</span>
-                                    <svg className={`w-4 h-4 transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            )}
-                        </button>
-
-                        {/* DIPERBAIKI: Dropdown dengan z-index tinggi dan positioning yang benar */}
-                        {showDropdown && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                                <div className="py-2">
-                                    {[
-                                        { type: 'summary', icon: '📊', label: 'Ringkasan Keuangan' },
-                                        { type: 'detailed', icon: '📋', label: 'Detail Pesanan' },
-                                        { type: 'products', icon: '🛍️', label: 'Laporan Produk' },
-                                        { type: 'daily', icon: '📅', label: 'Laporan Harian' },
-                                        { type: 'multiple', icon: '📑', label: 'Semua Sheet' },
-                                        { type: 'styled', icon: '🎨', label: 'Format Premium' }
-                                    ].map((item) => (
-                                        <button
-                                            key={item.type}
-                                            onClick={() => handleExport(item.type)}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 transition-colors duration-200 flex items-center space-x-3"
-                                        >
-                                            <span className="text-base">{item.icon}</span>
-                                            <span className="text-gray-700 hover:text-amber-800">{item.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-light text-amber-900">Laporan Keuangan</h1>
+                    <button
+                        onClick={handleExport}
+                        className="group px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Export Excel</span>
+                        </div>
+                    </button>
                 </div>
 
                 {error && (
-                    <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md">
-                        <div className="flex items-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            <strong>Error:</strong> {error}
-                        </div>
+                    <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded animate-shake">
+                        <strong>Error:</strong> {error}
                     </div>
                 )}
 
-                {/* DIPERBAIKI: Filter Section dengan z-index rendah */}
-                <form onSubmit={handleDateFilter} className="mb-6 bg-white rounded-lg shadow-md p-6 border border-amber-200 relative z-10">
-                    <h3 className="text-lg font-semibold text-amber-900 mb-4">Filter Periode</h3>
-                    <div className="flex flex-wrap gap-4 items-end">
-                        <div className="flex-1 min-w-[180px]">
-                            <label className="block text-sm font-medium text-amber-700 mb-2">Tanggal Mulai</label>
-                            <input
-                                type="date"
-                                name="start_date"
-                                defaultValue={filters?.start_date || ''}
-                                ref={startDateRef}
-                                className="w-full rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                            />
-                        </div>
-                        <div className="flex-1 min-w-[180px]">
-                            <label className="block text-sm font-medium text-amber-700 mb-2">Tanggal Selesai</label>
-                            <input
-                                type="date"
-                                name="end_date"
-                                defaultValue={filters?.end_date || ''}
-                                ref={endDateRef}
-                                className="w-full rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                            />
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                type="submit"
-                                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-sm"
-                            >
-                                Terapkan Filter
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleResetFilter}
-                                className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-300 text-sm"
-                            >
-                                Reset
-                            </button>
-                        </div>
+                {/* Filter Section */}
+                <form onSubmit={handleDateFilter} className="mb-8 flex gap-4 flex-wrap bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-amber-200">
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-amber-700">Mulai:</label>
+                        <input
+                            type="date"
+                            name="start_date"
+                            defaultValue={filters?.start_date || ''}
+                            ref={startDateRef}
+                            className="rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-all duration-200"
+                        />
                     </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-amber-700">Sampai:</label>
+                        <input
+                            type="date"
+                            name="end_date"
+                            defaultValue={filters?.end_date || ''}
+                            ref={endDateRef}
+                            className="rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 transition-all duration-200"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                    >
+                        Terapkan Filter
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleResetFilter}
+                        className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-300"
+                    >
+                        Reset
+                    </button>
                 </form>
 
-                {/* DIPERBAIKI: Revenue Metrics Cards dengan spacing yang lebih baik */}
+                {/* Enhanced Revenue Metrics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {[
                         {
+                            id: 'gross',
                             title: 'Pendapatan Kotor',
                             value: safeRevenue.gross_revenue,
                             subtitle: `${safeRevenue.total_orders} pesanan`,
-                            icon: (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
-                            ),
-                            textColor: 'text-blue-600',
-                            iconBg: 'bg-blue-100',
-                            borderColor: 'border-blue-500'
+                            color: 'blue',
+                            bgGradient: 'from-blue-500 to-blue-600',
+                            icon: '💰'
                         },
                         {
+                            id: 'net',
                             title: 'Pendapatan Bersih',
                             value: safeRevenue.net_revenue,
                             subtitle: 'Setelah refund',
-                            icon: (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            ),
-                            textColor: 'text-emerald-600',
-                            iconBg: 'bg-emerald-100',
-                            borderColor: 'border-emerald-500'
+                            color: 'green',
+                            bgGradient: 'from-green-500 to-green-600',
+                            icon: '✅'
                         },
                         {
+                            id: 'average',
                             title: 'Rata-rata Order',
                             value: safeRevenue.average_order_value,
                             subtitle: 'Per pesanan',
-                            icon: (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            ),
-                            textColor: 'text-purple-600',
-                            iconBg: 'bg-purple-100',
-                            borderColor: 'border-purple-500'
+                            color: 'purple',
+                            bgGradient: 'from-purple-500 to-purple-600',
+                            icon: '📊'
                         },
                         {
+                            id: 'growth',
                             title: 'Pertumbuhan',
                             value: safeRevenue.growth_rate,
                             subtitle: 'Vs bulan lalu',
-                            icon: (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
-                                        safeRevenue.growth_rate >= 0
-                                            ? "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                                            : "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                                    } />
-                                </svg>
-                            ),
-                            textColor: safeRevenue.growth_rate >= 0 ? 'text-green-600' : 'text-red-600',
-                            iconBg: safeRevenue.growth_rate >= 0 ? 'bg-green-100' : 'bg-red-100',
-                            borderColor: safeRevenue.growth_rate >= 0 ? 'border-green-500' : 'border-red-500',
+                            color: safeRevenue.growth_rate >= 0 ? 'green' : 'red',
+                            bgGradient: safeRevenue.growth_rate >= 0 ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600',
+                            icon: safeRevenue.growth_rate >= 0 ? '📈' : '📉',
                             isPercentage: true
                         }
                     ].map((metric, index) => (
                         <div
-                            key={index}
-                            className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border-l-4 ${metric.borderColor}`}
+                            key={metric.id}
+                            className={`group relative bg-white rounded-xl shadow-lg border-l-4 border-${metric.color}-500 overflow-hidden transition-all duration-500 hover:shadow-2xl transform hover:scale-105 hover:-translate-y-2 cursor-pointer ${
+                                hoveredCard === metric.id ? 'ring-4 ring-amber-300/50' : ''
+                            }`}
+                            onMouseEnter={() => setHoveredCard(metric.id)}
+                            onMouseLeave={() => setHoveredCard(null)}
+                            style={{
+                                animationDelay: `${index * 100}ms`
+                            }}
                         >
-                            <div className="p-5">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-base font-semibold mb-2 text-gray-700 truncate">
-                                            {metric.title}
-                                        </h3>
-                                        <p className={`text-xl font-bold ${metric.textColor} mb-1`}>
+                            {/* Animated background gradient */}
+                            <div className={`absolute inset-0 bg-gradient-to-br ${metric.bgGradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+
+                            {/* Shimmer effect */}
+                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+                            <div className="relative p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-2 mb-2">
+                                            <span className="text-2xl animate-bounce">{metric.icon}</span>
+                                            <h3 className="text-lg font-semibold text-gray-700 group-hover:text-gray-800 transition-colors duration-300">
+                                                {metric.title}
+                                            </h3>
+                                        </div>
+                                        <p className={`text-2xl font-bold text-${metric.color}-600 transition-all duration-300 group-hover:scale-110`}>
                                             {metric.isPercentage
                                                 ? `${metric.value >= 0 ? '+' : ''}${metric.value.toFixed(1)}%`
                                                 : formatCurrency(metric.value)
                                             }
                                         </p>
-                                        <p className="text-sm text-gray-500 truncate">
+                                        <p className="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors duration-300">
                                             {metric.subtitle}
                                         </p>
                                     </div>
-                                    {/* DIPERBAIKI: Icon dengan spacing yang lebih baik */}
-                                    <div className={`w-12 h-12 ${metric.iconBg} rounded-lg flex items-center justify-center ${metric.textColor} ml-4 flex-shrink-0`}>
-                                        {metric.icon}
-                                    </div>
                                 </div>
+
+                                {/* Animated progress bar */}
+                                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                    <div
+                                        className={`h-full bg-gradient-to-r ${metric.bgGradient} rounded-full transition-all duration-1000 ease-out transform ${
+                                            hoveredCard === metric.id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
+                                        }`}
+                                        style={{
+                                            width: hoveredCard === metric.id ? '100%' : '70%'
+                                        }}
+                                    ></div>
+                                </div>
+
+                                {/* Floating particles effect */}
+                                {hoveredCard === metric.id && (
+                                    <>
+                                        <div className="absolute top-4 right-4 w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>
+                                        <div className="absolute top-8 right-8 w-1 h-1 bg-orange-400 rounded-full animate-pulse"></div>
+                                        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce"></div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Revenue Chart - DIPERBAIKI: Ukuran lebih kecil */}
-                <div className="bg-white rounded-lg shadow-md mb-8 border border-amber-200">
+                {/* Enhanced Revenue Chart */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg mb-8 border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
                     <div className="p-6">
-                        <h3 className="text-xl font-semibold mb-4 text-amber-900">Trend Pendapatan Harian</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                            <span className="text-2xl mr-3 animate-pulse">📈</span>
+                            Trend Pendapatan Harian
+                        </h3>
                         {safeDailyRevenue.length > 0 ? (
-                            <div className="h-72">
+                            <div className="h-80">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={safeDailyRevenue}>
+                                        <defs>
+                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#D97706" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#D97706" stopOpacity={0.05}/>
+                                            </linearGradient>
+                                        </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                                         <XAxis
                                             dataKey="date"
                                             tickFormatter={formatChartDate}
                                             tick={{ fontSize: 12, fill: '#6b7280' }}
-                                            stroke="#9ca3af"
                                         />
                                         <YAxis
                                             tickFormatter={value => formatCurrency(value)}
                                             width={120}
                                             tick={{ fontSize: 12, fill: '#6b7280' }}
-                                            stroke="#9ca3af"
                                         />
                                         <Tooltip
                                             formatter={(value: number, name: string) => [
@@ -360,29 +303,27 @@ export default function Financial({
                                             ]}
                                             labelFormatter={(label) => `Tanggal: ${formatChartDate(label)}`}
                                             contentStyle={{
-                                                backgroundColor: '#fff',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                                 border: '1px solid #e5e7eb',
                                                 borderRadius: '8px',
-                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                                             }}
                                         />
                                         <Line
                                             type="monotone"
                                             dataKey="revenue"
-                                            stroke="#3b82f6"
+                                            stroke="#D97706"
                                             strokeWidth={3}
-                                            dot={{ r: 4, fill: '#3b82f6' }}
-                                            activeDot={{ r: 8, fill: '#1d4ed8' }}
+                                            dot={{ r: 5, fill: '#D97706' }}
+                                            activeDot={{ r: 8, fill: '#B45309' }}
+                                            fill="url(#colorRevenue)"
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
                         ) : (
-                            <div className="h-72 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
-                                <div className="text-center">
-                                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
+                            <div className="h-80 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
+                                <div className="text-center animate-pulse">
                                     <p className="text-lg mb-2">Tidak ada data pendapatan</p>
                                     <p className="text-sm">Silakan ubah rentang tanggal</p>
                                 </div>
@@ -393,13 +334,16 @@ export default function Financial({
 
                 {/* Revenue by Category */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Table */}
-                    <div className="bg-white rounded-lg shadow-md border border-amber-200">
+                    {/* Enhanced Table */}
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
                         <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4 text-amber-900">Pendapatan per Kategori</h3>
+                            <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                                <span className="text-2xl mr-3">🏷️</span>
+                                Pendapatan per Kategori
+                            </h3>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-amber-50">
+                                    <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                                                 Kategori
@@ -407,41 +351,30 @@ export default function Financial({
                                             <th className="px-4 py-3 text-right text-xs font-medium text-amber-700 uppercase tracking-wider">
                                                 Pendapatan
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                                %
-                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {safeRevenueByCategory.length > 0 ? (
-                                            safeRevenueByCategory.map((item, index) => {
-                                                const totalRevenue = safeRevenueByCategory.reduce((sum, cat) => sum + cat.revenue, 0);
-                                                const percentage = totalRevenue > 0 ? (item.revenue / totalRevenue * 100).toFixed(1) : '0';
-
-                                                return (
-                                                    <tr key={index} className="hover:bg-amber-50 transition-colors duration-200">
-                                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                            <div className="flex items-center">
-                                                                <div
-                                                                    className="w-3 h-3 rounded-full mr-3"
-                                                                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                                                                ></div>
-                                                                {item.category}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold">
-                                                            {formatCurrency(item.revenue)}
-                                                        </td>
-                                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-600">
-                                                            {percentage}%
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
+                                            safeRevenueByCategory.map((item, index) => (
+                                                <tr
+                                                    key={index}
+                                                    className="hover:bg-amber-50 transition-all duration-300 group cursor-pointer transform hover:scale-[1.02]"
+                                                    style={{
+                                                        animationDelay: `${index * 50}ms`
+                                                    }}
+                                                >
+                                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 group-hover:text-amber-800 transition-colors duration-300">
+                                                        {item.category}
+                                                    </td>
+                                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold group-hover:text-amber-800 transition-colors duration-300">
+                                                        {formatCurrency(item.revenue)}
+                                                    </td>
+                                                </tr>
+                                            ))
                                         ) : (
                                             <tr>
                                                 <td
-                                                    colSpan={3}
+                                                    colSpan={2}
                                                     className="px-4 py-8 text-center text-gray-500"
                                                 >
                                                     Tidak ada data kategori
@@ -454,62 +387,99 @@ export default function Financial({
                         </div>
                     </div>
 
-                    {/* Pie Chart */}
-                    <div className="bg-white rounded-lg shadow-md border border-amber-200">
+                    {/* Enhanced Chart */}
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-amber-200 overflow-hidden transition-all duration-500 hover:shadow-xl">
                         <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4 text-amber-900">Distribusi Pendapatan</h3>
+                            <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                                <span className="text-2xl mr-3">📊</span>
+                                Chart Kategori
+                            </h3>
                             {safeRevenueByCategory.length > 0 ? (
-                                <div className="h-72">
+                                <div className="h-80">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={safeRevenueByCategory}
-                                                cx="50%"
-                                                cy="50%"
-                                                labelLine={false}
-                                                label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}
-                                                outerRadius={80}
-                                                fill="#8884d8"
-                                                dataKey="revenue"
-                                            >
-                                                {safeRevenueByCategory.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
+                                        <BarChart data={safeRevenueByCategory} layout="horizontal">
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                                            <XAxis
+                                                type="number"
+                                                tickFormatter={value => formatCurrency(value)}
+                                                width={100}
+                                                tick={{ fontSize: 12, fill: '#6b7280' }}
+                                            />
+                                            <YAxis
+                                                type="category"
+                                                dataKey="category"
+                                                width={100}
+                                                tick={{ fontSize: 12, fill: '#6b7280' }}
+                                            />
                                             <Tooltip
-                                                formatter={(value: number) => [formatCurrency(value), 'Pendapatan']}
+                                                formatter={(value: number) => [
+                                                    formatCurrency(value),
+                                                    'Pendapatan'
+                                                ]}
                                                 contentStyle={{
-                                                    backgroundColor: '#fff',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                                     border: '1px solid #e5e7eb',
                                                     borderRadius: '8px',
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                                                 }}
                                             />
-                                        </PieChart>
+                                            <Bar
+                                                dataKey="revenue"
+                                                fill="url(#barGradient)"
+                                                radius={[0, 4, 4, 0]}
+                                            />
+                                            <defs>
+                                                <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="5%" stopColor="#D97706" stopOpacity={0.8}/>
+                                                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.6}/>
+                                                </linearGradient>
+                                            </defs>
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             ) : (
-                                <div className="h-72 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
-                                    <div className="text-center">
-                                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                                        </svg>
-                                        <p>Tidak ada data untuk ditampilkan</p>
-                                    </div>
+                                <div className="h-80 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
+                                    <p className="animate-pulse">Tidak ada data untuk ditampilkan</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-
-                {/* Overlay untuk menutup dropdown ketika klik di luar */}
-                {showDropdown && (
-                    <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowDropdown(false)}
-                    ></div>
-                )}
             </div>
+
+            {/* Custom CSS untuk animasi tambahan */}
+            <style>{`
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-5px); }
+                    75% { transform: translateX(5px); }
+                }
+
+                .animate-shake {
+                    animation: shake 0.5s ease-in-out;
+                }
+
+                @keyframes slideInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .grid > div {
+                    animation: slideInUp 0.6s ease-out forwards;
+                    opacity: 0;
+                }
+
+                .grid > div:nth-child(1) { animation-delay: 0.1s; }
+                .grid > div:nth-child(2) { animation-delay: 0.2s; }
+                .grid > div:nth-child(3) { animation-delay: 0.3s; }
+                .grid > div:nth-child(4) { animation-delay: 0.4s; }
+            `}</style>
         </AuthenticatedLayout>
     );
 }
