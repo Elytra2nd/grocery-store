@@ -19,24 +19,26 @@ use App\Http\Controllers\{CartController, OrderController, ProductController, Ca
 // Public Routes
 // ===================
 Route::get('/', [ProductController::class, 'index'])->name('home');
-Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-
-Route::prefix('cart')->name('cart.')->group(function () {
-    Route::post('/', [CartController::class, 'add'])->name('add');
-    Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::put('/{id}', [CartController::class, 'update'])->name('update');
-    Route::delete('/{id}', [CartController::class, 'destroy'])->name('destroy');
-    Route::delete('/', [CartController::class, 'clear'])->name('clear');
-});
-
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
 Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     $request->validate(['email' => 'required|email']);
     return redirect()->route('home')->with('success', 'Thank you for subscribing!');
 })->name('newsletter.subscribe');
+
+// ===================
+// Cart & Order (User)
+// ===================
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add', [CartController::class, 'add'])->name('add');
+    Route::put('/{id}', [CartController::class, 'update'])->name('update');
+    Route::delete('/{id}', [CartController::class, 'destroy'])->name('destroy');
+    Route::delete('/', [CartController::class, 'clear'])->name('clear');
+});
+
+Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
 
 // ===================
 // Auth & User Routes
@@ -45,19 +47,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
-});
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/add', [CartController::class, 'add'])->name('add'); // <-- tambahkan ini
+        Route::post('/add', [CartController::class, 'add'])->name('add');
         Route::put('/{id}', [CartController::class, 'update'])->name('update');
         Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
-
 
     Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
     Route::post('/buyer/orders/buy-now', [OrderController::class, 'buyNow'])->name('buyer.orders.buy-now');
@@ -68,9 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
     });
-
-
-
+});
 
 // ===================
 // Admin Routes
@@ -83,7 +82,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/statistics', [AdminDashboardController::class, 'statistics'])->name('statistics');
 
-        // Categories (SUDAH DIPINDAHKAN)
+        // ========== CATEGORIES GROUP DULU ==========
         Route::prefix('categories')->name('categories.')->group(function () {
             Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
             Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
@@ -93,7 +92,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
         });
 
-        // Products
+        // ========== PRODUCTS GROUP ==========
         Route::prefix('products')->name('products.')->group(function () {
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
@@ -102,6 +101,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/out-of-stock', [AdminProductController::class, 'outOfStock'])->name('out-of-stock');
             Route::get('/export', [AdminProductController::class, 'export'])->name('export');
             Route::post('/bulk-action', [AdminProductController::class, 'bulkAction'])->name('bulk-action');
+            // Route parameter DIBAWAH group kategori!
             Route::get('/{product}', [AdminProductController::class, 'show'])->name('show');
             Route::get('/{product}/edit', [AdminProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [AdminProductController::class, 'update'])->name('update');
