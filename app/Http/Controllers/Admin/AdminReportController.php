@@ -172,41 +172,79 @@ class AdminReportController extends Controller
     public function products(Request $request): Response
     {
         try {
-            // Ambil data produk beserta total terjual dan pendapatan per produk
-            $products = Product::select([
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
+            $category = $request->get('category', 'all');
+
+            // Query builder untuk produk dengan data penjualan
+            $query = Product::select([
                 'products.id',
                 'products.name',
-                DB::raw('COALESCE(SUM(order_items.quantity),0) as total_sold'),
-                DB::raw('COALESCE(SUM(order_items.quantity * order_items.price),0) as revenue')
+                'products.price',
+                'products.stock',
+                'products.is_active',
+                'categories.name as category_name'
             ])
-                ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-                ->groupBy('products.id', 'products.name')
-                ->orderByDesc('total_sold')
-                ->get();
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('order_items', function($join) use ($startDate, $endDate) {
+                $join->on('products.id', '=', 'order_items.product_id');
+                if ($startDate && $endDate) {
+                    $join->leftJoin('orders', function($orderJoin) use ($startDate, $endDate) {
+                        $orderJoin->on('order_items.order_id', '=', 'orders.id')
+                                 ->where('orders.status', '!=', 'cancelled')
+                                 ->whereBetween('orders.created_at', [$startDate, $endDate]);
+                    });
+                } else {
+                    $join->leftJoin('orders', function($orderJoin) {
+                        $orderJoin->on('order_items.order_id', '=', 'orders.id')
+                                 ->where('orders.status', '!=', 'cancelled');
+                    });
+                }
+            })
+            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as total_sold')
+            ->selectRaw('COALESCE(SUM(order_items.quantity * order_items.price), 0) as revenue')
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.stock', 'products.is_active', 'categories.name');
 
-            // Ringkasan
+            // Filter berdasarkan kategori
+            if ($category !== 'all') {
+                $query->where('categories.name', $category);
+            }
+
+            $products = $query->orderByDesc('total_sold')->get();
+
+            // Hitung ringkasan
             $summary = [
-                'total_products' => Product::count(),
-                'total_sold_items' => $products->sum('total_sold'),
-                'total_revenue' => 0,
+                'total_products' => (int) Product::count(),
+                'total_sold_items' => (int) $products->sum('total_sold'),
+                'total_revenue' => (int) $products->sum('revenue'),
+                'active_products' => (int) Product::where('is_active', true)->count(),
+                'low_stock_products' => (int) Product::where('stock', '<=', 10)->count(),
             ];
 
-            // Hitung total pendapatan
-            $totalRevenue = OrderItem::select(DB::raw('SUM(quantity * price) as total_revenue'))
-                ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->where('orders.status', 'delivered')
-                ->whereIn('order_items.product_id', $products->pluck('id'))
-                ->value('total_revenue');
-            $summary['total_revenue'] = $totalRevenue ? 'Rp ' . number_format($totalRevenue, 0, ',', '.') : 'Rp 0';
+            // Ambil kategori untuk filter
+            $categories = DB::table('categories')
+                ->select('name')
+                ->distinct()
+                ->orderBy('name')
+                ->pluck('name');
 
             return Inertia::render('Admin/Reports/Products', [
                 'products' => $products,
-                'total_Revenue' => $summary['total_revenue'],
                 'summary' => $summary,
+                'categories' => $categories,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'category' => $category,
+                ],
                 'error' => null,
             ]);
+
         } catch (\Exception $e) {
-            Log::error('AdminReportController@products error: ' . $e->getMessage());
+            Log::error('AdminReportController@products error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
 
             return Inertia::render('Admin/Reports/Products', [
                 'products' => [],
@@ -214,6 +252,14 @@ class AdminReportController extends Controller
                     'total_products' => 0,
                     'total_sold_items' => 0,
                     'total_revenue' => 0,
+                    'active_products' => 0,
+                    'low_stock_products' => 0,
+                ],
+                'categories' => [],
+                'filters' => [
+                    'start_date' => $request->get('start_date'),
+                    'end_date' => $request->get('end_date'),
+                    'category' => $request->get('category', 'all'),
                 ],
                 'error' => 'Terjadi kesalahan saat memuat laporan produk: ' . $e->getMessage(),
             ]);
@@ -535,8 +581,9 @@ class AdminReportController extends Controller
     public function exportProducts(Request $request)
     {
         try {
-            $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-            $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
+            $category = $request->get('category', 'all');
 
             // Menggunakan FinancialReportExport untuk products
             $export = new FinancialReportExport($startDate, $endDate, 'products');
