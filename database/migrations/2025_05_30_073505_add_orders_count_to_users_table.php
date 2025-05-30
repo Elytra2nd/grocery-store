@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 class AddOrdersCountToUsersTable extends Migration
 {
+
+
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
