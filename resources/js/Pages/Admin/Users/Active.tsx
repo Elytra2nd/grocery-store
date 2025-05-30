@@ -247,7 +247,7 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
                             links={users.links}
                             meta={{
                                 ...users,
-                                last_page_url: users.last_page_url || users.first_page_url // fallback
+                                last_page_url: users.last_page_url || users.first_page_url
                             }}
                         />
                     )}
@@ -267,7 +267,7 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
     );
 }
 
-// StatCard
+// StatCard - Diperbaiki untuk lebih compact
 function StatCard({ title, value, color, icon }: { title: string; value: string; color: string; icon: string }) {
     const colorClasses: Record<string, string> = {
         green: 'bg-green-500',
@@ -277,15 +277,16 @@ function StatCard({ title, value, color, icon }: { title: string; value: string;
         lime: 'bg-lime-500',
         indigo: 'bg-indigo-500',
     };
+
     return (
         <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="p-5 flex items-center">
-                <div className={`w-8 h-8 ${colorClasses[color]} rounded-md flex items-center justify-center`}>
-                    <span className="text-white text-lg">{icon}</span>
+            <div className="p-4 flex items-center">
+                <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-white text-sm">{icon}</span>
                 </div>
-                <div className="ml-5 flex-1">
-                    <dt className="text-sm font-medium text-amber-700">{title}</dt>
-                    <dd className="text-lg font-medium text-amber-900">{value}</dd>
+                <div className="ml-3 flex-1 min-w-0">
+                    <dt className="text-xs font-medium text-amber-700 truncate">{title}</dt>
+                    <dd className="text-sm font-semibold text-amber-900 truncate">{value}</dd>
                 </div>
             </div>
         </div>
@@ -413,7 +414,7 @@ function BulkActions({ selectedCount, bulkAction, setBulkAction, onExecute }: {
     );
 }
 
-// ActiveUsersTable
+// ActiveUsersTable - DIPERBAIKI untuk layout yang konsisten
 function ActiveUsersTable({
     users,
     selectedUsers,
@@ -445,136 +446,144 @@ function ActiveUsersTable({
 
     return (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            {/* Container dengan kontrol scroll yang lebih baik */}
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-amber-100">
-                    <thead className="bg-green-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedUsers.length === users.length && users.length > 0}
-                                    onChange={onToggleSelectAll}
-                                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-amber-300 rounded"
-                                />
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Pelanggan
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Kontak
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Aktivitas
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Statistik Belanja
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Terakhir Login
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
-                                Aksi
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-amber-50">
-                        {users.map((user) => {
-                            const activity = getActivityLevel(user);
-                            return (
-                                <tr key={user.id} className="hover:bg-green-50 transition-colors duration-150">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedUsers.includes(user.id)}
-                                            onChange={() => onToggleSelection(user.id)}
-                                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-amber-300 rounded"
-                                        />
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-10 w-10">
-                                                {user.avatar ? (
-                                                    <img
-                                                        className="h-10 w-10 rounded-full object-cover"
-                                                        src={`/storage/avatars/${user.avatar}`}
-                                                        alt={user.name}
-                                                    />
-                                                ) : (
-                                                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                        <UserIcon className="h-6 w-6 text-green-600" />
+                <div className="inline-block min-w-full align-middle">
+                    <table className="min-w-full divide-y divide-amber-100" style={{ tableLayout: 'fixed', width: '100%' }}>
+                        <thead className="bg-green-50 sticky top-0 z-10">
+                            <tr>
+                                <th className="w-12 px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedUsers.length === users.length && users.length > 0}
+                                        onChange={onToggleSelectAll}
+                                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-amber-300 rounded"
+                                    />
+                                </th>
+                                <th className="w-1/4 min-w-[280px] px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Pelanggan
+                                </th>
+                                <th className="w-1/5 min-w-[220px] px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Kontak
+                                </th>
+                                <th className="w-32 px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Aktivitas
+                                </th>
+                                <th className="w-40 px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Statistik Belanja
+                                </th>
+                                <th className="w-36 px-4 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Terakhir Login
+                                </th>
+                                <th className="w-24 px-4 py-3 text-right text-xs font-medium text-amber-700 uppercase tracking-wider">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-amber-50">
+                            {users.map((user) => {
+                                const activity = getActivityLevel(user);
+                                return (
+                                    <tr key={user.id} className="hover:bg-green-50 transition-colors duration-150">
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedUsers.includes(user.id)}
+                                                onChange={() => onToggleSelection(user.id)}
+                                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-amber-300 rounded"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0 h-10 w-10">
+                                                    {user.avatar ? (
+                                                        <img
+                                                            className="h-10 w-10 rounded-full object-cover"
+                                                            src={`/storage/avatars/${user.avatar}`}
+                                                            alt={user.name}
+                                                        />
+                                                    ) : (
+                                                        <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                                            <UserIcon className="h-6 w-6 text-green-600" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="ml-4 min-w-0 flex-1">
+                                                    <div className="text-sm font-medium text-amber-900 truncate">
+                                                        {user.name}
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-amber-900">
-                                                    {user.name}
-                                                </div>
-                                                <div className="text-sm text-amber-700">
-                                                    ID: {user.id}
+                                                    <div className="text-sm text-amber-700">
+                                                        ID: {user.id}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-amber-900">{user.email}</div>
-                                        <div className="text-sm text-amber-700">
-                                            {user.phone || 'Tidak ada nomor'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.color} animate-fade-in-up`}>
-                                            {activity.label}
-                                        </span>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            {user.orders_count || 0} pesanan
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-amber-900">
-                                            {formatCurrency(user.total_spent)}
-                                        </div>
-                                        <div className="text-sm text-amber-700">
-                                            {user.last_order_date ?
-                                                `Terakhir: ${new Date(user.last_order_date).toLocaleDateString('id-ID')}` :
-                                                'Belum pernah belanja'
-                                            }
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700">
-                                        {user.last_login_at ? (
-                                            <div>
-                                                <div>{new Date(user.last_login_at).toLocaleDateString('id-ID')}</div>
-                                                <div className="text-xs text-gray-400">
-                                                    {new Date(user.last_login_at).toLocaleTimeString('id-ID')}
-                                                </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="text-sm text-amber-900 truncate" title={user.email}>
+                                                {user.email}
                                             </div>
-                                        ) : (
-                                            'Belum pernah login'
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex items-center justify-end space-x-2">
-                                            <Link
-                                                href={`/admin/users/${user.id}`}
-                                                className="text-green-600 hover:text-green-900 p-1 rounded transition-all duration-150 active:scale-95"
-                                                title="Lihat Detail"
-                                            >
-                                                <EyeIcon className="h-5 w-5" />
-                                            </Link>
-                                            <Link
-                                                href={`/admin/users/${user.id}/edit`}
-                                                className="text-amber-700 hover:text-amber-900 p-1 rounded transition-all duration-150 active:scale-95"
-                                                title="Edit Pelanggan"
-                                            >
-                                                <PencilIcon className="h-5 w-5" />
-                                            </Link>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                            <div className="text-sm text-amber-700 truncate">
+                                                {user.phone || 'Tidak ada nomor'}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.color}`}>
+                                                {activity.label}
+                                            </span>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {user.orders_count || 0} pesanan
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-amber-900">
+                                                {formatCurrency(user.total_spent)}
+                                            </div>
+                                            <div className="text-sm text-amber-700 truncate">
+                                                {user.last_order_date ?
+                                                    `Terakhir: ${new Date(user.last_order_date).toLocaleDateString('id-ID')}` :
+                                                    'Belum pernah belanja'
+                                                }
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-amber-700">
+                                            {user.last_login_at ? (
+                                                <div>
+                                                    <div>{new Date(user.last_login_at).toLocaleDateString('id-ID')}</div>
+                                                    <div className="text-xs text-gray-400">
+                                                        {new Date(user.last_login_at).toLocaleTimeString('id-ID', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                'Belum pernah login'
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex items-center justify-end space-x-1">
+                                                <Link
+                                                    href={`/admin/users/${user.id}`}
+                                                    className="text-green-600 hover:text-green-900 p-2 rounded-md hover:bg-green-100 transition-all duration-150"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <EyeIcon className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href={`/admin/users/${user.id}/edit`}
+                                                    className="text-amber-700 hover:text-amber-900 p-2 rounded-md hover:bg-amber-100 transition-all duration-150"
+                                                    title="Edit Pelanggan"
+                                                >
+                                                    <PencilIcon className="h-4 w-4" />
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
