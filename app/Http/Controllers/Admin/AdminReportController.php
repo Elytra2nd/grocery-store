@@ -298,39 +298,79 @@ class AdminReportController extends Controller
         try {
             $sortBy = $request->get('sort_by', 'total_orders');
             $sortOrder = $request->get('sort_order', 'desc');
-            $dateRange = $request->get('date_range', '30');
+            $dateRange = (int) $request->get('date_range', 30);
+            $perPage = (int) $request->get('per_page', 15); // Items per page
+            $search = $request->get('search', ''); // Search functionality
 
             $startDate = Carbon::now()->subDays($dateRange);
 
-            $customers = User::role('buyer')
-                ->select('users.*')
-                ->leftJoin('orders', 'users.id', '=', 'orders.user_id')
-                ->selectRaw('
-                    users.*,
-                    COUNT(orders.id) as total_orders,
-                    COALESCE(SUM(orders.total_amount), 0) as total_spent,
-                    COALESCE(AVG(orders.total_amount), 0) as average_order_value,
-                    MAX(orders.created_at) as last_order_date
-                ')
-                ->groupBy('users.id')
-                ->orderBy($sortBy, $sortOrder)
-                ->paginate(20);
+            // DIPERBAIKI: Query dengan paginasi
+            $customersQuery = User::role('buyer')
+                ->leftJoin('orders', function($join) use ($startDate) {
+                    $join->on('users.id', '=', 'orders.user_id')
+                         ->where('orders.status', '!=', 'cancelled')
+                         ->where('orders.created_at', '>=', $startDate);
+                })
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    'users.created_at',
+                    DB::raw('COUNT(orders.id) as total_orders'),
+                    DB::raw('COALESCE(SUM(orders.total_amount), 0) as total_spent'),
+                    DB::raw('CASE WHEN COUNT(orders.id) > 0 THEN AVG(orders.total_amount) ELSE 0 END as average_order_value'),
+                    DB::raw('MAX(orders.created_at) as last_order_date')
+                ])
+                ->groupBy('users.id', 'users.name', 'users.email', 'users.created_at');
 
+            // Search functionality
+            if (!empty($search)) {
+                $customersQuery->where(function($query) use ($search) {
+                    $query->where('users.name', 'LIKE', "%{$search}%")
+                          ->orWhere('users.email', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Apply sorting
+            $customersQuery->orderBy($sortBy, $sortOrder);
+
+            // DIPERBAIKI: Menggunakan paginate() dengan transform
+            $customers = $customersQuery->paginate($perPage);
+
+            // Transform paginated data
+            $customers->getCollection()->transform(function ($customer) {
+                return [
+                    'id' => (int) $customer->id,
+                    'name' => (string) $customer->name,
+                    'email' => (string) $customer->email,
+                    'total_orders' => (int) $customer->total_orders,
+                    'total_spent' => (float) $customer->total_spent,
+                    'average_order_value' => (float) $customer->average_order_value,
+                    'last_order_date' => $customer->last_order_date,
+                    'created_at' => $customer->created_at->toISOString(),
+                ];
+            });
+
+            // Summary calculations (tidak terpaginasi)
             $summary = [
                 'total_customers' => User::role('buyer')->count(),
                 'active_customers' => User::role('buyer')
                     ->whereHas('orders', function ($query) use ($startDate) {
-                        $query->where('created_at', '>=', $startDate);
+                        $query->where('created_at', '>=', $startDate)
+                              ->where('status', '!=', 'cancelled');
                     })->count(),
                 'new_customers' => User::role('buyer')
                     ->where('created_at', '>=', $startDate)
                     ->count(),
                 'repeat_customers' => User::role('buyer')
                     ->whereHas('orders', function ($query) {
-                        $query->havingRaw('COUNT(*) > 1');
+                        $query->select(DB::raw('COUNT(*)'))
+                              ->where('status', '!=', 'cancelled')
+                              ->havingRaw('COUNT(*) > 1');
                     })->count(),
             ];
 
+            // Acquisition trend
             $acquisitionTrend = [];
             for ($i = 29; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
@@ -343,21 +383,35 @@ class AdminReportController extends Controller
             }
 
             return Inertia::render('Admin/Reports/Customers', [
-                'customers' => $customers,
+                'customers' => $customers, // DIPERBAIKI: Paginated data
                 'summary' => $summary,
                 'acquisitionTrend' => $acquisitionTrend,
                 'filters' => [
                     'sort_by' => $sortBy,
                     'sort_order' => $sortOrder,
-                    'date_range' => $dateRange,
+                    'date_range' => (string) $dateRange,
+                    'per_page' => $perPage,
+                    'search' => $search,
                 ],
+                'error' => null,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('AdminReportController@customers error: ' . $e->getMessage());
+            Log::error('AdminReportController@customers error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
 
             return Inertia::render('Admin/Reports/Customers', [
-                'customers' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
+                'customers' => [
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                    'from' => null,
+                    'to' => null,
+                ], // DIPERBAIKI: Pagination structure untuk error state
                 'summary' => [
                     'total_customers' => 0,
                     'active_customers' => 0,
@@ -365,8 +419,14 @@ class AdminReportController extends Controller
                     'repeat_customers' => 0,
                 ],
                 'acquisitionTrend' => [],
-                'filters' => [],
-                'error' => 'Terjadi kesalahan saat memuat laporan pelanggan.'
+                'filters' => [
+                    'sort_by' => $request->get('sort_by', 'total_orders'),
+                    'sort_order' => $request->get('sort_order', 'desc'),
+                    'date_range' => $request->get('date_range', '30'),
+                    'per_page' => $perPage,
+                    'search' => $request->get('search', ''),
+                ],
+                'error' => 'Terjadi kesalahan saat memuat laporan pelanggan: ' . $e->getMessage(),
             ]);
         }
     }
