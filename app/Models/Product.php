@@ -51,4 +51,14 @@ class Product extends Model
         return 'Rp ' . number_format($this->price, 0, ',', '.');
     }
 
+    public function getUnitAttribute()
+    {
+        return 'pcs';
+    }
+
+    public function getEmojiAttribute()
+    {
+        return '🛒';
+    }
+
 }

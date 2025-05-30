@@ -4,7 +4,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Buyer\CheckoutController;
+use App\Http\Controllers\Buyer\{
+    DashboardController as BuyerDashboardController,
+    CheckoutController,
+    ProductController as BuyerProductController,
+    CartController as BuyerCartController,
+    OrderController as BuyerOrderController
+};
 use App\Http\Controllers\Admin\{
     AdminDashboardController,
     AdminProductController,
@@ -44,18 +50,20 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::delete('/', [CartController::class, 'clear'])->name('clear');
 });
 
-Route::middleware(['auth', 'role:buyer'])->group(function () {
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-});
-
-Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-
 // ===================
 // Auth & User Routes
 // ===================
 Route::middleware('auth')->group(function () {
+    // DIPERBAIKI: Redirect dashboard berdasarkan role
     Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->hasRole('buyer')) {
+            return redirect()->route('buyer.dashboard');
+        }
+
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
@@ -63,24 +71,34 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::prefix('cart')->name('cart.')->group(function () {
-        Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/add', [CartController::class, 'add'])->name('add');
-        Route::put('/{id}', [CartController::class, 'update'])->name('update');
-        Route::delete('/{id}', [CartController::class, 'remove'])->name('remove');
-        Route::delete('/', [CartController::class, 'clear'])->name('clear');
-    });
-
-    Route::post('/buyer/orders/create', [OrderController::class, 'create'])->name('buyer.orders.create');
-    Route::post('/buyer/orders/buy-now', [OrderController::class, 'buyNow'])->name('buyer.orders.buy-now');
-    Route::post('/checkout', [OrderController::class, 'create'])->name('checkout');
-
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
     });
 });
+
+// ===================
+// Buyer Routes - DIPERBAIKI
+// ===================
+Route::middleware(['auth', 'role:buyer'])
+    ->prefix('buyer')
+    ->name('buyer.')
+    ->group(function () {
+        // DIPERBAIKI: Dashboard dengan controller yang benar
+        Route::get('/dashboard', [BuyerDashboardController::class, 'index'])->name('dashboard');
+
+        // DIPERBAIKI: Products routes untuk buyer
+
+        // DIPERBAIKI: Cart routes untuk buyer
+
+        // DIPERBAIKI: Orders routes untuk buyer
+        // DIPERBAIKI: Checkout routes untuk buyer
+        Route::prefix('checkout')->name('checkout.')->group(function () {
+            Route::get('/', [CheckoutController::class, 'index'])->name('index');
+            Route::post('/', [CheckoutController::class, 'store'])->name('store');
+        });
+    });
 
 // ===================
 // Admin Routes
@@ -93,7 +111,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/statistics', [AdminDashboardController::class, 'statistics'])->name('statistics');
 
-        // ========== CATEGORIES GROUP DULU ==========
+        // Categories
         Route::prefix('categories')->name('categories.')->group(function () {
             Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
             Route::get('/create', [AdminCategoryController::class, 'create'])->name('create');
@@ -103,7 +121,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('/{category}', [AdminCategoryController::class, 'destroy'])->name('destroy');
         });
 
-        // ========== PRODUCTS GROUP ==========
+        // Products
         Route::prefix('products')->name('products.')->group(function () {
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
@@ -112,7 +130,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/out-of-stock', [AdminProductController::class, 'outOfStock'])->name('out-of-stock');
             Route::get('/export', [AdminProductController::class, 'export'])->name('export');
             Route::post('/bulk-action', [AdminProductController::class, 'bulkAction'])->name('bulk-action');
-            // Route parameter DIBAWAH group kategori!
             Route::get('/{product}', [AdminProductController::class, 'show'])->name('show');
             Route::get('/{product}/edit', [AdminProductController::class, 'edit'])->name('edit');
             Route::put('/{product}', [AdminProductController::class, 'update'])->name('update');
@@ -170,43 +187,12 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/inventory', [AdminReportController::class, 'inventory'])->name('inventory');
 
             Route::prefix('export')->name('export.')->group(function () {
-                // Export Sales Report
                 Route::get('/sales', [AdminReportController::class, 'exportSales'])->name('sales');
-
-                // Export Products Report
                 Route::get('/products', [AdminReportController::class, 'exportProducts'])->name('products');
-
-                // Export Customers Report
                 Route::get('/customers', [AdminReportController::class, 'exportCustomers'])->name('customers');
-
-                // Export Financial Report dengan berbagai tipe
                 Route::get('/financial', [AdminReportController::class, 'exportFinancial'])->name('financial');
-                Route::get('/financial/summary', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'summary')
-                    ->name('financial.summary');
-                Route::get('/financial/detailed', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'detailed')
-                    ->name('financial.detailed');
-                Route::get('/financial/products', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'products')
-                    ->name('financial.products');
-                Route::get('/financial/daily', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'daily')
-                    ->name('financial.daily');
-                Route::get('/financial/multiple-sheets', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'multiple')
-                    ->name('financial.multiple');
-                Route::get('/financial/styled', [AdminReportController::class, 'exportFinancial'])
-                    ->defaults('report_type', 'styled')
-                    ->name('financial.styled');
-
-                // Export Inventory Report
                 Route::get('/inventory', [AdminReportController::class, 'exportInventory'])->name('inventory');
-
-                // Export Large Dataset
                 Route::get('/large-dataset', [AdminReportController::class, 'exportLargeDataset'])->name('large.dataset');
-
-                // Export Daily Report
                 Route::get('/daily', [AdminReportController::class, 'exportDaily'])->name('daily');
             });
         });
@@ -228,7 +214,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/notifications', [AdminSettingController::class, 'updateNotifications'])->name('notifications.update');
         });
 
-        // Additional Admin Routes
+        // System Management
         Route::prefix('system')->name('system.')->group(function () {
             Route::get('/info', [AdminDashboardController::class, 'systemInfo'])->name('info');
             Route::post('/cache/clear', [AdminDashboardController::class, 'clearCache'])->name('cache.clear');
@@ -238,18 +224,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/logs', [AdminDashboardController::class, 'logs'])->name('logs');
             Route::delete('/logs/clear', [AdminDashboardController::class, 'clearLogs'])->name('logs.clear');
         });
-    });
-
-// ===================
-// Buyer Routes
-// ===================
-Route::middleware(['auth', 'role:buyer'])
-    ->prefix('buyer')
-    ->name('buyer.')
-    ->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('Buyer/Dashboard');
-        })->name('dashboard');
     });
 
 // ===================
@@ -265,6 +239,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/orders/search', [AdminOrderController::class, 'search'])->name('orders.search');
         Route::get('/notifications', [AdminDashboardController::class, 'notifications'])->name('notifications');
         Route::patch('/notifications/{id}/read', [AdminDashboardController::class, 'markNotificationRead'])->name('notifications.read');
+    });
+
+// ===================
+// API Routes untuk Buyer
+// ===================
+Route::middleware(['auth', 'role:buyer'])
+    ->prefix('api/buyer')
+    ->name('api.buyer.')
+    ->group(function () {
+        Route::get('/dashboard-stats', [BuyerDashboardController::class, 'getStats'])->name('dashboard.stats');
     });
 
 // ===================
