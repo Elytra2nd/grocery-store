@@ -20,7 +20,7 @@ class AdminUserController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%");
+                    ->orWhere('email', 'like', "%$search%");
             });
         }
 
@@ -39,7 +39,7 @@ class AdminUserController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%");
+                    ->orWhere('email', 'like', "%$search%");
             });
         }
 
@@ -163,10 +163,51 @@ class AdminUserController extends Controller
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User "' . $userName . '" berhasil dihapus');
-
         } catch (\Exception $e) {
             Log::error('AdminUserController@destroy error: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus user: ' . $e->getMessage()]);
         }
+    }
+
+    private function getActiveUserStatistics()
+    {
+        try {
+            $baseQuery = User::where('is_active', true);
+
+            return [
+                'total_active' => $baseQuery->count(),
+                'new_this_month' => $baseQuery->clone()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count(),
+                'with_orders' => $baseQuery->clone()->whereHas('orders')->count(),
+                'total_spent' => $baseQuery->clone()
+                    ->join('orders', 'users.id', '=', 'orders.user_id')
+                    ->sum('orders.total') ?? 0,
+                'average_orders' => round($baseQuery->clone()
+                    ->withCount('orders')
+                    ->get()
+                    ->avg('orders_count') ?? 0),
+                'last_30_days' => $baseQuery->clone()
+                    ->where('last_login_at', '>=', now()->subDays(30))
+                    ->count(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting statistics: ' . $e->getMessage());
+            return $this->getDefaultStatistics();
+        }
+    }
+
+    // Method untuk default statistics jika terjadi error
+    private function getDefaultStatistics()
+    {
+        return [
+            'total_active' => 0,
+            'new_this_month' => 0,
+            'with_orders' => 0,
+            'total_spent' => 0,
+            'average_orders' => 0,
+            'last_30_days' => 0,
+        ];
     }
 }
