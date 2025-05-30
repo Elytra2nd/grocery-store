@@ -12,7 +12,6 @@ import {
     ShoppingBagIcon,
     XMarkIcon,
     HeartIcon,
-    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 interface NavigationItem {
@@ -55,7 +54,7 @@ export default function BuyerAuthenticatedLayout({ children, header }: BuyerAuth
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50">
 
             {/* Main Navigation Bar */}
             <MainNavigationBar
@@ -97,30 +96,33 @@ function MainNavigationBar({
     navigation
 }: MainNavigationBarProps): JSX.Element {
     return (
-        <div className="bg-white shadow-md">
+        <div className="bg-white/80 backdrop-blur-md shadow-lg border-b border-amber-200/50 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <div className="flex items-center">
-                        <Link href="/" className="flex items-center space-x-2">
-                            <div className="h-10 w-10 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">🌱</span>
+                        <Link href="/" className="flex items-center space-x-2 group">
+                            <div className="h-10 w-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-amber-500/30">
+                                <span className="text-white font-bold text-lg">🌾</span>
                             </div>
-                            <span className="text-2xl font-bold text-gray-800">Neo-Forest</span>
+                            <span className="text-2xl font-bold text-amber-700 tracking-wide drop-shadow-sm transition-colors duration-300 group-hover:text-amber-600">
+                                Fresh Market
+                            </span>
                         </Link>
                     </div>
 
                     {/* Navigation Menu */}
-                    <nav className="hidden md:flex space-x-8">
+                    <nav className="hidden md:flex space-x-6">
                         {navigation.map((item) => (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className="text-gray-700 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors relative"
+                                className="text-amber-700 hover:text-amber-600 px-4 py-2 text-sm font-medium transition-all duration-300 relative group rounded-lg hover:bg-amber-100/50"
                             >
-                                {item.name}
+                                <span className="relative z-10">{item.name}</span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
                                 {item.badge && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-md animate-pulse">
                                         {item.badge}
                                     </span>
                                 )}
@@ -130,39 +132,26 @@ function MainNavigationBar({
 
                     {/* Right Side Actions */}
                     <div className="flex items-center space-x-4">
-                        {/* Search Bar */}
-                        <div className="relative hidden md:block">
-                            <input
-                                type="text"
-                                placeholder="Cari produk..."
-                                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                            />
-                            <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                        </div>
-
                         {/* Cart */}
                         <Link
                             href="/cart"
-
-                            className="relative p-2 text-gray-700 hover:text-emerald-600 transition-colors"
+                            className="relative p-3 text-amber-700 hover:text-amber-600 transition-all duration-300 rounded-xl hover:bg-amber-100/50 group"
                         >
-                            <ShoppingCartIcon className="h-6 w-6" />
-                            <span className="absolute -top-2 -right-2 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            </span>
+                            <ShoppingCartIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
                         </Link>
 
                         {/* User Menu */}
                         <div className="relative">
                             <button
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                className="flex items-center space-x-2 p-2 text-gray-700 hover:text-emerald-600 transition-colors"
+                                className={`flex items-center space-x-2 p-2 text-amber-700 hover:text-amber-600 transition-all duration-300 rounded-xl hover:bg-amber-100/50 group ${userMenuOpen ? 'bg-amber-100/70' : ''}`}
                             >
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-amber-500/30">
                                     <span className="text-sm font-medium text-white">
                                         {user?.name?.charAt(0)?.toUpperCase() || 'B'}
                                     </span>
                                 </div>
-                                <span className="hidden md:block text-sm font-medium">
+                                <span className="hidden md:block text-sm font-medium transition-colors duration-300">
                                     {user?.name || 'Buyer'}
                                 </span>
                             </button>
@@ -197,46 +186,63 @@ function UserDropdownMenu({ user, onLogout, onClose }: UserDropdownMenuProps): J
                 onClick={onClose}
             />
 
-            <div className="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white ring-1 ring-gray-200 border border-gray-200 focus:outline-none z-20">
-                <div className="px-4 py-4 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                    <p className="text-sm text-gray-500">{user?.email || 'user@example.com'}</p>
-                    <p className="text-xs text-gray-400 mt-1">Buyer Account</p>
+            <div className="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white/90 backdrop-blur-md ring-1 ring-amber-200 border border-amber-200 focus:outline-none z-20 animate-fade-in">
+                <div className="px-4 py-4 border-b border-amber-200">
+                    <p className="text-sm font-medium text-amber-900">{user?.name || 'User'}</p>
+                    <p className="text-sm text-amber-700">{user?.email || 'user@example.com'}</p>
+                    <p className="text-xs text-amber-600 mt-1 bg-amber-100 px-2 py-1 rounded-full inline-block">Buyer Account</p>
                 </div>
 
                 <div className="py-2">
                     <Link
                         href={route('buyer.profile.edit')}
-                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center px-4 py-3 text-sm text-amber-700 hover:bg-amber-100/70 hover:text-amber-600 transition-all duration-300 group"
                         onClick={onClose}
                     >
-                        <UserCircleIcon className="h-5 w-5 mr-3" />
+                        <UserCircleIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
                         Profile Settings
                     </Link>
 
                     <Link
                         href={route('buyer.settings.index')}
-                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center px-4 py-3 text-sm text-amber-700 hover:bg-amber-100/70 hover:text-amber-600 transition-all duration-300 group"
                         onClick={onClose}
                     >
-                        <CogIcon className="h-5 w-5 mr-3" />
+                        <CogIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
                         Account Settings
                     </Link>
                 </div>
 
-                <div className="border-t border-gray-200 py-2">
+                <div className="border-t border-amber-200 py-2">
                     <button
                         onClick={() => {
                             onClose();
                             onLogout();
                         }}
-                        className="flex items-center w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="flex items-center w-full text-left px-4 py-3 text-sm text-amber-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group"
                     >
-                        <ArrowRightOnRectangleIcon className="h-5 w-5 mr-3" />
+                        <ArrowRightOnRectangleIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
                         Sign out
                     </button>
                 </div>
             </div>
+
+            <style>{`
+                @keyframes fade-in {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .animate-fade-in {
+                    animation: fade-in 0.2s ease-out;
+                }
+            `}</style>
         </>
     );
 }
@@ -254,10 +260,10 @@ function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
     return (
         <div className="p-4">
             {flash.success && (
-                <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg">
+                <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg shadow-md animate-slide-down">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                         </div>
@@ -269,7 +275,7 @@ function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
             )}
 
             {flash.error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-md animate-slide-down">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
                             <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -282,6 +288,23 @@ function FlashMessages({ flash }: FlashMessagesProps): JSX.Element {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes slide-down {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .animate-slide-down {
+                    animation: slide-down 0.3s ease-out;
+                }
+            `}</style>
         </div>
     );
 }
