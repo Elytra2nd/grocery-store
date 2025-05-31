@@ -94,6 +94,9 @@ Route::middleware(['auth', 'role:buyer'])
         Route::prefix('checkout')->name('checkout.')->group(function () {
             Route::get('/', [CheckoutController::class, 'index'])->name('index');
             Route::post('/', [CheckoutController::class, 'store'])->name('store');
+            Route::get('/cancel', [CheckoutController::class, 'cancel'])->name('cancel');
+            Route::post('/cancel', [CheckoutController::class, 'cancel'])->name('cancel.post');
+            Route::post('/summary', [CheckoutController::class, 'summary'])->name('summary');
         });
     });
 

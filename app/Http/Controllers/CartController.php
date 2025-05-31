@@ -13,20 +13,48 @@ use Inertia\Inertia;
 class CartController extends Controller
 {
     public function index()
-    {
-        $cartItems = Cart::with(['product'])
-            ->where('user_id', Auth::id())
-            ->get();
+{
+    // DIPERBAIKI: Load kategori dengan benar
+    $cartItems = Cart::with(['product.category'])
+        ->where('user_id', Auth::id())
+        ->get();
 
-        $totalAmount = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->product->price;
-        });
+    $totalAmount = $cartItems->sum(function ($item) {
+        return $item->quantity * $item->product->price;
+    });
 
-        return Inertia::render('Cart/Index', [
-            'cartItems' => $cartItems,
-            'totalAmount' => $totalAmount,
-        ]);
-    }
+    // DIPERBAIKI: Format data dengan kategori
+    $formattedCartItems = $cartItems->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'user_id' => $item->user_id,
+            'product_id' => $item->product_id,
+            'quantity' => $item->quantity,
+            'created_at' => $item->created_at,
+            'updated_at' => $item->updated_at,
+            'product' => [
+                'id' => $item->product->id,
+                'name' => $item->product->name,
+                'price' => (float) $item->product->price,
+                'image' => $item->product->image,
+                'category' => $item->product->category ? [
+                    'id' => $item->product->category->id,
+                    'name' => $item->product->category->name,
+                ] : [
+                    'id' => null,
+                    'name' => 'Tidak ada kategori',
+                ],
+                'description' => $item->product->description,
+                'stock' => $item->product->stock,
+            ],
+        ];
+    });
+
+    return Inertia::render('Cart/Index', [
+        'cartItems' => $formattedCartItems,
+        'totalAmount' => (float) $totalAmount,
+    ]);
+}
 
     // Tambah item ke keranjang
     public function add(Request $request)
@@ -165,7 +193,8 @@ class CartController extends Controller
         $cartItem->delete();
 
         // Redirect kembali dengan pesan sukses
-        return back()->with('sukses', $productName . ' berhasil dihapus dari keranjang');
+        return back()->with('success', $productName . ' berhasil dihapus dari keranjang');
+
     }
 
 }

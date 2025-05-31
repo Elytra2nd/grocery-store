@@ -265,7 +265,7 @@ export default function Dashboard() {
                                 <div className="text-right">
                                     {safeStats.cartItemsCount > 0 && (
                                         <Link
-                                            href="/checkout"
+                                            href="/buyer/checkout"
                                             className="bg-white text-amber-600 px-6 py-3 rounded-lg font-bold hover:bg-amber-50 transition-colors duration-300 hover:scale-105 transform"
                                         >
                                             Checkout Sekarang
