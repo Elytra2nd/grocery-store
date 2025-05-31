@@ -53,7 +53,13 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Produk
+                </h2>
+            }
+        >
             <Head title="Tambah Produk" />
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
@@ -78,9 +84,8 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                                             id="name"
                                             value={data.name}
                                             onChange={e => setData('name', e.target.value)}
-                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
+                                                }`}
                                             placeholder="Contoh: Apel Fuji Premium"
                                         />
                                         {errors.name && (
@@ -96,9 +101,8 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                                             rows={4}
                                             value={data.description}
                                             onChange={e => setData('description', e.target.value)}
-                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                errors.description ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.description ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
+                                                }`}
                                             placeholder="Jelaskan detail produk, kualitas, dan keunggulannya..."
                                         />
                                         {errors.description && (
@@ -120,9 +124,8 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                                                 step="0.01"
                                                 value={data.price}
                                                 onChange={e => setData('price', e.target.value)}
-                                                className={`block w-full pl-12 pr-12 sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                    errors.price ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
-                                                }`}
+                                                className={`block w-full pl-12 pr-12 sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.price ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
+                                                    }`}
                                                 placeholder="0"
                                             />
                                         </div>
@@ -140,9 +143,8 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                                             min="0"
                                             value={data.stock}
                                             onChange={e => setData('stock', e.target.value)}
-                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${
-                                                errors.stock ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md transition-all duration-200 focus:ring-amber-500 focus:border-amber-500 ${errors.stock ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
+                                                }`}
                                             placeholder="0"
                                         />
                                         {errors.stock && (
@@ -157,9 +159,8 @@ export default function ProductsCreate({ categories }: Props): JSX.Element {
                                             id="category_id"
                                             value={data.category_id}
                                             onChange={e => setData('category_id', e.target.value)}
-                                            className={`mt-1 block w-full py-2 px-3 border bg-white rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm ${
-                                                errors.category_id ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
-                                            }`}
+                                            className={`mt-1 block w-full py-2 px-3 border bg-white rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm ${errors.category_id ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-amber-300'
+                                                }`}
                                             required
                                         >
                                             <option value="">Pilih Kategori</option>

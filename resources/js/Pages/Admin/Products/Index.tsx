@@ -62,8 +62,8 @@ function Pagination({ links, meta }: PaginationProps): JSX.Element {
                                 key={index}
                                 href={link.url || '#'}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${link.active
-                                        ? 'z-10 bg-amber-50 border-amber-500 text-amber-700'
-                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                    ? 'z-10 bg-amber-50 border-amber-500 text-amber-700'
+                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                     } ${index === 0 ? 'rounded-l-md' : ''
                                     } ${index === links.length - 1 ? 'rounded-r-md' : ''
                                     }`}
@@ -470,8 +470,8 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
                             </div>
                             <div className="md:hidden text-xs">
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${product.is_active
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}>
                                     {product.is_active ? 'Aktif' : 'Tidak Aktif'}
                                 </span>
@@ -497,8 +497,8 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
             </td>
             <td className="hidden md:table-cell px-2 sm:px-4 py-3 whitespace-nowrap">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
                     }`}>
                     {product.is_active ? 'Aktif' : 'Tidak Aktif'}
                 </span>
@@ -601,7 +601,13 @@ export default function ProductsIndex({
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Produk
+                </h2>
+            }
+        >
             <Head title="Kelola Produk" />
 
             <div className="py-6">

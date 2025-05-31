@@ -47,13 +47,13 @@ interface SalesProps {
 
 export default function Sales() {
     const { props } = usePage<PageProps<SalesProps>>();
-    const { 
-        orders, 
-        summary, 
-        dailySales, 
-        filters, 
-        statuses, 
-        error 
+    const {
+        orders,
+        summary,
+        dailySales,
+        filters,
+        statuses,
+        error
     } = props;
 
     const handleExport = () => {
@@ -78,8 +78,14 @@ export default function Sales() {
         );
     }
 
-   return (
-        <AuthenticatedLayout>
+    return (
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Laporan
+                </h2>
+            }
+        >
             <Head title="Laporan Penjualan" />
 
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">

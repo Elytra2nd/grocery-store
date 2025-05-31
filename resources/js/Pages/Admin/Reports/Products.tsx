@@ -125,8 +125,14 @@ export default function Products({
     };
 
     return (
-        <AuthenticatedLayout>
-            <Head title ="Laporan Produk" />
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Laporan
+                </h2>
+            }
+        >
+            <Head title="Laporan Produk" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
                 {/* Floating Background Elements */}
@@ -397,13 +403,12 @@ export default function Products({
                                                 {formatRupiah(product.price)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                                    product.stock <= 10
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${product.stock <= 10
                                                         ? 'bg-red-100 text-red-800 animate-pulse'
                                                         : product.stock <= 50
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-green-100 text-green-800'
-                                                }`}>
+                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                            : 'bg-green-100 text-green-800'
+                                                    }`}>
                                                     {formatNumber(product.stock)}
                                                     {product.stock <= 10 && (
                                                         <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
@@ -436,11 +441,10 @@ export default function Products({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                                    product.is_active
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${product.is_active
                                                         ? 'bg-green-100 text-green-800'
                                                         : 'bg-gray-100 text-gray-800'
-                                                }`}>
+                                                    }`}>
                                                     {product.is_active ? (
                                                         <>
                                                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -572,9 +576,8 @@ function SummaryCard({
 
     return (
         <div
-            className={`group relative bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-500 hover:shadow-lg hover:-translate-y-2 cursor-pointer overflow-hidden ${
-                hoveredCard === id ? 'ring-2 ring-amber-300/50 scale-105' : ''
-            }`}
+            className={`group relative bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-500 hover:shadow-lg hover:-translate-y-2 cursor-pointer overflow-hidden ${hoveredCard === id ? 'ring-2 ring-amber-300/50 scale-105' : ''
+                }`}
             onMouseEnter={() => setHoveredCard(id)}
             onMouseLeave={() => setHoveredCard(null)}
         >
@@ -602,9 +605,8 @@ function SummaryCard({
                 {/* Animated progress bar */}
                 <div className="w-full bg-gray-200 rounded-full h-1 overflow-hidden">
                     <div
-                        className={`h-full bg-gradient-to-r ${gradient} rounded-full transition-all duration-1000 ease-out transform ${
-                            hoveredCard === id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
-                        }`}
+                        className={`h-full bg-gradient-to-r ${gradient} rounded-full transition-all duration-1000 ease-out transform ${hoveredCard === id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
+                            }`}
                         style={{
                             width: hoveredCard === id ? '100%' : '60%'
                         }}

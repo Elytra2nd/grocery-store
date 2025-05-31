@@ -19,7 +19,13 @@ interface Props extends PageProps {
 
 export default function LowStockProducts({ products, error }: Props): JSX.Element {
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Produk
+                </h2>
+            }
+        >
             <Head title="Produk Stok Rendah" />
 
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
@@ -52,11 +58,10 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
                                                 {product.category?.name || 'Tidak ada kategori'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow ${
-                                                    product.stock === 0
+                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow ${product.stock === 0
                                                         ? 'bg-red-100 text-red-800 animate-pulse'
                                                         : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
+                                                    }`}>
                                                     {product.stock}
                                                 </span>
                                             </td>
@@ -83,11 +88,10 @@ export default function LowStockProducts({ products, error }: Props): JSX.Elemen
                                         key={i}
                                         onClick={() => link.url && router.visit(link.url)}
                                         disabled={!link.url}
-                                        className={`px-3 py-1 rounded border text-sm font-medium transition-all duration-150 ${
-                                            link.active
+                                        className={`px-3 py-1 rounded border text-sm font-medium transition-all duration-150 ${link.active
                                                 ? 'bg-amber-600 text-white border-amber-600 shadow'
                                                 : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
-                                        }`}
+                                            }`}
                                     >
                                         {label}
                                     </button>
