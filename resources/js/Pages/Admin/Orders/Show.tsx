@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import AdminAuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Order, OrderItem, PageProps } from '@/types';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface OrderShowProps extends PageProps {
   order: Order & {
     payment_method?: string;
+    shipping_cost?: number;
+    tax_amount?: number;
+    tracking_number?: string;
+    shipped_at?: string;
+    delivered_at?: string;
     order_items: (OrderItem & {
       product: {
         id: number;
@@ -28,8 +34,204 @@ interface OrderShowProps extends PageProps {
   };
 }
 
+// DITAMBAHKAN: Notification Modal Component
+interface NotificationModalProps {
+  show: boolean;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  onClose: () => void;
+}
+
+function NotificationModal({ show, type, title, message, onClose }: NotificationModalProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  React.useEffect(() => {
+    if (show) {
+      setIsVisible(true);
+      const timer = setTimeout(() => {
+        handleClose();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [show]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  if (!show) return null;
+
+  const getTypeStyles = () => {
+    switch (type) {
+      case 'success':
+        return {
+          bg: 'bg-green-50',
+          border: 'border-green-200',
+          icon: 'text-green-400',
+          title: 'text-green-800',
+          message: 'text-green-600',
+          button: 'bg-green-100 hover:bg-green-200 text-green-800'
+        };
+      case 'error':
+        return {
+          bg: 'bg-red-50',
+          border: 'border-red-200',
+          icon: 'text-red-400',
+          title: 'text-red-800',
+          message: 'text-red-600',
+          button: 'bg-red-100 hover:bg-red-200 text-red-800'
+        };
+      case 'warning':
+        return {
+          bg: 'bg-yellow-50',
+          border: 'border-yellow-200',
+          icon: 'text-yellow-400',
+          title: 'text-yellow-800',
+          message: 'text-yellow-600',
+          button: 'bg-yellow-100 hover:bg-yellow-200 text-yellow-800'
+        };
+      default:
+        return {
+          bg: 'bg-blue-50',
+          border: 'border-blue-200',
+          icon: 'text-blue-400',
+          title: 'text-blue-800',
+          message: 'text-blue-600',
+          button: 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+        };
+    }
+  };
+
+  const styles = getTypeStyles();
+
+  const getIcon = () => {
+    switch (type) {
+      case 'success':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'error':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'warning':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        );
+      default:
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          className={`fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity ${
+            isVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={handleClose}
+        />
+
+        <div className={`inline-block align-bottom ${styles.bg} rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6 ${
+          isVisible ? 'opacity-100 translate-y-0 sm:scale-100' : 'opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95'
+        }`}>
+          <div>
+            <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${styles.bg} border ${styles.border}`}>
+              <div className={styles.icon}>
+                {getIcon()}
+              </div>
+            </div>
+            <div className="mt-3 text-center sm:mt-5">
+              <h3 className={`text-lg leading-6 font-medium ${styles.title}`}>
+                {title}
+              </h3>
+              <div className="mt-2">
+                <p className={`text-sm ${styles.message}`}>
+                  {message}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 sm:mt-6">
+            <button
+              type="button"
+              className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm transition-colors ${styles.button}`}
+              onClick={handleClose}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// DITAMBAHKAN: Flash Message Hook
+function useFlashMessage() {
+  const { flash } = usePage().props as any;
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (flash?.success) {
+      setNotification({
+        type: 'success',
+        title: 'Berhasil!',
+        message: flash.success
+      });
+    } else if (flash?.error) {
+      setNotification({
+        type: 'error',
+        title: 'Error!',
+        message: flash.error
+      });
+    } else if (flash?.warning) {
+      setNotification({
+        type: 'warning',
+        title: 'Peringatan!',
+        message: flash.warning
+      });
+    } else if (flash?.info) {
+      setNotification({
+        type: 'info',
+        title: 'Informasi',
+        message: flash.info
+      });
+    }
+  }, [flash]);
+
+  const clearNotification = () => {
+    setNotification(null);
+  };
+
+  return {
+    notification,
+    clearNotification
+  };
+}
+
 export default function OrderShow({ order }: OrderShowProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
+  const { notification, clearNotification } = useFlashMessage();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -49,17 +251,19 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
     });
   };
 
+  // DIPERBAIKI: Hanya menggunakan status yang ada di ENUM
   const getStatusColor = (status: string) => {
     const colors = {
       pending: 'bg-amber-50 text-amber-800 border-amber-200',
       processing: 'bg-orange-50 text-orange-800 border-orange-200',
-      shipped: 'bg-yellow-50 text-yellow-800 border-yellow-200',
+      shipped: 'bg-blue-50 text-blue-800 border-blue-200',
       delivered: 'bg-green-50 text-green-800 border-green-200',
       cancelled: 'bg-red-50 text-red-800 border-red-200',
     };
     return colors[status as keyof typeof colors] || colors.pending;
   };
 
+  // DIPERBAIKI: Icon hanya untuk status yang ada
   const getStatusIcon = (status: string) => {
     const icons = {
       pending: (
@@ -91,6 +295,7 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
     return icons[status as keyof typeof icons] || icons.pending;
   };
 
+  // DIPERBAIKI: Status update dengan Inertia response
   const handleQuickStatusUpdate = (newStatus: string) => {
     setIsLoading(true);
     router.patch(`/admin/orders/${order.id}/status`, {
@@ -98,6 +303,12 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
     }, {
       onFinish: () => setIsLoading(false),
       preserveScroll: true,
+      onSuccess: () => {
+        // Success akan ditangani oleh flash message
+      },
+      onError: (errors) => {
+        console.error('Error updating status:', errors);
+      }
     });
   };
 
@@ -105,9 +316,35 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
     window.print();
   };
 
+  // DIPERBAIKI: Handle image error
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.currentTarget;
+    const parent = target.parentElement;
+
+    target.style.display = 'none';
+
+    if (parent) {
+      const fallbackElement = parent.querySelector('.image-fallback');
+      if (fallbackElement) {
+        (fallbackElement as HTMLElement).style.display = 'flex';
+      }
+    }
+  };
+
   return (
-    <>
+    <AdminAuthenticatedLayout>
       <Head title={`Pesanan #${order.order_number}`} />
+
+      {/* DITAMBAHKAN: Notification Modal */}
+      {notification && (
+        <NotificationModal
+          show={!!notification}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={clearNotification}
+        />
+      )}
 
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 relative overflow-hidden">
         {/* Floating Background Elements */}
@@ -199,7 +436,8 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-3">Update Status:</p>
                       <div className="flex flex-wrap gap-2">
-                        {['pending', 'processing', 'shipped', 'delivered'].map((status) => (
+                        {/* DIPERBAIKI: Hanya menggunakan status yang ada di ENUM */}
+                        {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
                           <button
                             key={status}
                             onClick={() => handleQuickStatusUpdate(status)}
@@ -208,9 +446,16 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
                               order.status === status
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                            }`}
+                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {isLoading ? (
+                              <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                              </svg>
+                            ) : (
+                              status.charAt(0).toUpperCase() + status.slice(1)
+                            )}
                           </button>
                         ))}
                       </div>
@@ -242,16 +487,22 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
                     <div className="space-y-4">
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex items-center space-x-4 p-4 bg-amber-25 rounded-lg border border-amber-100">
-                          <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200">
+                          <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200 relative">
                             {item.product?.image ? (
-                              <img
-                                src={`/storage/products/${item.product?.image}`}
-                                alt={item.product?.name || 'Product'}
-                                className="w-full h-full object-cover"
-                              />
+                              <>
+                                <img
+                                  src={item.product.image}
+                                  alt={item.product?.name || 'Product'}
+                                  className="w-full h-full object-cover"
+                                  onError={handleImageError}
+                                />
+                                <div className="image-fallback absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center" style={{ display: 'none' }}>
+                                  <span className="text-amber-600 text-2xl">🛒</span>
+                                </div>
+                              </>
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                                <span className="text-amber-600 text-xs font-medium">IMG</span>
+                                <span className="text-amber-600 text-2xl">🛒</span>
                               </div>
                             )}
                           </div>
@@ -401,6 +652,6 @@ export default function OrderShow({ order }: OrderShowProps): JSX.Element {
           </div>
         </div>
       </div>
-    </>
+    </AdminAuthenticatedLayout>
   );
 }
