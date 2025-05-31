@@ -14,7 +14,7 @@ interface CartItem {
         name: string;
         price: number;
         image?: string;
-        // DIPERBAIKI: Kategori bisa berupa string atau object
+        // Kategori jadi berupa string
         category: string | {
             id: number;
             name: string;
