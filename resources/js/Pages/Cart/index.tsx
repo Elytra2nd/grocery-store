@@ -14,7 +14,11 @@ interface CartItem {
         name: string;
         price: number;
         image?: string;
-        category: string;
+        // DIPERBAIKI: Kategori bisa berupa string atau object
+        category: string | {
+            id: number;
+            name: string;
+        };
         description?: string;
         stock: number;
     };
@@ -47,10 +51,18 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
     const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
     const [isModalAnimating, setIsModalAnimating] = useState(false);
 
+    // DITAMBAHKAN: Helper function untuk mendapatkan nama kategori
+    const getCategoryName = (category: string | { id: number; name: string } | undefined): string => {
+        if (!category) return 'Tidak ada kategori';
+        if (typeof category === 'string') return category;
+        if (typeof category === 'object' && category.name) return category.name;
+        return 'Tidak ada kategori';
+    };
+
     // Filter cart items berdasarkan search term
     const filteredCartItems = cartItems.filter(item =>
         item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.product.category.toLowerCase().includes(searchTerm.toLowerCase())
+        getCategoryName(item.product.category).toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const formatCurrency = (amount: number) => {
@@ -177,10 +189,10 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
 
         // Jika ingin checkout item terpilih saja:
         if (selectedItems.length > 0) {
-            router.visit(`/checkout?items[]=${selectedItems.join('&items[]=')}`);
+            router.visit(`/buyer/checkout?items[]=${selectedItems.join('&items[]=')}`);
         } else {
             // Jika ingin checkout semua item
-            router.visit('/checkout');
+            router.visit('/buyer/checkout');
         }
         setIsLoading(false);
     };
@@ -298,7 +310,10 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
                                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
-                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                                                            if (nextElement) {
+                                                                nextElement.classList.remove('hidden');
+                                                            }
                                                         }}
                                                     />
                                                 ) : null}
@@ -317,8 +332,9 @@ export default function CartIndex({ cartItems, totalAmount, auth, flash }: CartI
                                                 <h3 className="text-xl font-bold text-amber-900 truncate mb-2">
                                                     {item.product.name}
                                                 </h3>
+                                                {/* DIPERBAIKI: Gunakan helper function untuk kategori */}
                                                 <p className="text-sm text-amber-700 font-medium mb-2 bg-amber-100 px-3 py-1 rounded-full inline-block border border-amber-200">
-                                                    {item.product.category}
+                                                    {getCategoryName(item.product.category)}
                                                 </p>
                                                 <p className="text-lg font-bold text-amber-800">
                                                     {formatCurrency(item.product.price)}

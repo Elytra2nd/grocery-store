@@ -11,6 +11,202 @@ interface Props extends PageProps {
     filters: ProductFilters;
 }
 
+// DITAMBAHKAN: Enhanced Delete Modal Component dengan Animasi
+interface DeleteModalProps {
+    show: boolean;
+    product: Product | null;
+    isLoading: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+}
+
+function DeleteModal({ show, product, isLoading, onConfirm, onCancel }: DeleteModalProps): JSX.Element {
+    const [isModalAnimating, setIsModalAnimating] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+
+    React.useEffect(() => {
+        if (show) {
+            setIsModalAnimating(true);
+            setIsClosing(false);
+        } else {
+            setIsClosing(true);
+            const timer = setTimeout(() => {
+                setIsModalAnimating(false);
+                setIsClosing(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [show]);
+
+    const handleCancel = () => {
+        if (!isLoading) {
+            setIsClosing(true);
+            setTimeout(() => {
+                onCancel();
+            }, 300);
+        }
+    };
+
+    if (!show && !isClosing) return <></>;
+
+    return (
+        <div
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-in-out ${
+                isModalAnimating && !isClosing
+                    ? 'opacity-100 backdrop-blur-sm'
+                    : 'opacity-0'
+            }`}
+            style={{
+                background: isModalAnimating && !isClosing
+                    ? 'rgba(0, 0, 0, 0.5)'
+                    : 'rgba(0, 0, 0, 0)'
+            }}
+        >
+            {/* Background overlay dengan animasi */}
+            <div
+                className={`fixed inset-0 transition-opacity duration-300 ease-in-out ${
+                    isModalAnimating && !isClosing ? 'opacity-100' : 'opacity-0'
+                }`}
+                onClick={handleCancel}
+            />
+
+            {/* Modal panel dengan ukuran yang lebih kecil dan centered */}
+            <div
+                className={`relative bg-white rounded-2xl shadow-2xl transform transition-all duration-300 ease-out w-full max-w-md mx-auto ${
+                    isModalAnimating && !isClosing
+                        ? 'opacity-100 translate-y-0 scale-100'
+                        : 'opacity-0 translate-y-8 scale-95'
+                }`}
+                style={{
+                    boxShadow: isModalAnimating && !isClosing
+                        ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                        : 'none'
+                }}
+            >
+                {/* Header dengan padding yang disesuaikan */}
+                <div className="p-6">
+                    <div className="flex items-center">
+                        <div
+                            className={`flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full transition-all duration-500 delay-100 ${
+                                isModalAnimating && !isClosing
+                                    ? 'bg-red-100 scale-100'
+                                    : 'bg-red-50 scale-75'
+                            }`}
+                        >
+                            <TrashIcon
+                                className={`transition-all duration-500 delay-200 ${
+                                    isModalAnimating && !isClosing
+                                        ? 'h-6 w-6 text-red-600 scale-100'
+                                        : 'h-5 w-5 text-red-400 scale-75'
+                                }`}
+                            />
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3
+                                className={`text-lg font-bold leading-6 transition-all duration-500 delay-150 ${
+                                    isModalAnimating && !isClosing
+                                        ? 'text-gray-900 translate-y-0 opacity-100'
+                                        : 'text-gray-700 translate-y-2 opacity-0'
+                                }`}
+                            >
+                                Konfirmasi Hapus
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div
+                        className={`mt-4 transition-all duration-500 delay-200 ${
+                            isModalAnimating && !isClosing
+                                ? 'translate-y-0 opacity-100'
+                                : 'translate-y-4 opacity-0'
+                        }`}
+                    >
+                        <p className="text-sm text-gray-500 mb-3">
+                            Apakah Anda yakin ingin menghapus produk:
+                        </p>
+                        <div
+                            className={`p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-l-4 border-amber-400 transition-all duration-500 delay-300 ${
+                                isModalAnimating && !isClosing
+                                    ? 'scale-100 opacity-100'
+                                    : 'scale-95 opacity-0'
+                            }`}
+                        >
+                            <p className="text-sm font-semibold text-gray-900 flex items-center">
+                                <span className="text-lg mr-2">📦</span>
+                                "{product?.name}"
+                            </p>
+                        </div>
+                        <div
+                            className={`mt-3 p-2 bg-red-50 rounded-lg border border-red-200 transition-all duration-500 delay-400 ${
+                                isModalAnimating && !isClosing
+                                    ? 'scale-100 opacity-100'
+                                    : 'scale-95 opacity-0'
+                            }`}
+                        >
+                            <p className="text-xs text-red-600 flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                Tindakan ini tidak dapat dibatalkan!
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Action buttons dengan ukuran yang disesuaikan */}
+                    <div
+                        className={`mt-6 flex gap-3 transition-all duration-500 delay-500 ${
+                            isModalAnimating && !isClosing
+                                ? 'translate-y-0 opacity-100'
+                                : 'translate-y-6 opacity-0'
+                        }`}
+                    >
+                        <button
+                            onClick={handleCancel}
+                            disabled={isLoading}
+                            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-300 ${
+                                isLoading
+                                    ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-800 hover:from-amber-100 hover:to-yellow-100 hover:border-amber-400 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-500'
+                            }`}
+                        >
+                            <div className="flex items-center justify-center space-x-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Batal</span>
+                            </div>
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            disabled={isLoading}
+                            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-transparent transition-all duration-300 ${
+                                isLoading
+                                    ? 'bg-red-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500'
+                            } text-white`}
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                    <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                    <span>Menghapus...</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center space-x-1">
+                                    <TrashIcon className="w-4 h-4" />
+                                    <span>Ya, Hapus</span>
+                                </div>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // Pagination Component
 interface PaginationLink {
     url: string | null;
@@ -166,7 +362,6 @@ function FilterForm({ onSubmit, categories, filters }: {
         <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-5 sm:p-6">
                 <form onSubmit={onSubmit} className="space-y-4">
-                    {/* Grid yang lebih responsif */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="w-full">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -227,7 +422,6 @@ function FilterForm({ onSubmit, categories, filters }: {
                             </select>
                         </div>
                     </div>
-                    {/* Button group */}
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                         <button
                             type="submit"
@@ -460,7 +654,6 @@ function ProductRow({ product, isSelected, onToggleSelection, onDelete }: {
                                 : product.description || 'Tidak ada deskripsi'
                             }
                         </div>
-                        {/* Info tambahan untuk mobile */}
                         <div className="lg:hidden mt-1 space-y-1">
                             <div className="text-xs text-gray-500">
                                 {product.category?.name || 'Tidak ada kategori'}
@@ -544,6 +737,11 @@ export default function ProductsIndex({
     const [bulkAction, setBulkAction] = useState<string>('');
     const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
 
+    // DITAMBAHKAN: State untuk delete modal dengan animasi
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
     const safeProducts = products?.data || [];
     const safeCategories = categories || {};
     const safeStatistics = statistics || {
@@ -594,9 +792,34 @@ export default function ProductsIndex({
         }
     };
 
+    // DIPERBAIKI: Handle delete dengan modal animasi
     const handleDelete = (product: Product): void => {
-        if (confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}"?`)) {
-            router.delete(`/admin/products/${product.id}`);
+        setProductToDelete(product);
+        setShowDeleteModal(true);
+    };
+
+    // DITAMBAHKAN: Confirm delete function
+    const confirmDeleteItem = (): void => {
+        if (!productToDelete) return;
+
+        setIsDeleting(true);
+        router.delete(`/admin/products/${productToDelete.id}`, {
+            onSuccess: () => {
+                setIsDeleting(false);
+                setShowDeleteModal(false);
+                setProductToDelete(null);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            }
+        });
+    };
+
+    // DITAMBAHKAN: Close delete modal function
+    const closeDeleteModal = (): void => {
+        if (!isDeleting) {
+            setShowDeleteModal(false);
+            setProductToDelete(null);
         }
     };
 
@@ -605,7 +828,6 @@ export default function ProductsIndex({
             <Head title="Kelola Produk" />
 
             <div className="py-6">
-                {/* Container dengan max-width dan padding yang konsisten */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
@@ -638,7 +860,7 @@ export default function ProductsIndex({
                         </div>
                     )}
 
-                    {/* Statistik Cards - Perbaiki grid responsif */}
+                    {/* Statistik Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                         <StatCard title="Total Produk" value={safeStatistics.total_products} color="amber" />
                         <StatCard title="Produk Aktif" value={safeStatistics.active_products} color="green" />
@@ -663,7 +885,7 @@ export default function ProductsIndex({
                         />
                     )}
 
-                    {/* Products Table - Tambahkan wrapper untuk scroll */}
+                    {/* Products Table */}
                     <div className="bg-white shadow overflow-hidden sm:rounded-md">
                         <div className="overflow-x-auto">
                             <ProductsTable
@@ -688,6 +910,15 @@ export default function ProductsIndex({
                     )}
                 </div>
             </div>
+
+            {/* DITAMBAHKAN: Enhanced Delete Confirmation Modal dengan Animasi */}
+            <DeleteModal
+                show={showDeleteModal}
+                product={productToDelete}
+                isLoading={isDeleting}
+                onConfirm={confirmDeleteItem}
+                onCancel={closeDeleteModal}
+            />
 
             {/* Bulk Action Confirmation Modal */}
             {showBulkModal && (

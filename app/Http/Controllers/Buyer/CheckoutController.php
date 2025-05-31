@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -23,20 +25,14 @@ class CheckoutController extends Controller
         try {
             $user = Auth::user();
 
-            // DIPERBAIKI: Cek apakah ini mode buy now
-            $buyNowMode = session('buy_now_mode', false);
-            $hasSavedCart = !empty(session('saved_cart_items', []));
-
-            // Ambil item yang akan di-checkout
+            // DIPERBAIKI: Load kategori dengan benar
             if ($request->has('items') && is_array($request->items)) {
-                // Checkout item yang dipilih
-                $cartItems = Cart::with('product.category')
+                $cartItems = Cart::with(['product.category'])
                     ->where('user_id', $user->id)
                     ->whereIn('id', $request->items)
                     ->get();
             } else {
-                // Checkout semua item
-                $cartItems = Cart::with('product.category')
+                $cartItems = Cart::with(['product.category'])
                     ->where('user_id', $user->id)
                     ->get();
             }
@@ -46,24 +42,16 @@ class CheckoutController extends Controller
                     ->with('error', 'Tidak ada item untuk di-checkout.');
             }
 
-            // DIPERBAIKI: Validasi stok sebelum checkout
-            foreach ($cartItems as $item) {
-                if ($item->product->stock < $item->quantity) {
-                    return redirect()->route('cart.index')
-                        ->with('error', 'Stok tidak mencukupi untuk produk: ' . $item->product->name);
-                }
-            }
-
             // Hitung total
             $subtotal = $cartItems->sum(function ($item) {
                 return $item->quantity * $item->product->price;
             });
 
-            $shippingCost = 15000; // Flat rate shipping
-            $tax = $subtotal * 0.1; // 10% tax
+            $shippingCost = 15000;
+            $tax = $subtotal * 0.1;
             $total = $subtotal + $shippingCost + $tax;
 
-            // DIPERBAIKI: Format data untuk frontend dengan informasi tambahan
+            // DIPERBAIKI: Format data dengan kategori yang benar
             $formattedCartItems = $cartItems->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -74,7 +62,10 @@ class CheckoutController extends Controller
                         'price' => (float) $item->product->price,
                         'image' => $item->product->image ? asset('storage/' . $item->product->image) : null,
                         'stock' => $item->product->stock,
-                        'category' => $item->product->category->name ?? 'Umum',
+                        'category' => [
+                            'id' => $item->product->category->id ?? null,
+                            'name' => $item->product->category->name ?? 'Tidak ada kategori',
+                        ],
                     ],
                     'subtotal' => $item->quantity * $item->product->price,
                 ];
@@ -87,8 +78,8 @@ class CheckoutController extends Controller
                 'tax' => (float) $tax,
                 'total' => (float) $total,
                 'user' => $user,
-                'buyNowMode' => $buyNowMode,
-                'hasSavedCart' => $hasSavedCart,
+                'buyNowMode' => session('buy_now_mode', false),
+                'hasSavedCart' => !empty(session('saved_cart_items', [])),
                 'cartItemIds' => $cartItems->pluck('id')->toArray(),
             ]);
 
@@ -211,7 +202,7 @@ class CheckoutController extends Controller
     /**
      * DITAMBAHKAN: Method untuk cancel checkout dan restore cart (jika buy now mode)
      */
-    public function cancel()
+    public function cancel(): RedirectResponse
     {
         try {
             $buyNowMode = session('buy_now_mode', false);
@@ -221,15 +212,19 @@ class CheckoutController extends Controller
                 // Hapus cart saat ini (yang berisi item buy now)
                 Cart::where('user_id', Auth::id())->delete();
 
-                // Restore cart items yang disimpan
+                // Restore cart items yang disimpan sebelumnya
                 foreach ($savedCartItems as $item) {
-                    Cart::create([
-                        'user_id' => Auth::id(),
-                        'product_id' => $item['product_id'],
-                        'quantity' => $item['quantity'],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    // Cek apakah produk masih ada dan stok masih tersedia
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && $product->stock >= $item['quantity']) {
+                        Cart::create([
+                            'user_id' => Auth::id(),
+                            'product_id' => $item['product_id'],
+                            'quantity' => $item['quantity'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
                 }
 
                 // Hapus session
@@ -239,10 +234,16 @@ class CheckoutController extends Controller
                     ->with('success', 'Checkout dibatalkan. Keranjang lama telah dikembalikan.');
             }
 
+            // Jika bukan buy now mode, langsung ke cart
             return redirect()->route('cart.index')
                 ->with('info', 'Checkout dibatalkan.');
 
         } catch (\Exception $e) {
+            \Log::error('Error canceling checkout:', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
             return redirect()->route('cart.index')
                 ->with('error', 'Terjadi kesalahan saat membatalkan checkout: ' . $e->getMessage());
         }

@@ -369,8 +369,7 @@ export default function CheckoutIndex({
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-amber-800 font-medium truncate">{item.product.name}</h3>
                                                 <p className="text-amber-600 text-sm">{item.product.category?.name || 'No Category'}</p>
-                                                <p className="text-amber-600 text-sm">Qty: {item.quantity} × {formatCurrency(item.product.price)}</p>
-                                                <p className="text-xs text-gray-500">Stok: {item.product.stock}</p>
+                                                <p className="text-amber-600 text-sm">Jumlah: {item.quantity} × {formatCurrency(item.product.price)}</p>
                                             </div>
                                             <div className="text-amber-700 font-semibold">
                                                 {formatCurrency(item.subtotal)}
