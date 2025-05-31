@@ -39,6 +39,8 @@ Route::post('/newsletter', function (Illuminate\Http\Request $request) {
     return redirect()->route('home')->with('success', 'Thank you for subscribing!');
 })->name('newsletter.subscribe');
 
+Route::post('/buy-now', [CartController::class, 'buyNow'])->name('buy-now');
+Route::post('/cart/restore', [CartController::class, 'restoreCart'])->name('cart.restore');
 // ===================
 // Cart & Order (User)
 // ===================
@@ -88,12 +90,7 @@ Route::middleware(['auth', 'role:buyer'])
         // DIPERBAIKI: Dashboard dengan controller yang benar
         Route::get('/dashboard', [BuyerDashboardController::class, 'index'])->name('dashboard');
 
-        // DIPERBAIKI: Products routes untuk buyer
 
-        // DIPERBAIKI: Cart routes untuk buyer
-
-        // DIPERBAIKI: Orders routes untuk buyer
-        // DIPERBAIKI: Checkout routes untuk buyer
         Route::prefix('checkout')->name('checkout.')->group(function () {
             Route::get('/', [CheckoutController::class, 'index'])->name('index');
             Route::post('/', [CheckoutController::class, 'store'])->name('store');

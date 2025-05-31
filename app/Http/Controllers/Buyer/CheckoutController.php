@@ -23,6 +23,10 @@ class CheckoutController extends Controller
         try {
             $user = Auth::user();
 
+            // DIPERBAIKI: Cek apakah ini mode buy now
+            $buyNowMode = session('buy_now_mode', false);
+            $hasSavedCart = !empty(session('saved_cart_items', []));
+
             // Ambil item yang akan di-checkout
             if ($request->has('items') && is_array($request->items)) {
                 // Checkout item yang dipilih
@@ -42,6 +46,14 @@ class CheckoutController extends Controller
                     ->with('error', 'Tidak ada item untuk di-checkout.');
             }
 
+            // DIPERBAIKI: Validasi stok sebelum checkout
+            foreach ($cartItems as $item) {
+                if ($item->product->stock < $item->quantity) {
+                    return redirect()->route('cart.index')
+                        ->with('error', 'Stok tidak mencukupi untuk produk: ' . $item->product->name);
+                }
+            }
+
             // Hitung total
             $subtotal = $cartItems->sum(function ($item) {
                 return $item->quantity * $item->product->price;
@@ -51,18 +63,38 @@ class CheckoutController extends Controller
             $tax = $subtotal * 0.1; // 10% tax
             $total = $subtotal + $shippingCost + $tax;
 
+            // DIPERBAIKI: Format data untuk frontend dengan informasi tambahan
+            $formattedCartItems = $cartItems->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'quantity' => $item->quantity,
+                    'product' => [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'price' => (float) $item->product->price,
+                        'image' => $item->product->image ? asset('storage/' . $item->product->image) : null,
+                        'stock' => $item->product->stock,
+                        'category' => $item->product->category->name ?? 'Umum',
+                    ],
+                    'subtotal' => $item->quantity * $item->product->price,
+                ];
+            });
+
             return Inertia::render('Buyer/Checkout/Index', [
-                'cartItems' => $cartItems,
-                'subtotal' => $subtotal,
-                'shippingCost' => $shippingCost,
-                'tax' => $tax,
-                'total' => $total,
+                'cartItems' => $formattedCartItems,
+                'subtotal' => (float) $subtotal,
+                'shippingCost' => (float) $shippingCost,
+                'tax' => (float) $tax,
+                'total' => (float) $total,
                 'user' => $user,
+                'buyNowMode' => $buyNowMode,
+                'hasSavedCart' => $hasSavedCart,
+                'cartItemIds' => $cartItems->pluck('id')->toArray(),
             ]);
 
         } catch (\Exception $e) {
             return redirect()->route('cart.index')
-                ->with('error', 'Terjadi kesalahan saat memuat halaman checkout.');
+                ->with('error', 'Terjadi kesalahan saat memuat halaman checkout: ' . $e->getMessage());
         }
     }
 
@@ -79,6 +111,10 @@ class CheckoutController extends Controller
         try {
             $user = Auth::user();
 
+            // DIPERBAIKI: Cek mode buy now untuk handling cart restoration
+            $buyNowMode = session('buy_now_mode', false);
+            $savedCartItems = session('saved_cart_items', []);
+
             // Ambil cart items
             $cartItems = Cart::with('product')
                 ->where('user_id', $user->id)
@@ -87,6 +123,13 @@ class CheckoutController extends Controller
 
             if ($cartItems->isEmpty()) {
                 throw new \Exception('Cart items tidak ditemukan.');
+            }
+
+            // DIPERBAIKI: Validasi stok lagi sebelum membuat order
+            foreach ($cartItems as $cartItem) {
+                if ($cartItem->product->stock < $cartItem->quantity) {
+                    throw new \Exception('Stok tidak mencukupi untuk produk: ' . $cartItem->product->name . '. Stok tersedia: ' . $cartItem->product->stock);
+                }
             }
 
             // Hitung total
@@ -124,17 +167,138 @@ class CheckoutController extends Controller
                 $cartItem->product->decrement('stock', $cartItem->quantity);
             }
 
-            // Hapus cart items
+            // Hapus cart items yang di-checkout
             Cart::whereIn('id', $request->cart_items)->delete();
+
+            // DIPERBAIKI: Handle cart restoration untuk buy now mode
+            if ($buyNowMode && !empty($savedCartItems)) {
+                // Restore cart items yang disimpan sebelumnya
+                foreach ($savedCartItems as $item) {
+                    // Cek apakah produk masih ada dan stok masih tersedia
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && $product->stock >= $item['quantity']) {
+                        Cart::create([
+                            'user_id' => $user->id,
+                            'product_id' => $item['product_id'],
+                            'quantity' => $item['quantity'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                // Hapus session
+                session()->forget(['saved_cart_items', 'buy_now_mode']);
+            }
 
             DB::commit();
 
+            // DIPERBAIKI: Pesan sukses yang berbeda untuk buy now mode
+            $successMessage = 'Pesanan berhasil dibuat! Nomor pesanan: ' . $order->order_number;
+            if ($buyNowMode && !empty($savedCartItems)) {
+                $successMessage .= ' Keranjang lama telah dikembalikan.';
+            }
+
             return redirect()->route('orders.show', $order->id)
-                ->with('success', 'Pesanan berhasil dibuat! Nomor pesanan: ' . $order->order_number);
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * DITAMBAHKAN: Method untuk cancel checkout dan restore cart (jika buy now mode)
+     */
+    public function cancel()
+    {
+        try {
+            $buyNowMode = session('buy_now_mode', false);
+            $savedCartItems = session('saved_cart_items', []);
+
+            if ($buyNowMode && !empty($savedCartItems)) {
+                // Hapus cart saat ini (yang berisi item buy now)
+                Cart::where('user_id', Auth::id())->delete();
+
+                // Restore cart items yang disimpan
+                foreach ($savedCartItems as $item) {
+                    Cart::create([
+                        'user_id' => Auth::id(),
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                // Hapus session
+                session()->forget(['saved_cart_items', 'buy_now_mode']);
+
+                return redirect()->route('cart.index')
+                    ->with('success', 'Checkout dibatalkan. Keranjang lama telah dikembalikan.');
+            }
+
+            return redirect()->route('cart.index')
+                ->with('info', 'Checkout dibatalkan.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Terjadi kesalahan saat membatalkan checkout: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * DITAMBAHKAN: Method untuk mendapatkan ringkasan checkout via AJAX
+     */
+    public function summary(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $cartItemIds = $request->input('items', []);
+
+            if (empty($cartItemIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada item yang dipilih'
+                ], 400);
+            }
+
+            $cartItems = Cart::with('product')
+                ->where('user_id', $user->id)
+                ->whereIn('id', $cartItemIds)
+                ->get();
+
+            $subtotal = $cartItems->sum(function ($item) {
+                return $item->quantity * $item->product->price;
+            });
+
+            $shippingCost = 15000;
+            $tax = $subtotal * 0.1;
+            $total = $subtotal + $shippingCost + $tax;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'subtotal' => $subtotal,
+                    'shipping_cost' => $shippingCost,
+                    'tax' => $tax,
+                    'total' => $total,
+                    'item_count' => $cartItems->count(),
+                    'formatted' => [
+                        'subtotal' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+                        'shipping_cost' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
+                        'tax' => 'Rp ' . number_format($tax, 0, ',', '.'),
+                        'total' => 'Rp ' . number_format($total, 0, ',', '.'),
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

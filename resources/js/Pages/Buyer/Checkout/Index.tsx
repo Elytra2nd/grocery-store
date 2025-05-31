@@ -10,11 +10,13 @@ interface CartItem {
         name: string;
         price: number;
         image?: string;
+        stock: number;
         category?: {
             id: number;
             name: string;
         };
     };
+    subtotal: number;
 }
 
 interface CheckoutProps {
@@ -30,6 +32,9 @@ interface CheckoutProps {
         phone?: string;
         address?: string;
     };
+    buyNowMode?: boolean;
+    hasSavedCart?: boolean;
+    cartItemIds: number[];
 }
 
 type CheckoutFormData = {
@@ -45,13 +50,16 @@ export default function CheckoutIndex({
     shippingCost,
     tax,
     total,
-    user
+    user,
+    buyNowMode = false,
+    hasSavedCart = false,
+    cartItemIds
 }: CheckoutProps): JSX.Element {
     const { data, setData, post, processing, errors } = useForm<CheckoutFormData>({
         shipping_address: user.address || '',
         payment_method: 'bank_transfer',
         notes: '',
-        cart_items: cartItems.map(item => item.id),
+        cart_items: cartItemIds || cartItems.map(item => item.id),
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,14 +72,39 @@ export default function CheckoutIndex({
         }).format(amount);
     };
 
+    // DIPERBAIKI: Handle image error untuk fallback ke icon
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const target = e.currentTarget;
+        const parent = target.parentElement;
+
+        target.style.display = 'none';
+
+        if (parent) {
+            const fallbackElement = parent.querySelector('.image-fallback');
+            if (fallbackElement) {
+                (fallbackElement as HTMLElement).style.display = 'flex';
+            }
+        }
+    };
+
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        post('/checkout', {
+        post('/buyer/checkout', {
             onFinish: () => setIsSubmitting(false),
             onError: () => setIsSubmitting(false),
         });
+    };
+
+    // DITAMBAHKAN: Handle cancel checkout untuk buy now mode
+    const handleCancelCheckout = () => {
+        if (buyNowMode && hasSavedCart) {
+            // Redirect ke cancel endpoint yang akan restore cart
+            window.location.href = '/buyer/checkout/cancel';
+        } else {
+            window.history.back();
+        }
     };
 
     return (
@@ -106,6 +139,34 @@ export default function CheckoutIndex({
                                 Lengkapi informasi pengiriman dan pembayaran Anda
                             </p>
                         </div>
+
+                        {/* DITAMBAHKAN: Buy Now Mode Indicator */}
+                        {buyNowMode && (
+                            <div className="mb-8 bg-blue-50/80 backdrop-blur-md border border-blue-200 rounded-2xl p-6 shadow-lg">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-400/50 mr-4">
+                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-blue-800 font-semibold text-lg mb-1">Mode Beli Sekarang</h3>
+                                        <p className="text-blue-600">
+                                            Anda sedang checkout item yang dipilih saja.
+                                            {hasSavedCart && ' Keranjang lama akan dikembalikan setelah checkout selesai.'}
+                                        </p>
+                                    </div>
+                                    {hasSavedCart && (
+                                        <button
+                                            onClick={handleCancelCheckout}
+                                            className="ml-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 text-sm font-medium"
+                                        >
+                                            Batalkan & Kembalikan Keranjang
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* Form Checkout */}
@@ -254,7 +315,9 @@ export default function CheckoutIndex({
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>Buat Pesanan - {formatCurrency(total)}</span>
+                                                    <span>
+                                                        {buyNowMode ? 'Beli Sekarang' : 'Buat Pesanan'} - {formatCurrency(total)}
+                                                    </span>
                                                 </div>
                                             )}
                                         </button>
@@ -270,23 +333,36 @@ export default function CheckoutIndex({
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                         </svg>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-amber-800">Ringkasan Pesanan</h2>
+                                    <h2 className="text-2xl font-bold text-amber-800">
+                                        Ringkasan Pesanan
+                                        {buyNowMode && (
+                                            <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                Beli Sekarang
+                                            </span>
+                                        )}
+                                    </h2>
                                 </div>
 
                                 {/* Items */}
                                 <div className="space-y-4 mb-6 max-h-80 overflow-y-auto">
                                     {cartItems.map((item) => (
                                         <div key={item.id} className="flex items-center space-x-4 p-4 bg-amber-50/50 rounded-xl hover:bg-amber-100/50 transition-all duration-200 border border-amber-200/30">
-                                            <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200/50">
+                                            <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200/50 relative">
                                                 {item.product.image ? (
-                                                    <img
-                                                        src={`/storage/products/${item.product.image}`}
-                                                        alt={item.product.name}
-                                                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                                    />
+                                                    <>
+                                                        <img
+                                                            src={item.product.image}
+                                                            alt={item.product.name}
+                                                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                                                            onError={handleImageError}
+                                                        />
+                                                        <div className="image-fallback absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center" style={{ display: 'none' }}>
+                                                            <span className="text-white text-2xl">🛒</span>
+                                                        </div>
+                                                    </>
                                                 ) : (
                                                     <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                                                        <span className="text-white text-xs font-bold">FM</span>
+                                                        <span className="text-white text-2xl">🛒</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -294,9 +370,10 @@ export default function CheckoutIndex({
                                                 <h3 className="text-amber-800 font-medium truncate">{item.product.name}</h3>
                                                 <p className="text-amber-600 text-sm">{item.product.category?.name || 'No Category'}</p>
                                                 <p className="text-amber-600 text-sm">Qty: {item.quantity} × {formatCurrency(item.product.price)}</p>
+                                                <p className="text-xs text-gray-500">Stok: {item.product.stock}</p>
                                             </div>
                                             <div className="text-amber-700 font-semibold">
-                                                {formatCurrency(item.quantity * item.product.price)}
+                                                {formatCurrency(item.subtotal)}
                                             </div>
                                         </div>
                                     ))}
@@ -335,16 +412,28 @@ export default function CheckoutIndex({
                                 </div>
 
                                 {/* Back to Cart */}
-                                <div className="mt-6 pt-6 border-t border-amber-200/50">
-                                    <Link
-                                        href="/cart"
-                                        className="flex items-center justify-center w-full px-4 py-3 bg-amber-100/50 border border-amber-200/50 text-amber-700 rounded-xl hover:bg-amber-200/50 hover:text-amber-800 hover:scale-105 transition-all duration-200"
-                                    >
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                        </svg>
-                                        Kembali ke Keranjang
-                                    </Link>
+                                <div className="mt-6 pt-6 border-t border-amber-200/50 space-y-3">
+                                    {buyNowMode && hasSavedCart ? (
+                                        <button
+                                            onClick={handleCancelCheckout}
+                                            className="flex items-center justify-center w-full px-4 py-3 bg-blue-100/50 border border-blue-200/50 text-blue-700 rounded-xl hover:bg-blue-200/50 hover:text-blue-800 hover:scale-105 transition-all duration-200"
+                                        >
+                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                            </svg>
+                                            Batalkan & Kembalikan Keranjang
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href="/cart"
+                                            className="flex items-center justify-center w-full px-4 py-3 bg-amber-100/50 border border-amber-200/50 text-amber-700 rounded-xl hover:bg-amber-200/50 hover:text-amber-800 hover:scale-105 transition-all duration-200"
+                                        >
+                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                            </svg>
+                                            Kembali ke Keranjang
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>
