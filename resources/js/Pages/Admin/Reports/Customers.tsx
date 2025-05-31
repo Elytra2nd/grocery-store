@@ -184,7 +184,13 @@ export default function Customers({
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Laporan
+                </h2>
+            }
+        >
             <Head title="Laporan Pelanggan" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
@@ -549,11 +555,10 @@ export default function Customers({
                                                         key={index}
                                                         onClick={() => handlePageChange(link.url || '')}
                                                         disabled={!link.url}
-                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                            link.active
+                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${link.active
                                                                 ? 'z-10 bg-amber-50 border-amber-500 text-amber-600'
                                                                 : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                        } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                                     />
                                                 );

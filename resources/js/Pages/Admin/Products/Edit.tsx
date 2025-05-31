@@ -84,7 +84,13 @@ export default function Edit({ product, categories }: Props): JSX.Element {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Produk
+                </h2>
+            }
+        >
             <Head title={`Edit ${product.name}`} />
 
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">

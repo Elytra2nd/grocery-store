@@ -29,7 +29,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     post('/admin/categories', {
       onSuccess: () => {
         resetCreate();
@@ -43,7 +43,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingCategory) return;
 
     put(`/admin/categories/${editingCategory.id}`, {
@@ -87,12 +87,12 @@ export default function CategoriesIndex({ categories }: Props) {
     <AuthenticatedLayout
       header={
         <h2 className="font-semibold text-xl text-amber-900 leading-tight">
-          Kategori Produk
+          Kategori
         </h2>
       }
     >
       <Head title="Kategori Produk" />
-      
+
       <div className="max-w-5xl mx-auto">
         {/* Tombol Kembali */}
         <div className="mb-4">
@@ -131,7 +131,7 @@ export default function CategoriesIndex({ categories }: Props) {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <form onSubmit={handleCreateSubmit}>
                 <div className="mb-4">
                   <label htmlFor="create-name" className="block text-sm font-medium text-amber-700 mb-2">
@@ -150,7 +150,7 @@ export default function CategoriesIndex({ categories }: Props) {
                     <p className="mt-1 text-sm text-red-600">{createErrors.name}</p>
                   )}
                 </div>
-                
+
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"

@@ -71,7 +71,13 @@ export default function UsersCreate({ roles }: Props): JSX.Element {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pelanggan
+                </h2>
+            }
+        >
             <Head title="Tambah User" />
 
             <div className="py-6">
@@ -192,9 +198,8 @@ function UserInfoSection({
                                 id="name"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                    errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                }`}
+                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                    }`}
                                 placeholder="Contoh: John Doe"
                                 required
                             />
@@ -212,9 +217,8 @@ function UserInfoSection({
                                 id="email"
                                 value={data.email}
                                 onChange={(e) => setData('email', e.target.value)}
-                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                    errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                }`}
+                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                    }`}
                                 placeholder="john@example.com"
                                 required
                             />
@@ -232,9 +236,8 @@ function UserInfoSection({
                                 id="phone"
                                 value={data.phone}
                                 onChange={(e) => setData('phone', e.target.value)}
-                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                    errors.phone ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                }`}
+                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.phone ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                    }`}
                                 placeholder="08123456789"
                             />
                             {errors.phone && (
@@ -252,9 +255,8 @@ function UserInfoSection({
                                     id="password"
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
-                                    className={`focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-10 shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                        errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                    }`}
+                                    className={`focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-10 shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                        }`}
                                     placeholder="Minimal 8 karakter"
                                     required
                                 />
@@ -285,9 +287,8 @@ function UserInfoSection({
                                     id="password_confirmation"
                                     value={data.password_confirmation}
                                     onChange={(e) => setData('password_confirmation', e.target.value)}
-                                    className={`focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-10 shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                        errors.password_confirmation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                    }`}
+                                    className={`focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-10 shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.password_confirmation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                        }`}
                                     placeholder="Ulangi password"
                                     required
                                 />
@@ -316,9 +317,8 @@ function UserInfoSection({
                                 id="role"
                                 value={data.role}
                                 onChange={(e) => setData('role', e.target.value)}
-                                className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                                    errors.role ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                }`}
+                                className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${errors.role ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                    }`}
                                 required
                             >
                                 <option value="">Pilih Role</option>
@@ -350,9 +350,8 @@ function UserInfoSection({
                                 rows={3}
                                 value={data.address}
                                 onChange={(e) => setData('address', e.target.value)}
-                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${
-                                    errors.address ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
-                                }`}
+                                className={`mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${errors.address ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                                    }`}
                                 placeholder="Alamat lengkap user..."
                             />
                             {errors.address && (
@@ -405,9 +404,8 @@ function AvatarUploadSection({ avatarPreview, onAvatarChange, error }: AvatarUpl
                     </p>
                 </div>
                 <div className="mt-5 md:mt-0 md:col-span-2">
-                    <div className={`flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
-                        error ? 'border-red-300' : 'border-gray-300'
-                    }`}>
+                    <div className={`flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${error ? 'border-red-300' : 'border-gray-300'
+                        }`}>
                         <div className="space-y-1 text-center">
                             {avatarPreview ? (
                                 <div className="mb-4">

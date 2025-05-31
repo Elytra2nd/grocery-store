@@ -60,7 +60,13 @@ export default function Edit({ user }: Props): JSX.Element {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pelanggan
+                </h2>
+            }
+        >
             <Head title={`Edit User: ${user.name}`} />
 
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
@@ -266,8 +272,8 @@ export default function Edit({ user }: Props): JSX.Element {
                                         <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
                                             <span className="text-sm font-medium text-amber-700">Status Email:</span>
                                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${user.email_verified_at
-                                                    ? 'bg-emerald-100 text-emerald-800'
-                                                    : 'bg-amber-100 text-amber-800'
+                                                ? 'bg-emerald-100 text-emerald-800'
+                                                : 'bg-amber-100 text-amber-800'
                                                 }`}>
                                                 {user.email_verified_at ? 'Terverifikasi' : 'Belum Verifikasi'}
                                             </span>

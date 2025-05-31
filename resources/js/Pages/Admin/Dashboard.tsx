@@ -40,7 +40,13 @@ export default function AdminDashboard({ statistics }: AdminDashboardProps): JSX
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+        header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Dashboard
+                </h2>
+            }
+        >
             <Head title="Admin Dashboard" />
 
             <div className="py-6 min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100">

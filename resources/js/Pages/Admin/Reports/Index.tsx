@@ -66,7 +66,13 @@ export default function ReportsIndex({
     const formatNumber = (value: number): string => value.toLocaleString('id-ID');
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Laporan
+                </h2>
+            }
+        >
             <Head title="Dashboard Laporan" />
 
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">

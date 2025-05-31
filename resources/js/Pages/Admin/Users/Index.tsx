@@ -55,7 +55,12 @@ export default function Index({ auth, users }: Props): JSX.Element {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pelanggan
+                </h2>
+            }>
             <Head title="Manajemen User" />
 
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
@@ -162,8 +167,8 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${user.active
-                                                            ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20'
-                                                            : 'bg-red-100 text-red-800 ring-1 ring-red-600/20'
+                                                        ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20'
+                                                        : 'bg-red-100 text-red-800 ring-1 ring-red-600/20'
                                                         }`}>
                                                         <div className={`w-1.5 h-1.5 rounded-full ${user.active ? 'bg-green-600' : 'bg-red-600'}`}></div>
                                                         {user.active ? 'Aktif' : 'Nonaktif'}
@@ -171,8 +176,8 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${user.email_verified_at
-                                                            ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/20'
-                                                            : 'bg-amber-100 text-amber-800 ring-1 ring-amber-600/20'
+                                                        ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/20'
+                                                        : 'bg-amber-100 text-amber-800 ring-1 ring-amber-600/20'
                                                         }`}>
                                                         {user.email_verified_at ? (
                                                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -244,10 +249,10 @@ export default function Index({ auth, users }: Props): JSX.Element {
                                                 key={index}
                                                 href={link.url || '#'}
                                                 className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${link.active
-                                                        ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-lg transform scale-105'
-                                                        : link.url
-                                                            ? 'text-amber-700 hover:bg-amber-100 hover:text-amber-900 hover:scale-105'
-                                                            : 'text-amber-300 cursor-not-allowed'
+                                                    ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-lg transform scale-105'
+                                                    : link.url
+                                                        ? 'text-amber-700 hover:bg-amber-100 hover:text-amber-900 hover:scale-105'
+                                                        : 'text-amber-300 cursor-not-allowed'
                                                     }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />

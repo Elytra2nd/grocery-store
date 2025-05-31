@@ -102,7 +102,13 @@ export default function Financial({
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Laporan
+                </h2>
+            }
+        >
             <Head title="Laporan Keuangan" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
@@ -207,9 +213,8 @@ export default function Financial({
                     ].map((metric, index) => (
                         <div
                             key={metric.id}
-                            className={`group relative bg-white rounded-xl shadow-lg border-l-4 border-${metric.color}-500 overflow-hidden transition-all duration-500 hover:shadow-2xl transform hover:scale-105 hover:-translate-y-2 cursor-pointer ${
-                                hoveredCard === metric.id ? 'ring-4 ring-amber-300/50' : ''
-                            }`}
+                            className={`group relative bg-white rounded-xl shadow-lg border-l-4 border-${metric.color}-500 overflow-hidden transition-all duration-500 hover:shadow-2xl transform hover:scale-105 hover:-translate-y-2 cursor-pointer ${hoveredCard === metric.id ? 'ring-4 ring-amber-300/50' : ''
+                                }`}
                             onMouseEnter={() => setHoveredCard(metric.id)}
                             onMouseLeave={() => setHoveredCard(null)}
                             style={{
@@ -246,9 +251,8 @@ export default function Financial({
                                 {/* Animated progress bar */}
                                 <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                     <div
-                                        className={`h-full bg-gradient-to-r ${metric.bgGradient} rounded-full transition-all duration-1000 ease-out transform ${
-                                            hoveredCard === metric.id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
-                                        }`}
+                                        className={`h-full bg-gradient-to-r ${metric.bgGradient} rounded-full transition-all duration-1000 ease-out transform ${hoveredCard === metric.id ? 'translate-x-0 scale-x-100' : 'translate-x-[-20%] scale-x-75'
+                                            }`}
                                         style={{
                                             width: hoveredCard === metric.id ? '100%' : '70%'
                                         }}
@@ -281,8 +285,8 @@ export default function Financial({
                                     <LineChart data={safeDailyRevenue}>
                                         <defs>
                                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#D97706" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#D97706" stopOpacity={0.05}/>
+                                                <stop offset="5%" stopColor="#D97706" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#D97706" stopOpacity={0.05} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -430,8 +434,8 @@ export default function Financial({
                                             />
                                             <defs>
                                                 <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
-                                                    <stop offset="5%" stopColor="#D97706" stopOpacity={0.8}/>
-                                                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.6}/>
+                                                    <stop offset="5%" stopColor="#D97706" stopOpacity={0.8} />
+                                                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.6} />
                                                 </linearGradient>
                                             </defs>
                                         </BarChart>
