@@ -177,7 +177,7 @@ function MainNavigationBar({
     };
 
     return (
-        <div className="relative z-50 bg-white/80 backdrop-blur-md shadow-lg border-b border-amber-200/50 sticky top-0">
+        <div className="relative z-50 bg-white/80 backdrop-blur-md shadow-lg border-b border-amber-200/50 top-0">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}

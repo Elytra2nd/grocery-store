@@ -9,7 +9,7 @@ interface GroceryProduct {
     name: string;
     price: number;
     unit: string;
-    image?: string;
+    image?: string | null;
     emoji: string;
     sold_count: number;
     category: string;
@@ -24,7 +24,7 @@ interface GroceryCartItem {
         name: string;
         price: number;
         unit: string;
-        image?: string;
+        image?: string | null;
         emoji: string;
         category: string;
     };
@@ -71,6 +71,7 @@ export default function Dashboard() {
     const { popularProducts, cartItems, recentOrders, stats } = usePage<DashboardProps>().props;
 
     const [isVisible, setIsVisible] = useState<Record<string, boolean>>({});
+    const [imageLoadErrors, setImageLoadErrors] = useState<Record<number, boolean>>({});
 
     // Safe fallback values
     const safePopularProducts = popularProducts || [];
@@ -93,6 +94,19 @@ export default function Dashboard() {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(amount);
+    };
+
+    // DIPERBAIKI: Enhanced image error handling dengan state tracking
+    const handleImageError = (productId: number) => {
+        setImageLoadErrors(prev => ({
+            ...prev,
+            [productId]: true
+        }));
+    };
+
+    // DITAMBAHKAN: Function untuk cek apakah gambar valid
+    const hasValidImage = (product: GroceryProduct): boolean => {
+        return !!(product.image && !imageLoadErrors[product.id]);
     };
 
     // Status badge untuk grocery orders
@@ -162,7 +176,7 @@ export default function Dashboard() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                {/* DITAMBAHKAN: Quick Shopping Actions */}
+                {/* Quick Shopping Actions */}
                 <div className="mb-12">
                     <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 border border-amber-200 shadow-lg">
                         <div className="text-center mb-8">
@@ -226,7 +240,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* DITAMBAHKAN: Shopping Summary Banner */}
+                {/* Shopping Summary Banner */}
                 {(safeStats.cartItemsCount > 0 || safeStats.pendingOrders > 0) && (
                     <div className="mb-12">
                         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg">
@@ -264,7 +278,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="space-y-16">
-                    {/* Produk Grocery Terlaris - ENHANCED */}
+                    {/* DIPERBAIKI: Produk Grocery Terlaris dengan conditional image/icon */}
                     <section
                         id="popular-products"
                         data-animate
@@ -302,15 +316,17 @@ export default function Dashboard() {
                                     >
                                         <Link href={`/products/${product.id}`}>
                                             <div className="aspect-[4/3] bg-gradient-to-br from-amber-100 to-orange-200 flex items-center justify-center relative overflow-hidden">
-                                                {product.image ? (
+                                                {/* DIPERBAIKI: Conditional rendering - gambar jika ada, icon keranjang jika tidak */}
+                                                {hasValidImage(product) ? (
                                                     <img
-                                                        src={product.image}
+                                                        src={product.image!}
                                                         alt={product.name}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                        onError={() => handleImageError(product.id)}
                                                     />
                                                 ) : (
                                                     <div className="text-center">
-                                                        <div className="text-6xl mb-3 group-hover:scale-110 transition-transform duration-500">{product.emoji}</div>
+                                                        <div className="text-6xl mb-3 group-hover:scale-110 transition-transform duration-500">🛒</div>
                                                         <span className="text-amber-700 font-bold text-sm bg-white/80 px-3 py-1 rounded-full">{product.category}</span>
                                                     </div>
                                                 )}
@@ -355,7 +371,7 @@ export default function Dashboard() {
                         </div>
                     </section>
 
-                    {/* Keranjang Grocery - ENHANCED */}
+                    {/* DIPERBAIKI: Enhanced Keranjang Belanja Section dengan conditional image/icon */}
                     <section
                         id="cart-preview"
                         data-animate
@@ -366,14 +382,19 @@ export default function Dashboard() {
                     >
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h2 className="text-3xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-yellow-600 bg-clip-text text-transparent">
+                                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center">
                                     🛍️ Keranjang Belanja Anda
+                                    {safeStats.cartItemsCount > 0 && (
+                                        <span className="ml-3 bg-red-500 text-white text-sm px-3 py-1 rounded-full animate-pulse">
+                                            {safeStats.cartItemsCount}
+                                        </span>
+                                    )}
                                 </h2>
-                                <p className="text-amber-600 mt-2">Item yang siap untuk checkout</p>
+                                <p className="text-blue-600 mt-2">Item yang siap untuk checkout</p>
                             </div>
                             <Link
                                 href="/cart"
-                                className="group flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                                className="group flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
                             >
                                 <span className="font-medium">Kelola Keranjang ({safeStats.cartItemsCount})</span>
                                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,60 +402,115 @@ export default function Dashboard() {
                                 </svg>
                             </Link>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border-2 border-blue-200 shadow-lg">
                             {safeCartItems.length > 0 ? (
-                                safeCartItems.slice(0, 6).map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-blue-200 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-                                        style={{
-                                            animationDelay: `${index * 150}ms`
-                                        }}
-                                    >
-                                        <Link href={`/products/${item.product?.id}`}>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
-                                                    {item.product?.image ? (
-                                                        <img
-                                                            src={item.product.image}
-                                                            alt={item.product.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-3xl">{item.product?.emoji}</span>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="font-bold text-amber-900 text-base mb-1 line-clamp-2">
-                                                        {item.product?.name}
-                                                    </h3>
-                                                    <p className="text-amber-700 font-semibold text-sm mb-2">
-                                                        {formatCurrency(item.product?.price || 0)}/{item.product?.unit}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className="text-sm text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
-                                                            Qty: {item.quantity}
-                                                        </span>
-                                                        <span className="text-sm text-amber-600 font-bold">
-                                                            {formatCurrency((item.product?.price || 0) * item.quantity)}
-                                                        </span>
+                                <>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                        {safeCartItems.slice(0, 4).map((item, index) => (
+                                            <div
+                                                key={item.id}
+                                                className="group bg-white rounded-xl p-4 border border-blue-200 shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
+                                                style={{
+                                                    animationDelay: `${index * 100}ms`
+                                                }}
+                                            >
+                                                <Link href={`/products/${item.product?.id}`}>
+                                                    <div className="flex items-center gap-4">
+                                                        {/* DIPERBAIKI: Conditional rendering untuk cart items */}
+                                                        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:scale-110 transition-transform duration-500 relative">
+                                                            {item.product?.image && !imageLoadErrors[item.product.id] ? (
+                                                                <img
+                                                                    src={item.product.image}
+                                                                    alt={item.product.name}
+                                                                    className="w-full h-full object-cover"
+                                                                    onError={() => handleImageError(item.product.id)}
+                                                                />
+                                                            ) : (
+                                                                <span className="text-3xl">🛒</span>
+                                                            )}
+                                                            {/* Quantity Badge */}
+                                                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg">
+                                                                {item.quantity}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="font-bold text-blue-900 text-base mb-1 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                                                                {item.product?.name}
+                                                            </h3>
+                                                            <p className="text-blue-700 font-semibold text-sm mb-2">
+                                                                {formatCurrency(item.product?.price || 0)}/{item.product?.unit}
+                                                            </p>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-sm text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
+                                                                    Qty: {item.quantity}
+                                                                </span>
+                                                                <span className="text-sm text-amber-600 font-bold">
+                                                                    {formatCurrency((item.product?.price || 0) * item.quantity)}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block mt-2">
+                                                                {item.product?.category}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
-                                                        {item.product?.category}
-                                                    </p>
-                                                </div>
+                                                </Link>
                                             </div>
-                                        </Link>
+                                        ))}
                                     </div>
-                                ))
+
+                                    {/* Cart Summary */}
+                                    <div className="bg-white rounded-xl p-6 border-2 border-emerald-200 shadow-lg">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-emerald-800">Total Keranjang</h3>
+                                                <p className="text-sm text-gray-600">{safeStats.cartItemsCount} item siap untuk checkout</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-3xl font-bold text-emerald-600">
+                                                    {formatCurrency(safeStats.cartTotalValue)}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3 justify-center">
+                                            <Link
+                                                href="/cart"
+                                                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors duration-300 text-center"
+                                            >
+                                                Edit Keranjang
+                                            </Link>
+                                            <Link
+                                                href="/checkout"
+                                                className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-8 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium text-center"
+                                            >
+                                                🚀 Checkout Sekarang
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    {/* Show more items if available */}
+                                    {safeCartItems.length > 4 && (
+                                        <div className="text-center mt-6">
+                                            <Link
+                                                href="/cart"
+                                                className="text-blue-600 hover:text-blue-800 font-medium"
+                                            >
+                                                +{safeCartItems.length - 4} item lainnya di keranjang
+                                            </Link>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
-                                <div className="col-span-3 text-center py-12 text-amber-600">
+                                <div className="text-center py-12 text-blue-600">
                                     <div className="animate-bounce">
                                         <span className="text-8xl mb-6 block">🛍️</span>
                                         <p className="text-xl font-medium mb-4">Keranjang belanja Anda masih kosong</p>
+                                        <p className="text-blue-500 mb-6">Mulai tambahkan produk favorit Anda!</p>
                                         <Link
                                             href="/products"
-                                            className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
+                                            className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
                                         >
                                             🛒 Mulai Belanja Sekarang
                                         </Link>
@@ -442,34 +518,6 @@ export default function Dashboard() {
                                 </div>
                             )}
                         </div>
-                        {safeCartItems.length > 0 && (
-                            <div className="mt-8 text-center">
-                                <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 border-2 border-emerald-200 inline-block shadow-lg">
-                                    <p className="text-2xl font-bold text-emerald-800 mb-2">
-                                        Total Keranjang: <span className="text-emerald-600">
-                                            {formatCurrency(safeStats.cartTotalValue)}
-                                        </span>
-                                    </p>
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        {safeStats.cartItemsCount} item siap untuk checkout
-                                    </p>
-                                    <div className="flex gap-3 justify-center">
-                                        <Link
-                                            href="/cart"
-                                            className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors duration-300"
-                                        >
-                                            Edit Keranjang
-                                        </Link>
-                                        <Link
-                                            href="/checkout"
-                                            className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-8 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
-                                        >
-                                            🚀 Checkout Sekarang
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </section>
 
                     {/* Pesanan Terakhir - ENHANCED */}

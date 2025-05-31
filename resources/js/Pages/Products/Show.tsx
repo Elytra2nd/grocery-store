@@ -55,11 +55,17 @@ export default function ProductShow({ product, relatedProducts, cartItemId }: Pr
 
         // Langsung redirect ke halaman checkout (bukan POST order langsung)
         // Jika ingin checkout hanya produk ini, pastikan produk sudah ada di cart dan gunakan cartItemId
-        if (cartItemId) {
-            router.visit(`/checkout?items[]=${cartItemId}`);
-        } else {
-            router.visit('/checkout');
-        }
+        router.post("/buy-now", {
+            product_id: product.id,
+            quantity: 1
+        }, {
+            onSuccess: () => {
+                // Redirect akan ditangani oleh backend
+            },
+            onError: (errors) => {
+                console.error('Error buy now:', errors);
+            }
+        });
     };
 
     return (
