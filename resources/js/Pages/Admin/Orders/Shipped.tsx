@@ -121,7 +121,13 @@ export default function ShippedOrders({ orders, statistics, filters }: Props): J
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pesanan
+                </h2>
+            }
+        >
             <Head title="Pesanan Sedang Dikirim" />
 
             <div className="py-6">
