@@ -125,7 +125,13 @@ export default function CompletedOrders({ orders, statistics, filters }: Props):
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pesanan
+                </h2>
+            }
+        >
             <Head title="Pesanan Selesai" />
 
             <div className="py-6">
@@ -547,11 +553,10 @@ function CompletedOrdersTable({
                                                 {[...Array(5)].map((_, i) => (
                                                     <StarIcon
                                                         key={i}
-                                                        className={`h-4 w-4 ${
-                                                            i < Math.floor(rating)
+                                                        className={`h-4 w-4 ${i < Math.floor(rating)
                                                                 ? 'text-yellow-400 fill-current'
                                                                 : 'text-gray-300'
-                                                        }`}
+                                                            }`}
                                                     />
                                                 ))}
                                             </div>
