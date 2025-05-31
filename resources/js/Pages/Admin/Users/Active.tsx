@@ -152,7 +152,12 @@ export default function ActiveUsers({ users, statistics, filters }: Props): JSX.
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="font-semibold text-xl text-amber-900 leading-tight">
+                    Pelanggan
+                </h2>
+            }>
             <Head title="Pelanggan Aktif" />
 
             <div className="py-8 min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
