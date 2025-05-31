@@ -301,39 +301,43 @@ class AdminOrderController extends Controller
      */
     public function show(Order $order)
     {
-        try {
-            $order->load(['user', 'orderItems.product']);
+        $order->load(['user', 'orderItems.product.category']);
 
-            // Calculate order statistics
-            $orderStats = [
-                'total_items' => $order->orderItems->sum('quantity'),
-                'total_weight' => $order->orderItems->sum(function($item) {
-                    return $item->quantity * ($item->product->weight ?? 0);
+        return Inertia::render('Admin/Orders/Show', [
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'user' => [
+                    'id' => $order->user->id,
+                    'name' => $order->user->name,
+                    'email' => $order->user->email,
+                ],
+                'total_amount' => (float) $order->total_amount,
+                'status' => $order->status,
+                'shipping_address' => $order->shipping_address,
+                'payment_method' => $order->payment_method ?? 'transfer',
+                'notes' => $order->notes,
+                'shipping_cost' => (float) ($order->shipping_cost ?? 0),
+                'tax_amount' => (float) ($order->tax_amount ?? 0),
+                'created_at' => $order->created_at->toISOString(),
+                'updated_at' => $order->updated_at->toISOString(),
+                'order_items' => $order->orderItems->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'quantity' => (int) $item->quantity,
+                        'price' => (float) $item->price,
+                        'subtotal' => $item->quantity * $item->price,
+                        'product' => [
+                            'id' => $item->product->id,
+                            'name' => $item->product->name,
+                            'description' => $item->product->description,
+                            'image' => $item->product->image ? asset('storage/' . $item->product->image) : null,
+                            'category' => $item->product->category->name ?? 'Uncategorized',
+                        ],
+                    ];
                 }),
-                'profit_margin' => $order->orderItems->sum(function($item) {
-                    $cost = $item->product->cost ?? 0;
-                    return ($item->price - $cost) * $item->quantity;
-                }),
-                'discount_amount' => $order->discount_amount ?? 0,
-                'tax_amount' => $order->tax_amount ?? 0,
-                'shipping_cost' => $order->shipping_cost ?? 0,
-            ];
-
-            // Get order history/logs
-            $orderHistory = $this->getOrderHistory($order);
-
-            return Inertia::render('Admin/Orders/Show', [
-                'order' => $order,
-                'orderStats' => $orderStats,
-                'orderHistory' => $orderHistory,
-                'statuses' => $this->getOrderStatuses(),
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('AdminOrderController@show error: ' . $e->getMessage());
-            return redirect()->route('admin.orders.index')
-                ->with('error', 'Pesanan tidak ditemukan.');
-        }
+            ],
+        ]);
     }
 
     /**
@@ -438,41 +442,18 @@ class AdminOrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:' . implode(',', array_keys($this->getOrderStatuses())),
-            'notes' => 'nullable|string|max:500',
+            'status' => 'required|in:pending,processing,packed,shipped,delivered,cancelled'
         ]);
 
-        try {
-            DB::beginTransaction();
+        $oldStatus = $order->status;
+        $newStatus = $request->status;
 
-            $oldStatus = $order->status;
+        $order->update([
+            'status' => $newStatus
+        ]);
 
-            $order->update([
-                'status' => $request->status,
-                'notes' => $request->notes,
-                'updated_at' => now(),
-            ]);
+        return back()->with('success', "Status pesanan berhasil diperbarui dari '{$oldStatus}' ke '{$newStatus}'");
 
-            $this->logStatusChange($order, $oldStatus, $request->status, $request->notes);
-            $this->handleStatusChange($order, $oldStatus, $request->status);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Status pesanan berhasil diperbarui.',
-                'order' => $order->load(['user', 'orderItems.product']),
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('AdminOrderController@updateStatus error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui status pesanan.',
-            ], 500);
-        }
     }
 
     /**
