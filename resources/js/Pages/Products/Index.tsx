@@ -214,7 +214,7 @@ export default function ProductIndex({
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                     </svg>
-                                    Login
+                                    Masuk
                                 </Link>
                             </div>
                         )}
@@ -230,10 +230,10 @@ export default function ProductIndex({
                                     </div>
                                 </div>
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-amber-700 via-orange-600 to-yellow-600 bg-clip-text text-transparent drop-shadow-sm">
-                                    Fresh Market Collection
+                                    Fresh Market
                                 </h1>
                                 <p className="text-base sm:text-lg lg:text-xl text-amber-800 max-w-2xl mx-auto px-4 font-medium">
-                                    Your daily essentials, delivered fresh to your doorstep
+                                    Kebutuhan sehari-hari Anda, diantar segar langsung ke pintu rumah Anda
                                 </p>
                             </div>
                         </header>
@@ -246,7 +246,7 @@ export default function ProductIndex({
                                     <div className="relative max-w-md mx-auto">
                                         <input
                                             type="text"
-                                            placeholder="Search fresh products..."
+                                            placeholder="Cari Produ Segar..."
                                             value={localFilters.search}
                                             onChange={e => handleInputChange('search', e.target.value)}
                                             className="w-full pl-12 pr-4 py-3 bg-white/90 backdrop-blur-md border-2 border-amber-200 rounded-2xl text-amber-900 placeholder-amber-500 focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-200/50 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -281,11 +281,11 @@ export default function ProductIndex({
                                     <div className="flex items-center space-x-4 text-sm">
                                         {products.data.length > 0 && (
                                             <span className="text-amber-700 font-medium">
-                                                {products.from}-{products.to} of {products.total} products
+                                                {products.from}-{products.to} of {products.total} produk
                                             </span>
                                         )}
                                         <div className="hidden sm:flex items-center space-x-2">
-                                            <span className="text-amber-700 font-medium">Show:</span>
+                                            <span className="text-amber-700 font-medium">Tampilkan:</span>
                                             <select
                                                 value={localFilters.per_page}
                                                 onChange={e => {
@@ -293,7 +293,7 @@ export default function ProductIndex({
                                                     handleInputChange('per_page', perPage);
                                                     handleInputChange('page', 1);
                                                 }}
-                                                className="bg-white/90 border-2 border-amber-200 rounded-lg px-3 py-1 text-amber-800 text-sm focus:outline-none focus:border-amber-400 transition-all duration-300"
+                                                className="bg-white/90 border-3 border-amber-200 rounded-lg px-3 py-1 text-amber-800 text-sm focus:outline-none focus:border-amber-400 transition-all duration-300"
                                             >
                                                 <option value={12}>12</option>
                                                 <option value={24}>24</option>
@@ -316,7 +316,7 @@ export default function ProductIndex({
                                                     onChange={e => handleInputChange('category', e.target.value)}
                                                     className="w-full bg-white/80 border-2 border-amber-200 rounded-lg px-3 py-2 text-amber-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200/50 transition-all duration-300"
                                                 >
-                                                    <option value="">All Categories</option>
+                                                    <option value="">Semua Kategori</option>
                                                     {categories.map(category => (
                                                         <option key={category.id} value={category.name}>
                                                             {category.name}
@@ -327,7 +327,7 @@ export default function ProductIndex({
 
                                             {/* Price Range */}
                                             <div>
-                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Min Price</label>
+                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Harga Rendah</label>
                                                 <input
                                                     type="number"
                                                     value={localFilters.min_price}
@@ -339,7 +339,7 @@ export default function ProductIndex({
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Max Price</label>
+                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Harga Tinggi</label>
                                                 <input
                                                     type="number"
                                                     value={localFilters.max_price}
@@ -353,7 +353,7 @@ export default function ProductIndex({
 
                                             {/* Sort By */}
                                             <div>
-                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Sort By</label>
+                                                <label className="block text-sm font-semibold text-amber-800 mb-2">Urutkan</label>
                                                 <select
                                                     value={`${localFilters.sort_by}-${localFilters.sort_order}`}
                                                     onChange={e => {
@@ -363,12 +363,12 @@ export default function ProductIndex({
                                                     }}
                                                     className="w-full bg-white/80 border-2 border-amber-200 rounded-lg px-3 py-2 text-amber-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200/50 transition-all duration-300"
                                                 >
-                                                    <option value="name-asc">Name A-Z</option>
-                                                    <option value="name-desc">Name Z-A</option>
-                                                    <option value="price-asc">Price Low-High</option>
-                                                    <option value="price-desc">Price High-Low</option>
-                                                    <option value="created_at-desc">Newest First</option>
-                                                    <option value="created_at-asc">Oldest First</option>
+                                                    <option value="name-asc">Nama A-Z</option>
+                                                    <option value="name-desc">Nama Z-A</option>
+                                                    <option value="price-asc">Harga Rendah-Tinggi</option>
+                                                    <option value="price-desc">Harga Tinggi-Rendah</option>
+                                                    <option value="created_at-desc">Terbaru</option>
+                                                    <option value="created_at-asc">Terlama</option>
                                                 </select>
                                             </div>
 
@@ -381,13 +381,13 @@ export default function ProductIndex({
                                                         onChange={e => handleInputChange('in_stock', e.target.checked)}
                                                         className="mr-2 rounded border-amber-300 bg-white text-amber-500 focus:ring-amber-400 focus:ring-offset-0"
                                                     />
-                                                    In Stock Only
+                                                    Hanya Tersedia di Toko
                                                 </label>
                                                 <button
                                                     onClick={clearFilters}
                                                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg transition-all duration-300 text-sm font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                                                 >
-                                                    Clear Filters
+                                                    Hapus Filter
                                                 </button>
                                             </div>
                                         </div>
@@ -428,7 +428,7 @@ export default function ProductIndex({
                                                         <svg className="w-12 h-12 sm:w-16 sm:h-16 text-amber-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                         </svg>
-                                                        <span className="text-amber-700 text-sm font-semibold">Fresh</span>
+                                                        <span className="text-amber-700 text-sm font-semibold">Segar</span>
                                                     </div>
                                                 </div>
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
@@ -468,7 +468,7 @@ export default function ProductIndex({
                                                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                             </svg>
-                                                            Ready to Order
+                                                            Siap Untuk Dipesan
                                                         </span>
                                                     )}
                                                 </div>
@@ -489,8 +489,8 @@ export default function ProductIndex({
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                                 </svg>
                                             </div>
-                                            <h3 className="text-xl sm:text-2xl font-bold text-amber-800 mb-4">No Products Found</h3>
-                                            <p className="text-amber-700 mb-6">We couldn't find any products matching your criteria. Try adjusting your filters or search terms.</p>
+                                            <h3 className="text-xl sm:text-2xl font-bold text-amber-800 mb-4">Produk Tidak Ditemukan</h3>
+                                            <p className="text-amber-700 mb-6">Kami tidak menemukan produk yang sesuai dengan kriteria Anda. Coba sesuaikan filter atau kata kunci pencarian Anda.</p>
                                             <button
                                                 onClick={clearFilters}
                                                 className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -498,7 +498,7 @@ export default function ProductIndex({
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                 </svg>
-                                                Clear All Filters
+                                                Hapus Semua Filter
                                             </button>
                                         </div>
                                     </div>
