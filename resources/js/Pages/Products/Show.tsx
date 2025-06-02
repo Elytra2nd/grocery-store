@@ -86,18 +86,6 @@ export default function ProductShow({ product, relatedProducts, cartItemId }: Pr
                                 </span>
                             ) : (
                                 <>
-                                    <Link
-                                        href="/login"
-                                        className="text-amber-700 hover:text-amber-600 transition-colors font-medium"
-                                    >
-                                        Login
-                                    </Link>
-                                    <Link
-                                        href="/register"
-                                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-md hover:shadow-lg"
-                                    >
-                                        Register
-                                    </Link>
                                 </>
                             )}
                             <Link
@@ -260,7 +248,7 @@ export default function ProductShow({ product, relatedProducts, cartItemId }: Pr
                                                         <svg className="w-12 h-12 text-amber-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                         </svg>
-                                                        <span className="text-amber-700 text-sm font-bold">Fresh</span>
+                                                        <span className="text-amber-700 text-sm font-bold">Segar</span>
                                                     </div>
                                                 </div>
                                                 <div className="absolute inset-0 bg-gradient-to-t from-amber-900/20 via-transparent to-transparent" />
@@ -285,7 +273,7 @@ export default function ProductShow({ product, relatedProducts, cartItemId }: Pr
                 {/* Footer */}
                 <footer className="w-full py-8 text-center text-amber-600 border-t border-amber-200/50 mt-auto bg-white/60 backdrop-blur-md">
                     <p>
-                        © {new Date().getFullYear()} <span className="text-amber-700 font-semibold">Fresh Market Collection</span>. All rights reserved.
+                        © {new Date().getFullYear()} <span className="text-amber-700 font-semibold">Fresh Market</span>. All rights reserved.
                     </p>
                 </footer>
             </div>

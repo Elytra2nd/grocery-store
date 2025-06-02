@@ -89,8 +89,6 @@ export default function BuyerAuthenticatedLayout({ children, header }: BuyerAuth
                                 <div className="flex-1">
                                     {header}
                                 </div>
-                                {/* DITAMBAHKAN: Header Action Buttons */}
-                                <HeaderActionButtons />
                             </div>
                         </div>
                     </div>
@@ -108,39 +106,6 @@ export default function BuyerAuthenticatedLayout({ children, header }: BuyerAuth
     );
 }
 
-// DITAMBAHKAN: Header Action Buttons Component
-function HeaderActionButtons(): JSX.Element {
-    return (
-        <div className="flex items-center space-x-3">
-            {/* Quick Add Button */}
-            <Link
-                href="/products"
-                className="group flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-            >
-                <PlusIcon className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
-                <span className="text-sm font-medium">Belanja</span>
-            </Link>
-
-            {/* Quick Cart Button */}
-            <Link
-                href="/cart"
-                className="group flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-            >
-                <ShoppingCartIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                <span className="text-sm font-medium">Keranjang</span>
-            </Link>
-
-            {/* Quick Orders Button */}
-            <Link
-                href="/orders"
-                className="group flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-            >
-                <ShoppingBagIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                <span className="text-sm font-medium">Pesanan</span>
-            </Link>
-        </div>
-    );
-}
 
 // Main Navigation Bar Component - ENHANCED
 interface MainNavigationBarProps {
@@ -228,21 +193,6 @@ function MainNavigationBar({
 
                     {/* Right Side Actions - ENHANCED */}
                     <div className="flex items-center space-x-4">
-                        {/* Search Button */}
-                        <button
-                            onClick={() => setSearchOpen(!searchOpen)}
-                            className="relative p-3 text-amber-700 hover:text-amber-600 transition-all duration-300 rounded-xl hover:bg-amber-100/50 group"
-                        >
-                            <MagnifyingGlassIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
-                        </button>
-
-                        {/* Notifications */}
-                        <button className="relative p-3 text-amber-700 hover:text-amber-600 transition-all duration-300 rounded-xl hover:bg-amber-100/50 group">
-                            <BellIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                                3
-                            </span>
-                        </button>
 
                         {/* Cart with Badge */}
                         <Link
@@ -250,8 +200,7 @@ function MainNavigationBar({
                             className="relative p-3 text-amber-700 hover:text-amber-600 transition-all duration-300 rounded-xl hover:bg-amber-100/50 group"
                         >
                             <ShoppingCartIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
-                            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                                2
+                            <span className="absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                             </span>
                         </Link>
 
@@ -374,7 +323,7 @@ function UserDropdownMenu({ user, onLogout, onClose }: UserDropdownMenuProps): J
                             <p className="text-sm font-semibold text-amber-900">{user?.name || 'User'}</p>
                             <p className="text-sm text-amber-700">{user?.email || 'user@example.com'}</p>
                             <p className="text-xs text-amber-600 mt-1 bg-amber-100 px-2 py-1 rounded-full inline-block">
-                                🛒 Buyer Account
+                                🛒 Akun Pembeli
                             </p>
                         </div>
                     </div>
@@ -389,44 +338,8 @@ function UserDropdownMenu({ user, onLogout, onClose }: UserDropdownMenuProps): J
                     >
                         <UserCircleIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
                         <div>
-                            <div className="font-medium">Profile Settings</div>
+                            <div className="font-medium">Pengaturan Profil</div>
                             <div className="text-xs text-gray-500">Kelola profil Anda</div>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/orders"
-                        className="flex items-center px-4 py-3 text-sm text-amber-700 hover:bg-amber-100/70 hover:text-amber-600 transition-all duration-300 group"
-                        onClick={onClose}
-                    >
-                        <ShoppingBagIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                        <div>
-                            <div className="font-medium">My Orders</div>
-                            <div className="text-xs text-gray-500">Lihat riwayat pesanan</div>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/cart"
-                        className="flex items-center px-4 py-3 text-sm text-amber-700 hover:bg-amber-100/70 hover:text-amber-600 transition-all duration-300 group"
-                        onClick={onClose}
-                    >
-                        <ShoppingCartIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                        <div>
-                            <div className="font-medium">Shopping Cart</div>
-                            <div className="text-xs text-gray-500">2 items dalam keranjang</div>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/wishlist"
-                        className="flex items-center px-4 py-3 text-sm text-amber-700 hover:bg-amber-100/70 hover:text-amber-600 transition-all duration-300 group"
-                        onClick={onClose}
-                    >
-                        <HeartIcon className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                        <div>
-                            <div className="font-medium">Wishlist</div>
-                            <div className="text-xs text-gray-500">Produk favorit</div>
                         </div>
                     </Link>
                 </div>

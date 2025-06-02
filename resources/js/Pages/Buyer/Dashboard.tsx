@@ -151,131 +151,10 @@ export default function Dashboard() {
 
     return (
         <BuyerAuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-yellow-600 bg-clip-text text-transparent">
-                            🌾 Selamat Datang di Fresh Market
-                        </h1>
-                        <p className="text-amber-700 mt-2">
-                            Temukan produk grocery segar dan berkualitas untuk kebutuhan harian Anda
-                        </p>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                        <div className="bg-white/70 backdrop-blur-md rounded-xl px-4 py-2 border border-amber-200">
-                            <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                                <span className="text-sm font-medium text-amber-800">Toko Buka</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
         >
             <Head title="Fresh Market - Dashboard" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-                {/* Quick Shopping Actions */}
-                <div className="mb-12">
-                    <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 border border-amber-200 shadow-lg">
-                        <div className="text-center mb-8">
-                            <h2 className="text-2xl font-bold text-amber-900 mb-2">Mulai Berbelanja</h2>
-                            <p className="text-amber-700">Akses cepat untuk kebutuhan belanja Anda</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Link
-                                href="/products"
-                                className="group flex flex-col items-center p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200 hover:border-emerald-400 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                            >
-                                <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                    <span className="text-3xl">🛒</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-emerald-800 mb-2">Jelajahi Produk</h3>
-                                <p className="text-sm text-emerald-600 text-center">Temukan produk grocery segar dan berkualitas</p>
-                            </Link>
-
-                            <Link
-                                href="/cart"
-                                className="group flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                            >
-                                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 relative">
-                                    <span className="text-3xl">🛍️</span>
-                                    {safeStats.cartItemsCount > 0 && (
-                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
-                                            {safeStats.cartItemsCount}
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className="text-lg font-bold text-blue-800 mb-2">Keranjang Saya</h3>
-                                <p className="text-sm text-blue-600 text-center">
-                                    {safeStats.cartItemsCount > 0
-                                        ? `${safeStats.cartItemsCount} item • ${formatCurrency(safeStats.cartTotalValue)}`
-                                        : 'Keranjang masih kosong'
-                                    }
-                                </p>
-                            </Link>
-
-                            <Link
-                                href="/orders"
-                                className="group flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                            >
-                                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 relative">
-                                    <span className="text-3xl">📦</span>
-                                    {safeStats.pendingOrders > 0 && (
-                                        <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
-                                            {safeStats.pendingOrders}
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className="text-lg font-bold text-purple-800 mb-2">Pesanan Saya</h3>
-                                <p className="text-sm text-purple-600 text-center">
-                                    {safeStats.pendingOrders > 0
-                                        ? `${safeStats.pendingOrders} pesanan dalam proses`
-                                        : 'Lihat riwayat pesanan'
-                                    }
-                                </p>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Shopping Summary Banner */}
-                {(safeStats.cartItemsCount > 0 || safeStats.pendingOrders > 0) && (
-                    <div className="mb-12">
-                        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-xl font-bold mb-2">🎯 Status Belanja Anda</h3>
-                                    <div className="flex items-center space-x-6">
-                                        {safeStats.cartItemsCount > 0 && (
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-lg">🛍️</span>
-                                                <span className="font-medium">{safeStats.cartItemsCount} item di keranjang</span>
-                                            </div>
-                                        )}
-                                        {safeStats.pendingOrders > 0 && (
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-lg">📦</span>
-                                                <span className="font-medium">{safeStats.pendingOrders} pesanan diproses</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    {safeStats.cartItemsCount > 0 && (
-                                        <Link
-                                            href="/buyer/checkout"
-                                            className="bg-white text-amber-600 px-6 py-3 rounded-lg font-bold hover:bg-amber-50 transition-colors duration-300 hover:scale-105 transform"
-                                        >
-                                            Checkout Sekarang
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <div className="space-y-16">
                     {/* DIPERBAIKI: Produk Grocery Terlaris dengan conditional image/icon */}
@@ -385,7 +264,7 @@ export default function Dashboard() {
                                 <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center">
                                     🛍️ Keranjang Belanja Anda
                                     {safeStats.cartItemsCount > 0 && (
-                                        <span className="ml-3 bg-red-500 text-white text-sm px-3 py-1 rounded-full animate-pulse">
+                                        <span className="ml-3 text-white text-sm px-3 py-1 rounded-full animate-pulse">
                                             {safeStats.cartItemsCount}
                                         </span>
                                     )}
@@ -429,10 +308,6 @@ export default function Dashboard() {
                                                             ) : (
                                                                 <span className="text-3xl">🛒</span>
                                                             )}
-                                                            {/* Quantity Badge */}
-                                                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg">
-                                                                {item.quantity}
-                                                            </div>
                                                         </div>
 
                                                         <div className="flex-1 min-w-0">
