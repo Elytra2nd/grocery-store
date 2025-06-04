@@ -21,12 +21,12 @@ export default function Welcome({
         try {
             if (typeof window !== 'undefined' && window.route) {
                 const url = window.route('dashboard');
-                return url && url !== '/' ? url : '/dashboard';
+                return url && url !== '/index.php' ? url : '/index.php/dashboard';
             }
-            return '/dashboard';
+            return '/index.php/dashboard';
         } catch (error) {
             console.error('Error getting dashboard URL:', error);
-            return '/dashboard';
+            return '/index.php/dashboard';
         }
     };
 
@@ -34,12 +34,12 @@ export default function Welcome({
         try {
             if (typeof window !== 'undefined' && window.route) {
                 const url = window.route('login');
-                return url && url !== '/' ? url : '/login';
+                return url && url !== '/index.php' ? url : '/index.php/login';
             }
-            return '/login';
+            return '/index.php/login';
         } catch (error) {
             console.error('Error getting login URL:', error);
-            return '/login';
+            return '/index.php/login';
         }
     };
 
@@ -47,7 +47,7 @@ export default function Welcome({
         try {
             if (typeof window !== 'undefined' && window.route) {
                 const url = window.route('register');
-                return url && url !== '/' ? url : '/register';
+                return url && url !== '/index.php' ? url : '/register';
             }
             return '/register';
         } catch (error) {
