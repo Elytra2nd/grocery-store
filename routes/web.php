@@ -58,7 +58,7 @@ Route::prefix('cart')->name('cart.')->group(function () {
 Route::middleware('auth')->group(function () {
     // DIPERBAIKI: Redirect dashboard berdasarkan role
     Route::get('/dashboard', function () {
-        $user = auth()->user();
+        $user = \Illuminate\Support\Facades\Auth::user();
 
         if ($user->hasRole('admin')) {
             return redirect()->route('admin.dashboard');

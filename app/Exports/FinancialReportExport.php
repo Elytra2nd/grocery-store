@@ -46,15 +46,18 @@ class FinancialReportExport
             $filename = $this->getDefaultFilename();
         }
 
+        $headerStyle = (new \OpenSpout\Common\Entity\Style\Style())
+            ->setFontBold()
+            ->setFontSize(12)
+            ->setBackgroundColor('D97706')
+            ->setShouldWrapText(false);
+
+        $rowStyle = (new \OpenSpout\Common\Entity\Style\Style())
+            ->setShouldWrapText(true);
+
         return (new FastExcel($data))
-            ->headerStyle([
-                'font' => ['bold' => true, 'size' => 12],
-                'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'D97706']],
-                'alignment' => ['horizontal' => 'center']
-            ])
-            ->rowsStyle([
-                'alignment' => ['vertical' => 'center']
-            ])
+            ->headerStyle($headerStyle)
+            ->rowsStyle($rowStyle)
             ->download($filename);
     }
 
