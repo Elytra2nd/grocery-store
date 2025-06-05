@@ -12,6 +12,14 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        cors: {
+            origin: /https?:\/\/.*\.ngrok-free\.app$/,
+        }
+    },
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
